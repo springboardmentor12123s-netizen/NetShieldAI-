@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Runtime data
+backend/netshield.db
+backend/uploads/*
+!backend/uploads/.gitkeep
+backend/predictions/
+backend/saved_models/*
+!backend/saved_models/.gitkeep
+sample_data/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# Environment and editor files
+.env
+*.local
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
