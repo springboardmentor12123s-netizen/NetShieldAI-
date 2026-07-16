@@ -1,6 +1,6 @@
 # NetShield AI
 
-NetShield AI is a local, full-stack network anomaly detection application built for a final-year college project. It trains an Isolation Forest on CICIDS2017-compatible CSV data, detects anomalous traffic, stores activity in SQLite, and presents results in a responsive monitoring dashboard.
+hell NetShield AI is a local, full-stack network anomaly detection application built for a final-year college project. It trains an Isolation Forest on CICIDS2017-compatible CSV data, detects anomalous traffic, stores activity in SQLite, and presents results in a responsive monitoring dashboard.
 
 ## Features
 
