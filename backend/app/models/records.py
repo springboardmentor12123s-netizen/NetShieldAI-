@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, Float, ForeignKey, Integer, String
+from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -51,3 +51,25 @@ class Alert(Base):
     prediction: Mapped[str] = mapped_column(String(30), default="Anomaly")
     severity: Mapped[str] = mapped_column(String(20))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class ThreatReport(Base):
+    """Stores the latest generated threat analysis report after a prediction run."""
+
+    __tablename__ = "threat_reports"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    generated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    total_records: Mapped[int] = mapped_column(Integer, default=0)
+    normal_count: Mapped[int] = mapped_column(Integer, default=0)
+    suspicious_count: Mapped[int] = mapped_column(Integer, default=0)
+    anomaly_count: Mapped[int] = mapped_column(Integer, default=0)
+    anomaly_percentage: Mapped[float] = mapped_column(Float, default=0.0)
+    risk_level: Mapped[str] = mapped_column(String(20), default="Low")
+    # Optional supervised metrics (populated when the CSV has a Label column)
+    accuracy: Mapped[float | None] = mapped_column(Float, nullable=True)
+    precision: Mapped[float | None] = mapped_column(Float, nullable=True)
+    recall: Mapped[float | None] = mapped_column(Float, nullable=True)
+    f1_score: Mapped[float | None] = mapped_column(Float, nullable=True)
+    # Full report data serialised as JSON text for SQLite/PostgreSQL compatibility
+    report_json: Mapped[str | None] = mapped_column(Text, nullable=True)

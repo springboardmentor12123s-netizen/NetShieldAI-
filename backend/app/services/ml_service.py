@@ -10,6 +10,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
+from app.services.risk_service import compute_risk
+from app.services.threat_classifier import classify_threats
+
 LABEL_NAMES = {"label", "class", "target", "attack", "category"}
 
 
@@ -77,7 +80,18 @@ def train_model(frame: pd.DataFrame, model_path: Path) -> dict:
     }
 
 
-def predict(frame: pd.DataFrame, model_path: Path) -> pd.DataFrame:
+def predict(frame: pd.DataFrame, model_path: Path) -> tuple[pd.DataFrame, dict | None]:
+    """
+    Run the Isolation Forest on *frame* and return an enriched DataFrame.
+
+    Returns
+    -------
+    (output, supervised_metrics)
+        *output* : DataFrame with Prediction, Prediction Label, Threat Category,
+                   Risk Score, Severity columns added.
+        *supervised_metrics* : dict with accuracy/precision/recall/f1_score if
+                               the CSV contained a Label column; otherwise None.
+    """
     if not model_path.exists():
         raise HTTPException(status_code=400, detail="No trained model found. Train a model first.")
     bundle = joblib.load(model_path)
@@ -87,7 +101,39 @@ def predict(frame: pd.DataFrame, model_path: Path) -> pd.DataFrame:
     if missing:
         preview = ", ".join(map(str, missing[:5]))
         raise HTTPException(status_code=400, detail=f"Prediction CSV is missing required features: {preview}")
+
     values = numeric[required].replace([np.inf, -np.inf], np.nan).fillna(0)
     output = frame.copy()
-    output["Prediction"] = np.where(bundle["pipeline"].predict(values) == -1, "Anomaly", "Normal")
-    return output
+    raw_preds = bundle["pipeline"].predict(values)
+    output["Prediction"] = np.where(raw_preds == -1, "Anomaly", "Normal")
+
+    # -----------------------------------------------------------------------
+    # Supervised evaluation – only when the CSV has a Label column
+    # -----------------------------------------------------------------------
+    supervised_metrics: dict | None = None
+    true_labels = _find_label(frame)
+    if true_labels is not None:
+        predicted_binary = (raw_preds == -1).astype(int)
+        tn, fp, fn, tp = confusion_matrix(
+            true_labels.to_numpy(), predicted_binary, labels=[0, 1]
+        ).ravel()
+        supervised_metrics = {
+            "accuracy": round(float(accuracy_score(true_labels, predicted_binary) * 100), 2),
+            "precision": round(float(precision_score(true_labels, predicted_binary, zero_division=0) * 100), 2),
+            "recall": round(float(recall_score(true_labels, predicted_binary, zero_division=0) * 100), 2),
+            "f1_score": round(float(f1_score(true_labels, predicted_binary, zero_division=0) * 100), 2),
+            "confusion_matrix": [[int(tn), int(fp)], [int(fn), int(tp)]],
+            "note": "Evaluated against dataset Label column.",
+        }
+
+    # -----------------------------------------------------------------------
+    # Threat classification (rule-based)
+    # -----------------------------------------------------------------------
+    output["Threat Category"] = classify_threats(output)
+
+    # -----------------------------------------------------------------------
+    # Risk scoring
+    # -----------------------------------------------------------------------
+    output = compute_risk(output)
+
+    return output, supervised_metrics

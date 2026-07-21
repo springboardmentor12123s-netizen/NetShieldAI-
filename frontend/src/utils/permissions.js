@@ -1,7 +1,7 @@
 export const ROLE_PERMISSIONS = {
-  admin: ["dashboard", "upload", "train", "predict", "alerts", "history"],
-  analyst: ["dashboard", "upload", "train", "predict", "alerts", "history"],
-  viewer: ["dashboard", "alerts", "history"],
+  admin: ["dashboard", "upload", "train", "predict", "alerts", "history", "reports"],
+  analyst: ["dashboard", "upload", "train", "predict", "alerts", "history", "reports"],
+  viewer: ["dashboard", "alerts", "history", "reports"],
 };
 
 export const hasPermission = (permission) => {

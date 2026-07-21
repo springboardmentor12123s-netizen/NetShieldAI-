@@ -1,141 +1,585 @@
-# NetShield AI
+# 🛡️ NetShield AI – Network Anomaly Detection & Threat Monitoring System
 
-NetShield AI is a local, full-stack network anomaly detection application built for a final-year college project. It trains an Isolation Forest on CICIDS2017-compatible CSV data, detects anomalous traffic, stores activity in SQLite, and presents results in a responsive monitoring dashboard.
+An AI-powered cybersecurity monitoring system that detects anomalous network traffic using Machine Learning.
 
-## Features
+NetShield AI enables security analysts to upload network traffic datasets, train anomaly detection models, predict suspicious traffic, classify cyber threats, generate risk scores, create security alerts, and monitor threat analytics through an interactive dashboard.
 
-- Hardcoded local administrator login (`admin` / `admin123`)
-- CSV validation, local storage, and 20-row preview
-- Isolation Forest training with scaling and Joblib persistence
-- Accuracy, precision, recall, F1 score, and confusion matrix
-- CSV prediction, anomaly highlighting, and result download
-- Severity-based alerts, history, summary cards, and Recharts visualizations
-- Automatic SQLite table creation
+> **Status:** Milestone 1 ✅ Completed | Milestone 2 ✅ Completed
 
-> The login is intentionally simple and is not suitable for an internet-facing deployment.
+---
 
-## Technology
+# 📌 Table of Contents
 
-- Frontend: React 19, Vite, Tailwind CSS, React Router, Axios, Recharts
-- Backend: FastAPI, SQLAlchemy, SQLite, Pandas, NumPy, scikit-learn, Joblib
-- Dataset: CICIDS2017 CSV files or any compatible numeric CSV
+- Overview
+- Features
+- Tech Stack
+- Project Architecture
+- Milestone Progress
+- Machine Learning Pipeline
+- Threat Classification
+- Risk Scoring
+- RBAC
+- Dataset
+- Project Structure
+- API Endpoints
+- Installation
+- Running the Project
+- Screenshots
+- Future Scope
+- Limitations
+- Contributors
 
-## Folder structure
+---
 
-```text
-netshield-ai/
-├── backend/
-│   ├── app/
-│   │   ├── models/       # SQLAlchemy entities
-│   │   ├── routers/      # API route modules
-│   │   ├── schemas/      # Request schemas
-│   │   ├── services/     # CSV and ML logic
+# 🚀 Overview
+
+NetShield AI simulates a simplified Security Operations Center (SOC) workflow by combining:
+
+- Machine Learning
+- Network Traffic Analysis
+- Threat Monitoring
+- Dashboard Analytics
+- Alert Generation
+- PostgreSQL Database
+- FastAPI REST APIs
+- React Frontend
+
+The application analyzes uploaded CSV network traffic datasets (CICIDS2017 format) and identifies suspicious network activities using an Isolation Forest anomaly detection model.
+
+---
+
+# ✨ Features
+
+## Authentication
+
+- Login system
+- Role-Based Access Control (RBAC)
+
+## Dashboard
+
+- Security overview
+- Threat statistics
+- Alerts summary
+- Prediction analytics
+
+## Dataset Management
+
+- Upload CSV datasets
+- Dataset preview
+- Data validation
+
+## Machine Learning
+
+- Train Isolation Forest model
+- Save trained model
+- Model evaluation
+- Prediction workflow
+
+## Threat Detection
+
+- Anomaly detection
+- Threat classification
+- Risk scoring
+- Severity generation
+
+## Reporting
+
+- Alerts
+- Prediction history
+- Threat reports
+
+## Documentation
+
+- FastAPI Swagger UI
+
+---
+
+# 🛠 Tech Stack
+
+## Frontend
+
+- React + Vite
+- Tailwind CSS
+- React Router
+- Axios
+- Recharts
+- lucide-react
+- react-hot-toast
+
+---
+
+## Backend
+
+- Python
+- FastAPI
+- SQLAlchemy
+- PostgreSQL
+- Pandas
+- NumPy
+- Scikit-learn
+- Joblib
+- python-dotenv
+
+---
+
+## Machine Learning
+
+- Isolation Forest
+
+---
+
+# 🏗 Project Architecture
+
+```
+                 React Dashboard
+                        │
+                        │
+                  REST API (FastAPI)
+                        │
+        ┌───────────────┼───────────────┐
+        │               │               │
+ Authentication    ML Service     PostgreSQL
+        │               │               │
+        │         Isolation Forest      │
+        │               │               │
+        └────── Upload / Prediction ────┘
+```
+
+---
+
+# ✅ Milestone Progress
+
+## Milestone 1 – Project Initialization & Core Setup
+
+Completed:
+
+- Security monitoring workflow
+- System architecture
+- Database schema
+- React frontend
+- FastAPI backend
+- Authentication
+- RBAC
+- Dataset upload
+- Dashboard analytics
+- Model training
+- Prediction workflow
+- Alerts module
+- History tracking
+- Frontend–Backend integration
+
+---
+
+## Milestone 2 – Anomaly Detection & Intrusion Prediction
+
+Completed:
+
+- Isolation Forest model
+- Model evaluation
+- Accuracy
+- Precision
+- Recall
+- F1 Score
+- Confusion Matrix
+- Threat classification
+- Risk scoring
+- Severity generation
+- Threat reports
+- PostgreSQL integration
+
+---
+
+# 🤖 Machine Learning Pipeline
+
+## Training
+
+```
+Upload CSV
+      │
+      ▼
+Data Cleaning
+      │
+      ▼
+Feature Selection
+      │
+      ▼
+Feature Scaling
+      │
+      ▼
+Isolation Forest Training
+      │
+      ▼
+Save Model
+      │
+      ▼
+Evaluation Metrics
+```
+
+---
+
+## Prediction
+
+```
+Prediction CSV
+      │
+      ▼
+Load Trained Model
+      │
+      ▼
+Predict Anomalies
+      │
+      ▼
+Generate Risk Score
+      │
+      ▼
+Assign Severity
+      │
+      ▼
+Threat Classification
+      │
+      ▼
+Store Alerts & History
+```
+
+---
+
+# 🎯 Threat Classification
+
+| Condition | Threat |
+|-----------|--------|
+| High Bytes/s + High Packets/s | Possible DDoS |
+| Port 22 | Possible SSH Attack |
+| Port 80 / 443 | Possible Web Attack |
+| Port 53 | Possible DNS Attack |
+| Other Anomaly | Generic Network Anomaly |
+| Normal Record | Normal Traffic |
+
+---
+
+# ⚠ Risk Scoring
+
+| Risk Score | Severity |
+|------------|----------|
+| 0–30 | 🟢 Low |
+| 31–60 | 🟡 Medium |
+| 61–80 | 🟠 High |
+| 81–100 | 🔴 Critical |
+
+---
+
+# 👥 Role-Based Access Control
+
+## Demo Users
+
+| Role | Username | Password |
+|------|----------|----------|
+| Admin | admin | admin123 |
+| Analyst | analyst | analyst123 |
+| Viewer | viewer | viewer123 |
+
+---
+
+## Permissions
+
+| Feature | Admin | Analyst | Viewer |
+|----------|:----:|:-------:|:------:|
+| Dashboard | ✅ | ✅ | ✅ |
+| Upload Dataset | ✅ | ✅ | ❌ |
+| Train Model | ✅ | ✅ | ❌ |
+| Prediction | ✅ | ✅ | ❌ |
+| Alerts | ✅ | ✅ | ✅ |
+| History | ✅ | ✅ | ✅ |
+| Threat Reports | ✅ | ✅ | ✅ |
+
+---
+
+# 📂 Supported Dataset
+
+The system currently supports **CICIDS2017-style CSV datasets**.
+
+Example features:
+
+```
+Destination Port
+Flow Duration
+Total Fwd Packets
+Total Backward Packets
+Flow Bytes/s
+Flow Packets/s
+Packet Length Mean
+Average Packet Size
+Label
+```
+
+Labels:
+
+```
+BENIGN
+DDoS
+Bot
+DoS
+PortScan
+SSH
+Web Attack
+```
+
+Any label other than **BENIGN** is treated as malicious traffic.
+
+---
+
+# 📁 Project Structure
+
+```
+NetShieldAI
+│
+├── backend
+│   ├── app
+│   │   ├── models
+│   │   ├── routers
+│   │   ├── schemas
+│   │   ├── services
 │   │   ├── database.py
 │   │   └── main.py
-│   ├── uploads/
-│   ├── saved_models/
+│   │
+│   ├── uploads
+│   ├── predictions
+│   ├── saved_models
+│   ├── .env.example
 │   └── requirements.txt
-├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   ├── services/
-│   │   └── App.jsx
-│   └── package.json
-├── scripts/
-│   └── generate_sample_data.py
-└── README.md
+│
+├── frontend
+│   ├── src
+│   ├── package.json
+│   ├── vite.config.js
+│   └── tailwind.config.js
+│
+├── sample_data
+├── scripts
+├── README.md
+└── .gitignore
 ```
 
-## Installation
+---
 
-Prerequisites: Python 3.10 or newer and Node.js 18 or newer.
+# 🌐 API Endpoints
 
-### Backend
+| Method | Endpoint | Description |
+|---------|----------|-------------|
+| GET | `/health` | Health Check |
+| POST | `/api/login` | Login |
+| POST | `/api/upload` | Upload Dataset |
+| POST | `/api/train` | Train Model |
+| POST | `/api/predict` | Predict Anomalies |
+| GET | `/api/dashboard` | Dashboard |
+| GET | `/api/alerts` | Alerts |
+| GET | `/api/history` | Prediction History |
+| GET | `/api/reports/latest` | Latest Threat Report |
+
+---
+
+# 📖 API Documentation
+
+FastAPI automatically generates API documentation.
+
+```
+http://127.0.0.1:8765/docs
+```
+
+---
+
+# 💾 PostgreSQL Setup
+
+Create database:
 
 ```powershell
-cd netshield-ai\backend
+& "C:\Program Files\PostgreSQL\18\bin\psql.exe" -U postgres -c "CREATE DATABASE netshield_ai;"
+```
+
+Create `.env`
+
+```env
+DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@localhost:5432/netshield_ai
+```
+
+---
+
+# ⚙ Backend Setup
+
+```powershell
+cd backend
+
 python -m venv .venv
-.\.venv\Scripts\Activate.ps1
+
+.\.venv\Scripts\activate
+
 pip install -r requirements.txt
+
+uvicorn app.main:app --reload --port 8765
 ```
 
-### Frontend
+Backend:
 
-Open a second terminal:
+```
+http://127.0.0.1:8765
+```
+
+---
+
+# 💻 Frontend Setup
 
 ```powershell
-cd netshield-ai\frontend
+cd frontend
+
 npm install
-```
 
-Environment files are optional for the default ports. To customize them, copy `backend/.env.example` and `frontend/.env.example` to `.env` in their respective folders.
-
-## Running the application
-
-Start the backend from `netshield-ai/backend`:
-
-```powershell
-uvicorn app.main:app --reload --port 8000
-```
-
-Start the frontend from `netshield-ai/frontend`:
-
-```powershell
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173), then log in with:
+Frontend:
 
-- Username: `admin`
-- Password: `admin123`
+```
+http://127.0.0.1:5173/login
+```
 
-FastAPI's interactive documentation is available at [http://localhost:8000/docs](http://localhost:8000/docs).
+---
 
-## API endpoints
+# ▶ Running the Project
 
-| Method | Endpoint | Description |
-|---|---|---|
-| POST | `/login` | Validate local administrator credentials |
-| POST | `/upload` | Validate, save, and preview a training CSV |
-| POST | `/train` | Train on the latest upload, or pass `dataset_id` |
-| POST | `/predict` | Analyze an uploaded CSV |
-| GET | `/predictions/{id}/download` | Download prediction results |
-| GET | `/dashboard` | Retrieve cards and chart data |
-| GET | `/alerts` | Retrieve anomaly-only rows |
-| GET | `/history` | Retrieve dataset activity |
-| GET | `/health` | Backend health check |
+Open **two terminals**.
 
-The same application endpoints are also available under `/api`; the React client uses these namespaced aliases.
+### Terminal 1
 
-## Training the model
+```powershell
+cd backend
 
-1. Download the CICIDS2017 CSV data or generate the included synthetic demo files:
+uvicorn app.main:app --reload --port 8765
+```
 
-   ```powershell
-   cd netshield-ai
-   python scripts\generate_sample_data.py
-   ```
+### Terminal 2
 
-2. Open **Upload Dataset** and upload a training CSV.
-3. Open **Train Model** and select **Start training**.
-4. The latest training upload is cleaned, numeric columns are selected, values are scaled, and an Isolation Forest is saved to `backend/saved_models/isolation_forest.joblib`.
+```powershell
+cd frontend
 
-When a `Label`, `Class`, `Target`, `Attack`, or `Category` column exists, metrics compare predictions against its labels (`BENIGN`, `NORMAL`, `0`, and `false` are treated as normal). For unlabeled data, the app evaluates against a robust statistical anomaly baseline.
+npm run dev
+```
 
-## Making predictions
+---
 
-1. Train a model first.
-2. Open **Prediction** and upload a CSV containing the same numeric feature columns as the training data.
-3. The application appends a `Prediction` column containing `Normal` or `Anomaly`.
-4. Review the first 20 results and download the complete prediction CSV.
-5. Open **Alerts** to view only anomalies. Severity is assigned per prediction run:
-   - 1 anomaly: Low
-   - 2–5 anomalies: Medium
-   - More than 5 anomalies: High
+# 📸 Screenshots
 
-## Notes
+Add screenshots here.
 
-- Uploaded data, the SQLite database, and the trained model remain local.
-- The upload limit is 50 MB to keep this simplified project responsive.
-- CICIDS2017 CSV exports sometimes contain leading spaces in column names; NetShield preserves data while normalizing column names in API previews.
+```
+Login Page
+
+Dashboard
+
+Dataset Upload
+
+Model Training
+
+Prediction
+
+Threat Report
+
+Alerts
+
+History
+```
+
+---
+
+# 🚫 Files Not to Push
+
+```
+backend/.env
+
+backend/.venv/
+
+frontend/node_modules/
+
+backend/uploads/
+
+backend/predictions/
+
+backend/saved_models/
+
+__pycache__/
+
+*.db
+
+Large datasets
+```
+
+---
+
+# 📤 Files to Push
+
+```
+backend/app/
+
+frontend/src/
+
+sample_data/
+
+scripts/
+
+README.md
+
+requirements.txt
+
+package.json
+
+package-lock.json
+
+.gitignore
+
+.env.example
+```
+
+---
+
+# ⚠ Limitations
+
+- Dataset-based detection only
+- No live packet capture
+- No Wireshark integration
+- No Zeek integration
+- No SIEM integration
+- Local deployment only
+- Simplified authentication
+- CSV-based workflow
+
+---
+
+# 🚀 Future Scope
+
+- Live packet capture
+- Deep Learning models
+- XGBoost / Random Forest
+- Password hashing
+- JWT Authentication
+- User management
+- Email alerts
+- SMS alerts
+- Report export (PDF)
+- Alembic database migrations
+- Docker support
+- Cloud deployment
+- SIEM integration
+- Zeek integration
+- Wireshark integration
+
+---
+
+# 👨‍💻 Contributors
+
+**Project:** NetShield AI – Network Anomaly Detection & Threat Monitoring System
+
+Developed as a Final Year Cybersecurity & Machine Learning academic project.
+
+---
+
+# 📄 License
+
+This project is intended for **educational and research purposes only**.

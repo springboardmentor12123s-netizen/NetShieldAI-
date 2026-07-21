@@ -1,26 +1,117 @@
 # Python
+# ======================================================
+# NetShield AI - .gitignore
+# ======================================================
+
+# --------------------------
+# Environment Variables
+# --------------------------
+.env
+*.env
+*.local
+backend/.env
+
+# --------------------------
+# Python
+# --------------------------
 __pycache__/
 *.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Virtual Environments
 .venv/
 venv/
+backend/.venv/
 
-# Runtime data
-backend/netshield.db
-backend/uploads/*
-!backend/uploads/.gitkeep
-backend/predictions/
-backend/saved_models/*
-!backend/saved_models/.gitkeep
-sample_data/
-
-# Frontend
+# --------------------------
+# Node.js
+# --------------------------
+node_modules/
 frontend/node_modules/
+
+# Build Output
+dist/
 frontend/dist/
 
-# Environment and editor files
-.env
-*.local
-.idea/
+# --------------------------
+# Database Files
+# --------------------------
+*.db
+backend/*.db
+backend/netshield.db
+
+# --------------------------
+# Generated Application Data
+# --------------------------
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+backend/predictions/
+
+backend/saved_models/*
+!backend/saved_models/.gitkeep
+
+# --------------------------
+# Datasets
+# --------------------------
+# Ignore all CSV datasets except sample files
+*.csv
+!sample_data/*.csv
+
+# Ignore entire sample_data folder except CSVs
+sample_data/*
+!sample_data/*.csv
+
+# --------------------------
+# Machine Learning Artifacts
+# --------------------------
+*.joblib
+*.pkl
+
+# --------------------------
+# Logs
+# --------------------------
+*.log
+logs/
+
+# --------------------------
+# IDE / Editor
+# --------------------------
 .vscode/
+.idea/
+*.code-workspace
+
+# --------------------------
+# Operating System Files
+# --------------------------
 .DS_Store
 Thumbs.db
+Desktop.ini
+
+# --------------------------
+# Temporary Files
+# --------------------------
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+
+# --------------------------
+# Archives
+# --------------------------
+*.zip
+*.tar
+*.gz
+*.rar
+
+# --------------------------
+# Miscellaneous
+# --------------------------
+.cache/

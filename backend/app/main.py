@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
 from app.database import Base, engine
-from app.routers import auth, datasets, ml, monitoring
+from app.routers import auth, datasets, ml, monitoring, reports
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
@@ -18,7 +18,7 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(
     title="NetShield AI API",
     description="Local network anomaly detection and monitoring API",
-    version="1.0.0",
+    version="2.0.0",
 )
 app.add_middleware(
     CORSMiddleware,
@@ -35,11 +35,13 @@ app.include_router(auth.router, prefix="/api")
 app.include_router(datasets.router, prefix="/api")
 app.include_router(ml.router, prefix="/api")
 app.include_router(monitoring.router, prefix="/api")
+app.include_router(reports.router, prefix="/api")
 # Root aliases preserve the endpoint contract specified for the college project.
 app.include_router(auth.router, include_in_schema=False)
 app.include_router(datasets.router, include_in_schema=False)
 app.include_router(ml.router, include_in_schema=False)
 app.include_router(monitoring.router, include_in_schema=False)
+app.include_router(reports.router, include_in_schema=False)
 
 
 @app.get("/")

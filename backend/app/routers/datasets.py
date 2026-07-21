@@ -8,6 +8,7 @@ from app.database import get_db
 from app.models import Alert, DatasetRecord
 from app.services.file_service import dataframe_preview, save_csv
 from app.services.ml_service import predict
+from app.services.report_service import build_and_save_report
 
 router = APIRouter(tags=["Datasets"])
 BACKEND_DIR = Path(__file__).resolve().parents[2]
@@ -40,10 +41,18 @@ async def upload_dataset(file: UploadFile = File(...), db: Session = Depends(get
 @router.post("/predict")
 async def predict_dataset(file: UploadFile = File(...), db: Session = Depends(get_db)):
     path, frame = await save_csv(file, UPLOAD_DIR)
-    output = predict(frame, MODEL_PATH)
+
+    # predict() now returns (enriched_df, supervised_metrics | None)
+    output, supervised_metrics = predict(frame, MODEL_PATH)
+
     anomaly_indices = output.index[output["Prediction"] == "Anomaly"].tolist()
     anomaly_count = len(anomaly_indices)
-    severity = "Low" if anomaly_count == 1 else "Medium" if 2 <= anomaly_count <= 5 else "High" if anomaly_count > 5 else "None"
+    severity = (
+        "Low" if anomaly_count == 1
+        else "Medium" if 2 <= anomaly_count <= 5
+        else "High" if anomaly_count > 5
+        else "None"
+    )
 
     record = DatasetRecord(
         original_name=file.filename or "prediction.csv",
@@ -63,7 +72,14 @@ async def predict_dataset(file: UploadFile = File(...), db: Session = Depends(ge
     result_name = f"predictions_{record.id}.csv"
     output.to_csv(PREDICTION_DIR / result_name, index=False)
     db.commit()
-    return {
+
+    # Build and persist threat report (non-blocking – errors are logged, not raised)
+    try:
+        build_and_save_report(output, db, supervised_metrics=supervised_metrics)
+    except Exception:
+        pass  # Report generation failure must not break the predict response
+
+    response: dict = {
         "dataset_id": record.id,
         "total_rows": len(output),
         "anomaly_count": anomaly_count,
@@ -72,6 +88,10 @@ async def predict_dataset(file: UploadFile = File(...), db: Session = Depends(ge
         "preview": dataframe_preview(output),
         "download_url": f"/api/predictions/{record.id}/download",
     }
+    if supervised_metrics:
+        response["supervised_metrics"] = supervised_metrics
+
+    return response
 
 
 @router.get("/predictions/{dataset_id}/download")

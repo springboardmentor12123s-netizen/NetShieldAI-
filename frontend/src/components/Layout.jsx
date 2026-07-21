@@ -3,6 +3,7 @@ import {
   Bell,
   BrainCircuit,
   Database,
+  FileBarChart2,
   History,
   LayoutDashboard,
   LogOut,
@@ -50,6 +51,12 @@ const links = [
     label: "History",
     icon: History,
     permission: "history",
+  },
+  {
+    to: "/threat-report",
+    label: "Threat Report",
+    icon: FileBarChart2,
+    permission: "reports",
   },
 ];
 

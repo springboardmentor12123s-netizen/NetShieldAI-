@@ -6,6 +6,7 @@ import Dashboard from "./pages/Dashboard";
 import History from "./pages/History";
 import Login from "./pages/Login";
 import Predict from "./pages/Predict";
+import ThreatReport from "./pages/ThreatReport";
 import Train from "./pages/Train";
 import Upload from "./pages/Upload";
 
@@ -73,6 +74,15 @@ export default function App() {
           element={
             <RoleProtectedRoute permission="history">
               <History />
+            </RoleProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/threat-report"
+          element={
+            <RoleProtectedRoute permission="reports">
+              <ThreatReport />
             </RoleProtectedRoute>
           }
         />
