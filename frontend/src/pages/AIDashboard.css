@@ -1,0 +1,54 @@
+.ai-container{
+    padding:30px;
+    background:#f5f7fb;
+    min-height:100vh;
+}
+
+.ai-container h1{
+    margin-bottom:25px;
+}
+
+.card-container{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:20px;
+}
+
+.card{
+
+    background:white;
+    border-radius:12px;
+    padding:25px;
+    text-align:center;
+
+    box-shadow:0 4px 10px rgba(0,0,0,.1);
+
+}
+
+.card h3{
+    color:#666;
+    margin-bottom:15px;
+}
+
+.card h2{
+    color:#007bff;
+    font-size:34px;
+}
+.chart-container{
+    margin-top:40px;
+    display:flex;
+    justify-content:center;
+}
+
+.chart-card{
+    background:white;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 4px 10px rgba(0,0,0,.1);
+}
+.update-time{
+    color:#666;
+    margin-bottom:20px;
+    font-size:15px;
+    font-style:italic;
+}
