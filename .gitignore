@@ -1,0 +1,20 @@
+﻿# Python
+backend/venv/
+backend/__pycache__/
+backend/**/__pycache__/
+*.pyc
+backend/.env
+
+# Data / models (large or generated files)
+backend/data/raw/
+backend/data/models/
+backend/data/processed/
+
+# Node / frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+
+# OS/editor
+.DS_Store
+.vscode/
