@@ -1,0 +1,49 @@
+============================================================
+NetShield AI - Threat Intelligence Report
+Generated: 2026-07-17 13:20:29
+============================================================
+
+--- Dataset 1: CICIDS2017 ---
+Total records analyzed: 2,520,751
+Normal traffic: 2,095,057 (83.1%)
+Attack traffic: 425,694 (16.9%)
+
+Top attack types detected:
+  - DoS: 193,745 incidents (7.69% of all traffic)
+  - DDoS: 128,014 incidents (5.08% of all traffic)
+  - Port Scanning: 90,694 incidents (3.60% of all traffic)
+  - Brute Force: 9,150 incidents (0.36% of all traffic)
+  - Web Attacks: 2,143 incidents (0.09% of all traffic)
+  - Bots: 1,948 incidents (0.08% of all traffic)
+
+--- Dataset 2: UNSW-NB15 ---
+Total records analyzed: 82,332
+Normal traffic: 37,000 (44.9%)
+Attack traffic: 45,332 (55.1%)
+
+Top attack categories detected:
+  - Generic: 18,871 incidents (22.92% of all traffic)
+  - Exploits: 11,132 incidents (13.52% of all traffic)
+  - Fuzzers: 6,062 incidents (7.36% of all traffic)
+  - DoS: 4,089 incidents (4.97% of all traffic)
+  - Reconnaissance: 3,496 incidents (4.25% of all traffic)
+  - Analysis: 677 incidents (0.82% of all traffic)
+  - Backdoor: 583 incidents (0.71% of all traffic)
+  - Shellcode: 378 incidents (0.46% of all traffic)
+  - Worms: 44 incidents (0.05% of all traffic)
+
+--- Combined Threat Assessment ---
+Across both datasets (2,603,083 total records),
+18.1% of traffic was classified as malicious.
+
+Most frequent attack type (CICIDS2017): DoS
+Most frequent attack type (UNSW-NB15): Generic
+
+--- Recommendations ---
+1. Prioritize detection tuning for the most frequent attack types above.
+2. Investigate protocols/services with disproportionate attack ratios
+   (see packet_monitor.py output for protocol-level breakdown).
+3. Continue monitoring low-sample attack classes (e.g. Bots, Worms) as
+   they are harder for the model to learn reliably with limited examples.
+
+Report generation completed successfully.

@@ -1,0 +1,5 @@
+dataset/cicids2017_cleaned.csv
+backend/__pycache__/
+frontend/node_modules/
+frontend/.next/
+venv/
