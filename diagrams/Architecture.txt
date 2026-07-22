@@ -1,0 +1,26 @@
+                +----------------------+
+                |    React Frontend    |
+                +----------+-----------+
+                           |
+                           |
+                REST API (HTTP)
+                           |
+                           ▼
+                +----------------------+
+                |   FastAPI Backend    |
+                +----------+-----------+
+                           |
+        +------------------+----------------+
+        |                                   |
+        ▼                                   ▼
+Authentication                   ML Detection Engine
+        |                                   |
+        ▼                                   ▼
+ PostgreSQL Database              CICIDS2017 Dataset
+                                  UNSW-NB15 Dataset
+                           |
+                           ▼
+                  Alert Generation
+                           |
+                           ▼
+                    Dashboard UI

@@ -1,0 +1,70 @@
+.traffic-page {
+    padding: 30px;
+    color: white;
+}
+
+.traffic-page h1 {
+    margin-bottom: 25px;
+}
+
+.traffic-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #263143;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.traffic-table th,
+.traffic-table td {
+    padding: 15px;
+    border-bottom: 1px solid #3d4a63;
+    text-align: center;
+}
+
+.traffic-table th {
+    background: #1b2537;
+}
+
+.traffic-table tr:hover {
+    background: #34425c;
+}
+
+
+.search-box {
+    margin-bottom: 20px;
+    color: #303e62;
+}
+
+.search-box input {
+    width: 350px;
+    padding: 10px 15px;
+    border-radius: 8px;
+    background-color: #1b2537;
+    border: none;
+    outline: none;
+    font-size: 15px;
+}
+
+
+
+
+.search-box select {
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 2px solid #303e62;
+    background-color: #303e62;
+    color: white;
+    font-size: 15px;
+    outline: none;
+    cursor: pointer;
+}
+
+.traffic-table th {
+    cursor: pointer;
+    user-select: none;
+}
+
+.traffic-table th:hover {
+    background-color: #334155;
+}

@@ -1,0 +1,46 @@
+.settings-page{
+    padding:30px;
+    background:#1f2937;
+    min-height:100vh;
+    color:white;
+}
+
+.settings-page h1{
+    margin-bottom:30px;
+}
+
+.settings-card{
+    background:#263143;
+    padding:25px;
+    border-radius:12px;
+    margin-bottom:25px;
+}
+
+.setting-item{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin:20px 0;
+}
+
+.setting-item label{
+    font-size:17px;
+}
+
+.setting-item select{
+    padding:10px;
+    border:none;
+    border-radius:8px;
+    background:#374151;
+    color:white;
+}
+
+.system-table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+.system-table td{
+    padding:15px;
+    border-bottom:1px solid #374151;
+}
