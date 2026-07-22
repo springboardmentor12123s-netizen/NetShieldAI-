@@ -1,0 +1,167 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 650" width="100%" height="100%">
+  <!-- Background -->
+  <rect width="1000" height="650" fill="#090d16" />
+  
+  <!-- Sidebar -->
+  <rect x="0" y="0" width="220" height="650" fill="#0c1322" stroke="#1e293b" stroke-width="1.5" />
+  <text x="25" y="45" font-family="Inter, sans-serif" font-size="20" font-weight="bold" fill="#6366f1">🛡️ NetShield AI</text>
+  
+  <!-- Sidebar Menu Items -->
+  <text x="35" y="102" font-family="Inter, sans-serif" font-size="12.5" fill="#94a3b8">📊 Dashboard Overview</text>
+  <rect x="15" y="130" width="190" height="35" rx="6" fill="#1e1b4b" stroke="#4f46e5" stroke-width="1" />
+  <text x="35" y="152" font-family="Inter, sans-serif" font-size="12.5" font-weight="bold" fill="#ffffff">🔍 Traffic Logs</text>
+  <text x="35" y="202" font-family="Inter, sans-serif" font-size="12.5" fill="#94a3b8">👥 Team Access</text>
+  <text x="35" y="252" font-family="Inter, sans-serif" font-size="12.5" fill="#94a3b8">⚙️ System Config</text>
+  
+  <!-- Content Area Header -->
+  <text x="250" y="45" font-family="Inter, sans-serif" font-size="24" font-weight="extrabold" fill="#ffffff">Traffic Logs Monitor</text>
+  <text x="250" y="65" font-family="Inter, sans-serif" font-size="12" fill="#64748b">Browse and inspect raw server packet metrics</text>
+  
+  <!-- Ingress Filters Form -->
+  <rect x="250" y="90" width="720" height="75" rx="10" fill="#0c1322" stroke="#1e293b" stroke-width="1" />
+  
+  <!-- Filter fields -->
+  <text x="270" y="115" font-family="Inter, sans-serif" font-size="10" font-weight="bold" fill="#94a3b8">SOURCE IP</text>
+  <rect x="270" y="125" width="135" height="28" rx="6" fill="#060c16" stroke="#1e293b" stroke-width="1" />
+  <text x="280" y="142" font-family="Inter, sans-serif" font-size="11.5" fill="#475569">e.g. 192.168.1.1...</text>
+  
+  <text x="420" y="115" font-family="Inter, sans-serif" font-size="10" font-weight="bold" fill="#94a3b8">DESTINATION IP</text>
+  <rect x="420" y="125" width="135" height="28" rx="6" fill="#060c16" stroke="#1e293b" stroke-width="1" />
+  <text x="430" y="142" font-family="Inter, sans-serif" font-size="11.5" fill="#475569">e.g. 10.0.0.1...</text>
+  
+  <text x="570" y="115" font-family="Inter, sans-serif" font-size="10" font-weight="bold" fill="#94a3b8">IP PROTOCOL</text>
+  <rect x="570" y="125" width="135" height="28" rx="6" fill="#060c16" stroke="#1e293b" stroke-width="1" />
+  <text x="580" y="142" font-family="Inter, sans-serif" font-size="11.5" fill="#ffffff">All Protocols</text>
+  <!-- dropdown arrow -->
+  <polygon points="688,136 693,142 698,136" fill="#475569" />
+  
+  <!-- Filter submit button -->
+  <rect x="725" y="125" width="225" height="28" rx="6" fill="#4f46e5" />
+  <text x="800" y="142" font-family="Inter, sans-serif" font-size="11.5" font-weight="bold" fill="#ffffff">Apply Filters</text>
+  
+  <!-- Traffic Logs Grid Table -->
+  <rect x="250" y="180" width="720" height="440" rx="12" fill="#0c1322" stroke="#1e293b" stroke-width="1" />
+  
+  <!-- Table Header -->
+  <rect x="251" y="181" width="718" height="35" fill="#060b13" />
+  <text x="270" y="202" font-family="Inter, sans-serif" font-size="10" font-weight="bold" fill="#64748b">TIMESTAMP</text>
+  <text x="370" y="202" font-family="Inter, sans-serif" font-size="10" font-weight="bold" fill="#64748b">SOURCE IP</text>
+  <text x="500" y="202" font-family="Inter, sans-serif" font-size="10" font-weight="bold" fill="#64748b">DESTINATION IP</text>
+  <text x="630" y="202" font-family="Inter, sans-serif" font-size="10" font-weight="bold" fill="#64748b">PROTOCOL</text>
+  <text x="730" y="202" font-family="Inter, sans-serif" font-size="10" font-weight="bold" fill="#64748b">PACKETS</text>
+  <text x="810" y="202" font-family="Inter, sans-serif" font-size="10" font-weight="bold" fill="#64748b">SIZE</text>
+  <text x="890" y="202" font-family="Inter, sans-serif" font-size="10" font-weight="bold" fill="#64748b" text-anchor="middle">ANALYZE</text>
+  
+  <line x1="250" y1="216" x2="970" y2="216" stroke="#1e293b" stroke-width="1" />
+  
+  <!-- Row 1 -->
+  <text x="270" y="242" font-family="Courier, monospace" font-size="11" fill="#94a3b8">23:23:12</text>
+  <text x="370" y="242" font-family="Courier, monospace" font-size="11" fill="#ffffff">192.168.1.100</text>
+  <text x="500" y="242" font-family="Courier, monospace" font-size="11" fill="#ffffff">10.0.0.15</text>
+  <rect x="630" y="230" width="35" height="15" rx="3" fill="#1e1b4b" stroke="#4f46e5" stroke-width="0.5" />
+  <text x="647" y="241" font-family="Courier, monospace" font-size="9" font-weight="bold" fill="#6366f1" text-anchor="middle">TCP</text>
+  <text x="760" y="242" font-family="Courier, monospace" font-size="11" fill="#94a3b8" text-anchor="end">8</text>
+  <text x="840" y="242" font-family="Courier, monospace" font-size="11" fill="#94a3b8" text-anchor="end">1.5 KB</text>
+  <!-- Eye action button -->
+  <rect x="880" y="228" width="20" height="18" rx="3" fill="#1e293b" />
+  <text x="890" y="240" font-family="Courier, monospace" font-size="11" fill="#818cf8" text-anchor="middle">👁️</text>
+  <line x1="250" y1="255" x2="970" y2="255" stroke="#0f172a" stroke-width="1" />
+  
+  <!-- Row 2 -->
+  <text x="270" y="277" font-family="Courier, monospace" font-size="11" fill="#94a3b8">23:23:07</text>
+  <text x="370" y="277" font-family="Courier, monospace" font-size="11" fill="#ffffff">185.120.45.62</text>
+  <text x="500" y="277" font-family="Courier, monospace" font-size="11" fill="#ffffff">10.0.0.4</text>
+  <rect x="630" y="265" width="35" height="15" rx="3" fill="#062f2d" stroke="#115e59" stroke-width="0.5" />
+  <text x="647" y="276" font-family="Courier, monospace" font-size="9" font-weight="bold" fill="#14b8a6" text-anchor="middle">SSH</text>
+  <text x="760" y="277" font-family="Courier, monospace" font-size="11" fill="#94a3b8" text-anchor="end">14</text>
+  <text x="840" y="277" font-family="Courier, monospace" font-size="11" fill="#94a3b8" text-anchor="end">6.1 KB</text>
+  <rect x="880" y="263" width="20" height="18" rx="3" fill="#1e293b" />
+  <text x="890" y="275" font-family="Courier, monospace" font-size="11" fill="#818cf8" text-anchor="middle">👁️</text>
+  <line x1="250" y1="290" x2="970" y2="290" stroke="#0f172a" stroke-width="1" />
+  
+  <!-- Row 3 (Selected - triggers Inspector) -->
+  <rect x="251" y="291" width="718" height="34" fill="#1e1b4b" fill-opacity="0.3" />
+  <text x="270" y="312" font-family="Courier, monospace" font-size="11" fill="#cbd5e1">23:22:42</text>
+  <text x="370" y="312" font-family="Courier, monospace" font-size="11" font-weight="bold" fill="#f43f5e">91.240.118.5</text>
+  <text x="500" y="312" font-family="Courier, monospace" font-size="11" fill="#ffffff">10.0.0.4</text>
+  <rect x="630" y="300" width="35" height="15" rx="3" fill="#4c0519" stroke="#9f1239" stroke-width="0.5" />
+  <text x="647" y="311" font-family="Courier, monospace" font-size="9" font-weight="bold" fill="#f43f5e" text-anchor="middle">RDP</text>
+  <text x="760" y="312" font-family="Courier, monospace" font-size="11" fill="#ffffff" text-anchor="end">42</text>
+  <text x="840" y="312" font-family="Courier, monospace" font-size="11" fill="#ffffff" text-anchor="end">46.5 KB</text>
+  <rect x="880" y="298" width="20" height="18" rx="3" fill="#4f46e5" />
+  <text x="890" y="310" font-family="Courier, monospace" font-size="11" fill="#ffffff" text-anchor="middle">👁️</text>
+  <line x1="250" y1="325" x2="970" y2="325" stroke="#1e293b" stroke-width="1" />
+  
+  <!-- Row 4 -->
+  <text x="270" y="347" font-family="Courier, monospace" font-size="11" fill="#94a3b8">23:22:30</text>
+  <text x="370" y="347" font-family="Courier, monospace" font-size="11" fill="#ffffff">10.0.2.15</text>
+  <text x="500" y="347" font-family="Courier, monospace" font-size="11" fill="#ffffff">8.8.8.8</text>
+  <rect x="630" y="335" width="35" height="15" rx="3" fill="#1e293b" stroke="#475569" stroke-width="0.5" />
+  <text x="647" y="346" font-family="Courier, monospace" font-size="9" font-weight="bold" fill="#94a3b8" text-anchor="middle">UDP</text>
+  <text x="760" y="347" font-family="Courier, monospace" font-size="11" fill="#94a3b8" text-anchor="end">2</text>
+  <text x="840" y="347" font-family="Courier, monospace" font-size="11" fill="#94a3b8" text-anchor="end">192 B</text>
+  <rect x="880" y="333" width="20" height="18" rx="3" fill="#1e293b" />
+  <text x="890" y="345" font-family="Courier, monospace" font-size="11" fill="#818cf8" text-anchor="middle">👁️</text>
+  <line x1="250" y1="360" x2="970" y2="360" stroke="#0f172a" stroke-width="1" />
+  
+  <!-- Pagination -->
+  <line x1="250" y1="575" x2="970" y2="575" stroke="#1e293b" stroke-width="1" />
+  <text x="270" y="602" font-family="Inter, sans-serif" font-size="11.5" fill="#94a3b8">Page <tspan font-weight="bold" fill="#ffffff">1</tspan> of 24</text>
+  <rect x="895" y="587" width="22" height="22" rx="3" fill="#1e293b" stroke="#334155" />
+  <text x="906" y="602" font-family="Inter, sans-serif" font-size="11" fill="#94a3b8" text-anchor="middle">◀</text>
+  <rect x="925" y="587" width="22" height="22" rx="3" fill="#1e293b" stroke="#334155" />
+  <text x="936" y="602" font-family="Inter, sans-serif" font-size="11" fill="#94a3b8" text-anchor="middle">▶</text>
+
+  <!-- OVERLAY PACKET INSPECTION MODAL -->
+  <rect x="420" y="100" width="460" height="440" rx="14" fill="#050a12" stroke="#4f46e5" stroke-width="2" filter="drop-shadow(0 25px 25px rgba(0,0,0,0.85))" />
+  
+  <text x="445" y="135" font-family="Inter, sans-serif" font-size="15" font-weight="extrabold" fill="#ffffff">🔍 Packet Inspection details</text>
+  <text x="445" y="152" font-family="Inter, sans-serif" font-size="11" fill="#6366f1">ID: TR-1027 (RDP Scan Alert)</text>
+  
+  <rect x="835" y="117" width="22" height="22" rx="4" fill="#1e293b" />
+  <text x="846" y="132" font-family="Inter, sans-serif" font-size="11" font-weight="bold" fill="#94a3b8" text-anchor="middle">✕</text>
+  
+  <line x1="445" y1="168" x2="855" y2="168" stroke="#1e293b" stroke-width="1.5" />
+  
+  <!-- Info Blocks -->
+  <rect x="445" y="185" width="195" height="48" rx="6" fill="#0d1425" stroke="#1e293b" stroke-width="1" />
+  <text x="455" y="203" font-family="Inter, sans-serif" font-size="8" fill="#64748b" letter-spacing="0.5">SOURCE SOCKET</text>
+  <text x="455" y="221" font-family="Courier, monospace" font-size="12" font-weight="bold" fill="#f43f5e">91.240.118.5:58892</text>
+  
+  <rect x="660" y="185" width="195" height="48" rx="6" fill="#0d1425" stroke="#1e293b" stroke-width="1" />
+  <text x="670" y="203" font-family="Inter, sans-serif" font-size="8" fill="#64748b" letter-spacing="0.5">DESTINATION SOCKET</text>
+  <text x="670" y="221" font-family="Courier, monospace" font-size="12" font-weight="bold" fill="#ffffff">10.0.0.4:3389</text>
+  
+  <!-- Status Badges -->
+  <rect x="445" y="248" width="125" height="35" rx="6" fill="#1c0f16" stroke="#881337" stroke-width="0.5" />
+  <text x="507" y="263" font-family="Inter, sans-serif" font-size="8.5" fill="#f43f5e" text-anchor="middle">INFERENCE</text>
+  <text x="507" y="276" font-family="Inter, sans-serif" font-size="10" font-weight="bold" fill="#fda4af" text-anchor="middle">0.96 Anomaly</text>
+  
+  <rect x="580" y="248" width="130" height="35" rx="6" fill="#0d1f1b" stroke="#115e59" stroke-width="0.5" />
+  <text x="645" y="263" font-family="Inter, sans-serif" font-size="8.5" fill="#14b8a6" text-anchor="middle">PROTOCOL</text>
+  <text x="645" y="276" font-family="Inter, sans-serif" font-size="10" font-weight="bold" fill="#99f6e4" text-anchor="middle">RDP (Remote)</text>
+  
+  <rect x="720" y="248" width="135" height="35" rx="6" fill="#0c1322" stroke="#1e293b" stroke-width="0.5" />
+  <text x="787" y="263" font-family="Inter, sans-serif" font-size="8.5" fill="#94a3b8" text-anchor="middle">GEOLOCATION</text>
+  <text x="787" y="276" font-family="Inter, sans-serif" font-size="10" font-weight="bold" fill="#ffffff" text-anchor="middle">RU (Russian Fed.)</text>
+  
+  <!-- Control Flags -->
+  <text x="445" y="306" font-family="Inter, sans-serif" font-size="10" font-weight="bold" fill="#94a3b8">PACKET FLAGS</text>
+  <rect x="445" y="314" width="40" height="18" rx="3" fill="#31101e" stroke="#9d174d" stroke-width="0.5" />
+  <text x="465" y="326" font-family="Courier, monospace" font-size="10" font-weight="bold" fill="#ec4899" text-anchor="middle">SYN</text>
+  
+  <rect x="492" y="314" width="42" height="18" rx="3" fill="#1e293b" stroke="#475569" stroke-width="0.5" />
+  <text x="513" y="326" font-family="Courier, monospace" font-size="10" fill="#94a3b8" text-anchor="middle">ACK</text>
+  
+  <!-- Hex Payload Dump -->
+  <text x="445" y="352" font-family="Inter, sans-serif" font-size="10" font-weight="bold" fill="#94a3b8">RAW HEX PAYLOAD DUMP</text>
+  <rect x="445" y="360" width="410" height="100" rx="8" fill="#04070d" stroke="#1e293b" stroke-width="1" />
+  <text x="455" y="378" font-family="Courier, monospace" font-size="10.5" fill="#38bdf8">0000  00 0c 29 4b c5 32 00 24  d4 cc d3 cb 08 00 45 00</text>
+  <text x="455" y="394" font-family="Courier, monospace" font-size="10.5" fill="#38bdf8">0010  00 3c d4 7a 40 00 40 06  b6 2a c0 a8 01 64 0a 00</text>
+  <text x="455" y="410" font-family="Courier, monospace" font-size="10.5" fill="#38bdf8">0020  00 0f a0 f3 00 50 d2 d8  05 c6 00 00 00 00 a0 02</text>
+  <text x="455" y="426" font-family="Courier, monospace" font-size="10.5" fill="#475569">0030  72 10 3a bf 00 00 02 04  05 b4 04 02 08 0a 00 37</text>
+  
+  <!-- Close Button -->
+  <rect x="740" y="482" width="115" height="35" rx="6" fill="#1e293b" stroke="#334155" stroke-width="1" />
+  <text x="797" y="504" font-family="Inter, sans-serif" font-size="11.5" font-weight="bold" fill="#ffffff" text-anchor="middle">Close Details</text>
+</svg>

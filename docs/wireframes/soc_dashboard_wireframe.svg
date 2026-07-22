@@ -1,0 +1,122 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 650" width="100%" height="100%">
+  <!-- Background -->
+  <rect width="1000" height="650" fill="#090d16" />
+  
+  <!-- Sidebar -->
+  <rect x="0" y="0" width="220" height="650" fill="#0c1322" stroke="#1e293b" stroke-width="1.5" />
+  
+  <text x="25" y="45" font-family="Inter, sans-serif" font-size="20" font-weight="bold" fill="#6366f1">🛡️ NetShield AI</text>
+  
+  <!-- Sidebar Menu Items -->
+  <rect x="15" y="80" width="190" height="35" rx="6" fill="#1e1b4b" stroke="#4f46e5" stroke-width="1" />
+  <text x="35" y="102" font-family="Inter, sans-serif" font-size="12.5" font-weight="bold" fill="#ffffff">📊 Dashboard Overview</text>
+  
+  <text x="35" y="152" font-family="Inter, sans-serif" font-size="12.5" fill="#94a3b8">🔍 Traffic Logs</text>
+  <text x="35" y="202" font-family="Inter, sans-serif" font-size="12.5" fill="#94a3b8">👥 Team Access</text>
+  <text x="35" y="252" font-family="Inter, sans-serif" font-size="12.5" fill="#94a3b8">⚙️ System Config</text>
+  
+  <!-- Content Area Header -->
+  <text x="250" y="45" font-family="Inter, sans-serif" font-size="24" font-weight="extrabold" fill="#ffffff">SOC Operations Dashboard</text>
+  <text x="250" y="65" font-family="Inter, sans-serif" font-size="12" fill="#64748b">Real-time telemetry and network threat analytics</text>
+  
+  <!-- Time Selector -->
+  <rect x="850" y="25" width="125" height="30" rx="6" fill="#0c1322" stroke="#1e293b" stroke-width="1" />
+  <text x="880" y="44" font-family="Inter, sans-serif" font-size="11.5" font-weight="bold" fill="#e2e8f0">Time: Last 24h</text>
+  
+  <!-- Status Cards Grid -->
+  <!-- Card 1: Total Packets -->
+  <rect x="250" y="90" width="165" height="85" rx="10" fill="#0c1322" stroke="#1e293b" stroke-width="1" />
+  <text x="265" y="115" font-family="Inter, sans-serif" font-size="11" font-weight="bold" fill="#94a3b8" letter-spacing="0.5">TOTAL PACKETS</text>
+  <text x="265" y="145" font-family="Inter, sans-serif" font-size="20" font-weight="extrabold" fill="#ffffff">1,248,503</text>
+  <text x="370" y="145" font-family="Inter, sans-serif" font-size="11" font-weight="bold" fill="#10b981">+12.4%</text>
+  
+  <!-- Card 2: Traffic Volume -->
+  <rect x="430" y="90" width="165" height="85" rx="10" fill="#0c1322" stroke="#1e293b" stroke-width="1" />
+  <text x="445" y="115" font-family="Inter, sans-serif" font-size="11" font-weight="bold" fill="#94a3b8" letter-spacing="0.5">TRAFFIC VOLUME</text>
+  <text x="445" y="145" font-family="Inter, sans-serif" font-size="20" font-weight="extrabold" fill="#ffffff">892.3 MB</text>
+  <text x="550" y="145" font-family="Inter, sans-serif" font-size="11" font-weight="bold" fill="#10b981">+8.2%</text>
+  
+  <!-- Card 3: Unique Host Sites -->
+  <rect x="610" y="90" width="165" height="85" rx="10" fill="#0c1322" stroke="#1e293b" stroke-width="1" />
+  <text x="625" y="115" font-family="Inter, sans-serif" font-size="11" font-weight="bold" fill="#94a3b8" letter-spacing="0.5">UNIQUE SOURCES</text>
+  <text x="625" y="145" font-family="Inter, sans-serif" font-size="20" font-weight="extrabold" fill="#ffffff">342</text>
+  <text x="735" y="145" font-family="Inter, sans-serif" font-size="11" font-weight="bold" fill="#ef4444">-2.1%</text>
+  
+  <!-- Card 4: Bandwidth -->
+  <rect x="790" y="90" width="185" height="85" rx="10" fill="#0c1322" stroke="#1e293b" stroke-width="1" />
+  <text x="805" y="115" font-family="Inter, sans-serif" font-size="11" font-weight="bold" fill="#94a3b8" letter-spacing="0.5">BANDWIDTH</text>
+  <text x="805" y="145" font-family="Inter, sans-serif" font-size="20" font-weight="extrabold" fill="#ffffff">4.2 Mbps</text>
+  <text x="920" y="145" font-family="Inter, sans-serif" font-size="11" font-weight="bold" fill="#64748b">Stable</text>
+  
+  <!-- Big Area Chart: Ingestion Timeline -->
+  <rect x="250" y="195" width="480" height="235" rx="12" fill="#0c1322" stroke="#1e293b" stroke-width="1" />
+  <text x="270" y="225" font-family="Inter, sans-serif" font-size="14" font-weight="bold" fill="#ffffff">Data Ingestion Chronology</text>
+  <text x="270" y="242" font-family="Inter, sans-serif" font-size="11" fill="#64748b">Network bytes ingested over last 6 hours</text>
+  
+  <!-- Simulated graph line -->
+  <path d="M 280 380 Q 340 330 400 350 T 520 290 T 640 320 T 700 270" fill="none" stroke="#6366f1" stroke-width="3.5" />
+  <path d="M 280 380 Q 340 330 400 350 T 520 290 T 640 320 T 700 270 L 700 400 L 280 400 Z" fill="url(#gradient)" opacity="0.15" />
+  
+  <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+    <stop offset="0%" stop-color="#6366f1" />
+    <stop offset="100%" stop-color="#6366f1" stop-opacity="0" />
+  </linearGradient>
+  
+  <!-- Chart Axes -->
+  <line x1="280" y1="400" x2="710" y2="400" stroke="#1e293b" stroke-width="1.5" />
+  <line x1="280" y1="260" x2="280" y2="400" stroke="#1e293b" stroke-width="1.5" />
+  <text x="280" y="415" font-family="Inter, sans-serif" font-size="9" fill="#475569">07:00</text>
+  <text x="360" y="415" font-family="Inter, sans-serif" font-size="9" fill="#475569">09:00</text>
+  <text x="440" y="415" font-family="Inter, sans-serif" font-size="9" fill="#475569">11:00</text>
+  <text x="520" y="415" font-family="Inter, sans-serif" font-size="9" fill="#475569">13:00</text>
+  <text x="600" y="415" font-family="Inter, sans-serif" font-size="9" fill="#475569">15:00</text>
+  <text x="680" y="415" font-family="Inter, sans-serif" font-size="9" fill="#475569">17:00</text>
+  
+  <!-- Live Threats Feed Panel -->
+  <rect x="750" y="195" width="225" height="235" rx="12" fill="#0d1425" stroke="#1e293b" stroke-width="1" />
+  <text x="765" y="225" font-family="Inter, sans-serif" font-size="14" font-weight="bold" fill="#ffffff">Live Security Alerts</text>
+  <circle cx="945" cy="221" r="5" fill="#ef4444" />
+  
+  <!-- Threat Entries -->
+  <rect x="762" y="245" width="200" height="42" rx="6" fill="#1e111a" stroke="#881337" stroke-width="1" />
+  <text x="772" y="262" font-family="Inter, sans-serif" font-size="10.5" font-weight="bold" fill="#f43f5e">🚨 Port Scan Detected</text>
+  <text x="772" y="278" font-family="Inter, sans-serif" font-size="9.5" fill="#fda4af">Src: 185.220.101.5 (RU) ➔ Desktop</text>
+  
+  <rect x="762" y="295" width="200" height="42" rx="6" fill="#1c1917" stroke="#443d3a" stroke-width="1" />
+  <text x="772" y="312" font-family="Inter, sans-serif" font-size="10.5" font-weight="bold" fill="#fb923c">⚠️ Brute Force SSH</text>
+  <text x="772" y="328" font-family="Inter, sans-serif" font-size="9.5" fill="#fdba74">Src: 203.0.113.88 (CN) ➔ Host-04</text>
+  
+  <rect x="762" y="345" width="200" height="42" rx="6" fill="#111c1d" stroke="#134e4a" stroke-width="1" />
+  <text x="772" y="362" font-family="Inter, sans-serif" font-size="10.5" font-weight="bold" fill="#2dd4bf">ℹ️ Heavy Data Transfer</text>
+  <text x="772" y="378" font-family="Inter, sans-serif" font-size="9.5" fill="#99f6e4">Src: 192.168.1.42 ➔ 8.8.8.8 (US)</text>
+  
+  <!-- Protocol distribution -->
+  <rect x="250" y="445" width="350" height="180" rx="12" fill="#0c1322" stroke="#1e293b" stroke-width="1" />
+  <text x="270" y="475" font-family="Inter, sans-serif" font-size="14" font-weight="bold" fill="#ffffff">IP Protocol Distribution</text>
+  <!-- Doughnut chart sketch -->
+  <circle cx="345" cy="545" r="42" fill="none" stroke="#1e293b" stroke-width="18" />
+  <!-- TCP Segment -->
+  <circle cx="345" cy="545" r="42" fill="none" stroke="#6366f1" stroke-width="18" stroke-dasharray="190, 260" stroke-dashoffset="0" />
+  <!-- UDP Segment -->
+  <circle cx="345" cy="545" r="42" fill="none" stroke="#14b8a6" stroke-width="18" stroke-dasharray="60, 260" stroke-dashoffset="-190" />
+  <!-- ICMP Segment -->
+  <circle cx="345" cy="545" r="42" fill="none" stroke="#f59e0b" stroke-width="18" stroke-dasharray="13, 260" stroke-dashoffset="-250" />
+  
+  <text x="440" y="515" font-family="Inter, sans-serif" font-size="11.5" font-weight="bold" fill="#6366f1">■ TCP (72.4%)</text>
+  <text x="440" y="538" font-family="Inter, sans-serif" font-size="11.5" font-weight="bold" fill="#14b8a6">■ UDP (22.2%)</text>
+  <text x="440" y="561" font-family="Inter, sans-serif" font-size="11.5" font-weight="bold" fill="#f59e0b">■ ICMP (5.4%)</text>
+  
+  <!-- ML Inference status -->
+  <rect x="620" y="445" width="355" height="180" rx="12" fill="#0c1322" stroke="#1e293b" stroke-width="1" />
+  <text x="640" y="475" font-family="Inter, sans-serif" font-size="14" font-weight="bold" fill="#ffffff">AI Model Inference Status</text>
+  
+  <rect x="640" y="495" width="315" height="50" rx="8" fill="#151f1f" stroke="#115e59" stroke-width="1" />
+  <text x="690" y="517" font-family="Inter, sans-serif" font-size="12" font-weight="bold" fill="#2dd4bf">Model Engine Active: Isolation Forest</text>
+  <text x="690" y="534" font-family="Inter, sans-serif" font-size="10.5" fill="#14b8a6">Mean Outlier Score: 0.142 | Accuracy: 99.82%</text>
+  <circle cx="663" cy="520" r="10" fill="#115e59" />
+  <!-- Shield visual inside circle -->
+  <path d="M 663 515 L 668 517 L 668 522 Q 668 526 663 529 Q 658 526 658 522 L 658 517 Z" fill="#2dd4bf" />
+  
+  <text x="640" y="575" font-family="Inter, sans-serif" font-size="11" fill="#94a3b8">Active Model Target Context: CICIDS2017 &amp; UNSWNB15</text>
+  <text x="640" y="593" font-family="Inter, sans-serif" font-size="10.5" fill="#64748b">Sensor ID: NS-DETECTOR-01 | Latency: 1.2ms</text>
+</svg>

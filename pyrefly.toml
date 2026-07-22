@@ -1,0 +1,5 @@
+# The path to your Python interpreter executable
+python-interpreter-path = "backend/venv/Scripts/python.exe"
+
+# Directories that Pyrefly should search for your source code and local imports
+search-path = ["backend", "."]
