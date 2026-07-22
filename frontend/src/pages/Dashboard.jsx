@@ -24,7 +24,7 @@ function Dashboard() {
   const [traffic, setTraffic] = useState([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState("");
-
+  const [prediction, setPrediction] = useState(null);
   useEffect(() => {
     loadDashboard();
 
@@ -41,6 +41,7 @@ function Dashboard() {
     await Promise.all([
       fetchSummary(),
       fetchTraffic(),
+      fetchLatestPrediction(),
     ]);
 
     setLastUpdated(new Date().toLocaleString());
@@ -83,6 +84,27 @@ function Dashboard() {
       console.log(error);
     }
   };
+  const fetchLatestPrediction = async () => {
+  try {
+
+    const trafficResponse = await API.get("/dashboard/traffic");
+
+    if (trafficResponse.data.length === 0) return;
+
+    const latestTraffic = trafficResponse.data[0];
+
+    const predictionResponse = await API.get(
+      `/predict/${latestTraffic.id}`
+    );
+
+    setPrediction(predictionResponse.data);
+
+  } catch (error) {
+
+    console.log(error);
+
+  }
+};
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -228,6 +250,37 @@ function Dashboard() {
           </div>
 
           <AttackChart />
+
+        </div>
+        {/* AI Prediction */}
+
+        <div className="card" style={{ marginTop: "30px" }}>
+
+          <h2>🤖 Latest AI Prediction</h2>
+
+          {prediction ? (
+
+          <div style={{ lineHeight: "2" }}>
+
+             <p><strong>Traffic ID:</strong> {prediction.traffic_id}</p>
+
+             <p><strong>Prediction:</strong> {prediction.predicted_label}</p>
+
+             <p><strong>Status:</strong> {prediction.status}</p>
+
+              <p><strong>Threat Level:</strong> {prediction.threat_level}</p>
+
+              <p><strong>Risk Score:</strong> {prediction.risk_score}</p>
+
+              <p><strong>Confidence:</strong> {prediction.confidence}%</p>
+
+          </div>
+
+         ) : (
+
+            <p>No prediction available.</p>
+
+           )}
 
         </div>
               {/* System Health */}

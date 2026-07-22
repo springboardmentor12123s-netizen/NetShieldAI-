@@ -1,19 +1,19 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-import pandas as pd
+import os
 import joblib
+import pandas as pd
 
 from app.database.database import get_db
 from app.database.models import NetworkTraffic
 
 router = APIRouter()
 
-# Load trained model
-model = joblib.load("app/ai/model.pkl")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+AI_DIR = os.path.join(BASE_DIR, "..", "ai")
 
-# Load label encoder
-encoder = joblib.load("app/ai/label_encoder.pkl")
-
+model = joblib.load(os.path.join(AI_DIR, "model.pkl"))
+encoder = joblib.load(os.path.join(AI_DIR, "label_encoder.pkl"))
 
 # ----------------------------
 # Threat Levels
@@ -93,6 +93,10 @@ def predict_attack(
     df = pd.DataFrame([features])
     prediction = model.predict(df)[0]
 
+    probabilities = model.predict_proba(df)[0]
+
+    confidence = float(probabilities.max() * 100)
+
     predicted_attack = encoder.inverse_transform([prediction])[0]
 
     risk = RISK_SCORE.get(predicted_attack, 0)
@@ -117,6 +121,8 @@ def predict_attack(
 
         "threat_level": threat,
 
-        "risk_score": risk
+        "risk_score": risk,
+        "confidence": round(confidence, 2)
+
 
     }

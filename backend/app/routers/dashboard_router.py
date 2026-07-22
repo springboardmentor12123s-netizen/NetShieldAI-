@@ -42,11 +42,13 @@ def get_recent_traffic(db: Session = Depends(get_db)):
     result = db.execute(
         text("""
             SELECT
+                id,
                 destination_port,
                 protocol,
                 flow_duration,
                 label
             FROM network_traffic
+            ORDER BY id DESC
             LIMIT 20
         """)
     )
