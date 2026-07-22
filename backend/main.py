@@ -1,0 +1,314 @@
+import os
+import sys
+import logging
+from typing import List
+from datetime import datetime
+
+from fastapi import FastAPI, Request, Depends, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+from bson import ObjectId
+
+# --- Path Fix ---
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+# --- Internal Imports ---
+from database import get_mongo_db
+from database.postgres import get_db, engine, Base, User
+from auth import router as auth_router
+from threat_ops import build_dashboard_snapshot, classify_threat
+
+# ==========================================
+# 1. APPLICATION & DATABASE SETUP
+# ==========================================
+
+# Initialize FastAPI App
+app = FastAPI(
+    title="NetShield AI SOC API",
+    description="Backend API for the NetShield Cybersecurity Dashboard"
+)
+
+# Configure CORS for Frontend Access
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], # In production, restrict this to your frontend URL
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Include external routers
+app.include_router(auth_router)
+
+# Auto-generate PostgreSQL tables on startup
+Base.metadata.create_all(bind=engine)
+
+# Setup Logging
+logger = logging.getLogger("netshield-threatops")
+
+# Initialize MongoDB connection (with in-memory fallback)
+mongo_db = get_mongo_db()
+collection = mongo_db.network_traffic_stats if mongo_db is not None else None
+
+# In-memory fallbacks for environments without MongoDB
+SAMPLE_PACKETS: List[dict] = [
+    {"Label": "DDoS", "Source IP": "198.51.100.87", "Destination IP": "203.0.113.10", "Destination Port": 80, "Flow Duration": 1800, "Total Fwd Packets": 64},
+    {"Label": "PortScan", "Source IP": "198.51.100.44", "Destination IP": "203.0.113.10", "Destination Port": 22, "Flow Duration": 420, "Total Fwd Packets": 12},
+    {"Label": "BENIGN", "Source IP": "10.0.0.15", "Destination IP": "203.0.113.10", "Destination Port": 443, "Flow Duration": 540, "Total Fwd Packets": 4},
+]
+IN_MEMORY_ALERTS = []
+
+# ==========================================
+# 2. PYDANTIC DATA SCHEMAS
+# ==========================================
+# These models define the exact structure of data expected from the frontend
+
+class UserCreate(BaseModel):
+    username: str
+    password: str
+    role: str
+
+class UserUpdate(BaseModel):
+    role: str
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+class IsolateRequest(BaseModel):
+    incident_id: str
+    source_ip: str
+
+
+# ==========================================
+# 3. AUTH & USER MANAGEMENT ENDPOINTS (PostgreSQL)
+# ==========================================
+
+@app.post("/api/auth/signup")
+def signup_user(user: UserCreate, db: Session = Depends(get_db)):
+    """Registers a new user in the PostgreSQL database."""
+    try:
+        existing_user = db.execute(
+            text("SELECT id FROM users WHERE username = :u"), {"u": user.username}
+        ).fetchone()
+        
+        if existing_user:
+            raise HTTPException(status_code=400, detail="Username already exists")
+
+        db.execute(
+            text("INSERT INTO users (username, hashed_password, role) VALUES (:u, :p, :r)"),
+            {"u": user.username, "p": f"hashed_{user.password}", "r": user.role}
+        )
+        db.commit()
+        return {"status": "success", "message": f"User {user.username} created."}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/auth/login")
+def login_user(req: LoginRequest, db: Session = Depends(get_db)):
+    """Authenticates a user and writes to the audit log."""
+    user = db.execute(
+        text("SELECT id, username, hashed_password, role FROM users WHERE username = :u"),
+        {"u": req.username}
+    ).fetchone()
+
+    # Handle Invalid Login
+    if not user or user[2] != f"hashed_{req.password}":
+        db.execute(
+            text("INSERT INTO audit_logs (username, event, severity) VALUES (:u, :e, :s)"),
+            {"u": req.username, "e": "Failed login attempt (Invalid credentials)", "s": "Critical"}
+        )
+        db.commit()
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    # Handle Successful Login
+    db.execute(
+        text("INSERT INTO audit_logs (username, event, severity) VALUES (:u, :e, :s)"),
+        {"u": user[1], "e": "User login successful", "s": "Info"}
+    )
+    db.commit()
+    return {"status": "success", "message": "Login successful", "username": user[1], "role": user[3]}
+
+@app.get("/api/users")
+def get_team_members(db: Session = Depends(get_db)):
+    """Fetches all registered team members."""
+    try:
+        result = db.execute(text("SELECT id, username, role FROM users")).fetchall()
+        users_list = [
+            {
+                "id": row[0],
+                "name": row[1],
+                "email": f"{row[1].lower().replace(' ', '')}@netshield.com",
+                "role": row[2],
+                "status": "Active"
+            }
+            for row in result
+        ]
+        return {"data": users_list}
+    except Exception as e:
+        logger.error(f"Error fetching users: {e}")
+        return {"data": []}
+
+@app.put("/api/users/{user_id}")
+def update_user(user_id: int, user_update: UserUpdate, db: Session = Depends(get_db)):
+    """Updates an existing user's Role-Based Access permissions."""
+    try:
+        db.execute(
+            text("UPDATE users SET role = :r WHERE id = :id"),
+            {"r": user_update.role, "id": user_id}
+        )
+        db.commit()
+        return {"status": "success", "message": f"User {user_id} updated."}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/audit-logs")
+def get_audit_logs(db: Session = Depends(get_db)):
+    """Fetches the 10 most recent system audit logs."""
+    try:
+        logs = db.execute(text("SELECT id, timestamp, username, event, severity FROM audit_logs ORDER BY timestamp DESC LIMIT 10")).fetchall()
+        log_list = [
+            {
+                "id": log[0],
+                "time": log[1].strftime("%Y-%m-%d %H:%M:%S") if log[1] else "Unknown",
+                "user": log[2],
+                "event": log[3],
+                "severity": log[4]
+            }
+            for log in logs
+        ]
+        return {"data": log_list}
+    except Exception as e:
+        logger.error(f"Error fetching logs: {e}")
+        return {"data": []}
+
+
+# ==========================================
+# 4. THREAT INTELLIGENCE & NETWORK ENDPOINTS (MongoDB)
+# ==========================================
+
+def calculate_risk_metrics(label, dest_port):
+    """Calculates a Risk Score (0-100) and Severity Level."""
+    label_str = str(label).upper()
+    if "DDOS" in label_str or "INFILTRATION" in label_str:
+        return 95, "CRITICAL"
+    elif "DOS" in label_str or "BOT" in label_str:
+        return 80, "HIGH"
+    elif "PORT" in label_str or "SCAN" in label_str:
+        return 60, "MEDIUM"
+    elif label_str not in ["BENIGN", "0"]:
+        return 75, "HIGH"
+    return 10, "LOW"
+
+@app.get("/api/alerts")
+async def get_live_alerts():
+    """Generates real-time alerts from anomalous network traffic."""
+    alerts_list = []
+    if mongo_db is not None:
+        try:
+            raw_threats = list(mongo_db.network_traffic_stats.find(
+                {"Label": {"$nin": ["BENIGN", "0", 0]}}, {"_id": 0}
+            ).sort("_id", -1).limit(50))
+            
+            for index, threat in enumerate(raw_threats):
+                label = threat.get("Label", "Anomalous Traffic")
+                dest_port = threat.get("Destination Port", 0)
+                risk_score, severity = calculate_risk_metrics(label, dest_port)
+                
+                alerts_list.append({
+                    "id": f"INC-{1000 + index}",
+                    "incident": f"Detected {label}",
+                    "severity": severity,
+                    "risk_score": risk_score,
+                    "source": threat.get("Source IP", "192.168.1.50"),
+                    "destination": f"{threat.get('Destination IP', '10.0.0.1')}:{dest_port}",
+                    "timestamp": threat.get("timestamp", "Just now")
+                })
+            return {"data": alerts_list, "count": len(alerts_list)}
+        except Exception as e:
+            logger.error(f"Error fetching alerts: {e}")
+            
+    return {"data": [], "count": 0}
+@app.delete("/api/users/{user_id}")
+def delete_user(user_id: int, db: Session = Depends(get_db)):
+    """Deletes a user from the PostgreSQL database."""
+    try:
+        db.execute(
+            text("DELETE FROM users WHERE id = :id"),
+            {"id": user_id}
+        )
+        db.commit()
+        return {"status": "success", "message": f"User {user_id} deleted successfully."}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@app.post("/api/isolate")
+async def isolate_host(req: IsolateRequest):
+    """Simulates an OS-level firewall command to isolate a malicious IP."""
+    logger.info(f"🛡️ ACTION TAKEN: Isolating malicious host {req.source_ip} (Incident: {req.incident_id})")
+    return {
+        "status": "success", 
+        "message": f"Host {req.source_ip} has been successfully isolated from the network."
+    }
+
+@app.get("/api/traffic-stats")
+async def get_traffic_stats() -> dict:
+    """Retrieves recent network packets and generates dashboard statistics."""
+    if collection is not None:
+        docs = list(collection.find().sort([("_id", -1)]).limit(200))
+        packets = []
+        for d in docs:
+            d2 = {k: v for k, v in d.items() if k != "_id"}
+            d2["id"] = str(d.get("_id"))
+            packets.append(d2)
+    else:
+        packets = SAMPLE_PACKETS
+
+    snapshot = build_dashboard_snapshot(packets)
+    return {"data": packets, "snapshot": snapshot}
+
+@app.post("/api/live-traffic")
+async def receive_live_traffic(request: Request) -> dict:
+    """Ingests live packets from the network sniffer."""
+    packet_batch = await request.json()
+    inserted = 0
+    if packet_batch:
+        if collection is not None:
+            try:
+                collection.insert_many(packet_batch)
+                inserted = len(packet_batch)
+            except Exception:
+                SAMPLE_PACKETS.extend(packet_batch)
+                inserted = len(packet_batch)
+        else:
+            SAMPLE_PACKETS.extend(packet_batch)
+            if len(SAMPLE_PACKETS) > 200:
+                SAMPLE_PACKETS[:] = SAMPLE_PACKETS[-200:]
+            inserted = len(packet_batch)
+
+    return {"status": "success", "inserted": inserted}
+
+@app.get("/api/reports")
+async def reports() -> dict:
+    """Generates an executive summary report of current network health."""
+    snapshot = build_dashboard_snapshot(SAMPLE_PACKETS)
+    return {
+        "data": {
+            "summary": snapshot,
+            "recommendations": [
+                "Isolate high-risk source IPs and review affected services.",
+                "Escalate DDoS and intrusion indicators to the SOC lead.",
+                "Capture additional telemetry for TTL and packet-rate anomalies.",
+            ],
+        }
+    }
+
+@app.get("/health")
+async def health() -> dict:
+    """Simple health check endpoint."""
+    return {"status": "ok", "timestamp": datetime.now().isoformat()}

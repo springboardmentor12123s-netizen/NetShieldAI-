@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database for User Management & RBAC
+  postgres_db:
+    image: postgres:15-alpine
+    container_name: netshield_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: netshield_admin
+      POSTGRES_PASSWORD: securepassword123
+      POSTGRES_DB: netshield_users
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # MongoDB for Traffic Data & AI Analytics Storage
+  mongo_db:
+    image: mongo:6.0
+    container_name: netshield_mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  postgres_data:
+  mongo_data:

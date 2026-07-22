@@ -1,0 +1,19 @@
+# Environment variables and secrets
+.env
+
+# Python Caches
+**/__pycache__/
+*.py[cod]
+*$py.class
+
+# Testing Caches
+.pytest_cache/
+
+# Virtual Environment
+venv/
+
+# Large ML Model files (Crucial if you don't want 100MB+ files in git)
+netshield_model.pkl
+
+backend/data/
+*.csv
