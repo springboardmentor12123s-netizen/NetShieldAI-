@@ -27,3 +27,5 @@ datasets/
 
 __pycache__/
 *.pyc
+
+backend/app/ai/dataset.pkl
