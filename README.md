@@ -7,7 +7,7 @@
 - Integrated SQLite and MongoDB for storing users, alerts, and network data.
 - Implemented real-time Wi-Fi packet capture using Scapy.
 - Added PCAP upload and offline traffic analysis.
-- Trained an AI-based anomaly detection model using the UNSW-NB15 and CICIDS2017 datasets.
+- Trained an AI-based anomaly detection model using the UNSW-NB15 and CICIDS2017 datasets with Random Forest Accuracy: 0.9480 and f1 score: 0.95.
 - Displays live network traffic, attack alerts, and system statistics through the dashboard.
 - Current focus: Increasing dataset utilization for the model training and expanding threat detection capabilities.
 
