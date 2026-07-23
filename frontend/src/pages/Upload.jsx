@@ -29,14 +29,39 @@ export default function Upload() {
 
   return (
     <>
-      <PageHeader title="Upload dataset" description="Add a CICIDS2017 or compatible CSV file for model training. Files are stored locally." />
+      <PageHeader
+        title="Upload dataset"
+        description="Add a CICIDS2017 or compatible CSV file for model training. Files are stored locally."
+      />
+
       <section className="panel p-6">
-        <FileDrop file={file} onChange={(value) => { setFile(value); setResult(null); }} />
-        <div className="mt-5 flex justify-end"><button className="button-primary" disabled={loading || !file} onClick={upload}><UploadCloud className="h-4 w-4" />{loading ? "Reading dataset..." : "Upload & preview"}</button></div>
+        <FileDrop
+          file={file}
+          onChange={(value) => {
+            setFile(value);
+            setResult(null);
+          }}
+        />
+        <div className="mt-5 flex justify-end">
+          <button
+            className="button-primary"
+            disabled={loading || !file}
+            onClick={upload}
+          >
+            <UploadCloud className="h-4 w-4" />
+            {loading ? "Reading dataset..." : "Upload & preview"}
+          </button>
+        </div>
       </section>
+
       {result && (
         <section className="panel mt-6 p-6">
-          <div className="mb-5"><h2 className="font-semibold text-white">Dataset preview</h2><p className="mt-1 text-xs text-slate-500">{result.name} • {result.row_count.toLocaleString()} rows • {result.columns.length} columns</p></div>
+          <div className="mb-5">
+            <h2 className="font-semibold text-white">Dataset preview</h2>
+            <p className="mt-1 text-xs text-slate-500">
+              {result.name} • {result.row_count.toLocaleString()} rows • {result.columns.length} columns
+            </p>
+          </div>
           <DataTable rows={result.preview} />
         </section>
       )}

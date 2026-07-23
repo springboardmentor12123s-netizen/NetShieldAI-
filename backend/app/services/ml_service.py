@@ -1,3 +1,11 @@
+"""
+NetShield AI — Isolation Forest training and prediction service.
+
+Handles feature extraction, model training with cross-validation,
+and enriched inference (predictions + supervised metrics when labels
+are present).
+"""
+
 from pathlib import Path
 
 import joblib
@@ -5,7 +13,13 @@ import numpy as np
 import pandas as pd
 from fastapi import HTTPException
 from sklearn.ensemble import IsolationForest
-from sklearn.metrics import accuracy_score, confusion_matrix, f1_score, precision_score, recall_score
+from sklearn.metrics import (
+    accuracy_score,
+    confusion_matrix,
+    f1_score,
+    precision_score,
+    recall_score,
+)
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
@@ -13,10 +27,12 @@ from sklearn.preprocessing import StandardScaler
 from app.services.risk_service import compute_risk
 from app.services.threat_classifier import classify_threats
 
+# Column names (case-insensitive) that are treated as ground-truth labels.
 LABEL_NAMES = {"label", "class", "target", "attack", "category"}
 
 
 def _numeric_features(frame: pd.DataFrame) -> pd.DataFrame:
+    """Extract and clean numeric columns suitable for the model."""
     numeric = frame.select_dtypes(include=[np.number]).replace([np.inf, -np.inf], np.nan)
     numeric = numeric.dropna(axis=1, how="all")
     if numeric.empty:
@@ -25,6 +41,11 @@ def _numeric_features(frame: pd.DataFrame) -> pd.DataFrame:
 
 
 def _find_label(frame: pd.DataFrame) -> pd.Series | None:
+    """
+    Locate a ground-truth label column and encode it as binary (0=normal, 1=attack).
+
+    Returns None if no recognised label column exists.
+    """
     for column in frame.columns:
         if str(column).strip().lower() in LABEL_NAMES:
             values = frame[column].astype(str).str.strip().str.lower()
@@ -33,6 +54,11 @@ def _find_label(frame: pd.DataFrame) -> pd.Series | None:
 
 
 def _statistical_labels(features: pd.DataFrame) -> np.ndarray:
+    """
+    Generate pseudo-labels via robust Z-score (MAD-based) when no Label column exists.
+
+    Rows with a max robust Z-score > 3.5 across any feature are flagged as anomalous.
+    """
     median = features.median()
     mad = (features - median).abs().median().replace(0, 1)
     robust_z = 0.6745 * (features - median).abs() / mad
@@ -40,6 +66,15 @@ def _statistical_labels(features: pd.DataFrame) -> np.ndarray:
 
 
 def train_model(frame: pd.DataFrame, model_path: Path) -> dict:
+    """
+    Train an Isolation Forest pipeline on *frame* and persist it to *model_path*.
+
+    Uses a 75/25 train-test split.  Evaluation is done against dataset labels
+    when present, otherwise against a statistical (MAD) baseline.
+
+    Returns a metrics dict with accuracy, precision, recall, f1_score,
+    confusion_matrix, feature_count, and evaluation keys.
+    """
     features = _numeric_features(frame)
     if len(features) < 4:
         raise HTTPException(status_code=400, detail="Training requires at least four data rows.")
@@ -63,7 +98,11 @@ def train_model(frame: pd.DataFrame, model_path: Path) -> dict:
     )
     pipeline.fit(features.iloc[train_idx])
     predicted = (pipeline.predict(features.iloc[test_idx]) == -1).astype(int)
-    actual = labels.iloc[test_idx].to_numpy() if labels is not None else _statistical_labels(features.iloc[test_idx])
+    actual = (
+        labels.iloc[test_idx].to_numpy()
+        if labels is not None
+        else _statistical_labels(features.iloc[test_idx])
+    )
 
     tn, fp, fn, tp = confusion_matrix(actual, predicted, labels=[0, 1]).ravel()
     model_path.parent.mkdir(parents=True, exist_ok=True)
@@ -88,28 +127,30 @@ def predict(frame: pd.DataFrame, model_path: Path) -> tuple[pd.DataFrame, dict |
     -------
     (output, supervised_metrics)
         *output* : DataFrame with Prediction, Prediction Label, Threat Category,
-                   Risk Score, Severity columns added.
+                   Risk Score, and Severity columns added.
         *supervised_metrics* : dict with accuracy/precision/recall/f1_score if
                                the CSV contained a Label column; otherwise None.
     """
     if not model_path.exists():
         raise HTTPException(status_code=400, detail="No trained model found. Train a model first.")
+
     bundle = joblib.load(model_path)
     required = bundle["features"]
     numeric = _numeric_features(frame)
     missing = [column for column in required if column not in numeric.columns]
     if missing:
         preview = ", ".join(map(str, missing[:5]))
-        raise HTTPException(status_code=400, detail=f"Prediction CSV is missing required features: {preview}")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Prediction CSV is missing required features: {preview}",
+        )
 
     values = numeric[required].replace([np.inf, -np.inf], np.nan).fillna(0)
     output = frame.copy()
     raw_preds = bundle["pipeline"].predict(values)
     output["Prediction"] = np.where(raw_preds == -1, "Anomaly", "Normal")
 
-    # -----------------------------------------------------------------------
-    # Supervised evaluation – only when the CSV has a Label column
-    # -----------------------------------------------------------------------
+    # Supervised evaluation — only when the CSV has a Label column.
     supervised_metrics: dict | None = None
     true_labels = _find_label(frame)
     if true_labels is not None:
@@ -126,14 +167,10 @@ def predict(frame: pd.DataFrame, model_path: Path) -> tuple[pd.DataFrame, dict |
             "note": "Evaluated against dataset Label column.",
         }
 
-    # -----------------------------------------------------------------------
-    # Threat classification (rule-based)
-    # -----------------------------------------------------------------------
+    # Rule-based threat classification.
     output["Threat Category"] = classify_threats(output)
 
-    # -----------------------------------------------------------------------
-    # Risk scoring
-    # -----------------------------------------------------------------------
+    # Risk scoring and severity assignment.
     output = compute_risk(output)
 
     return output, supervised_metrics

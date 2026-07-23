@@ -1,3 +1,10 @@
+"""
+NetShield AI — SQLAlchemy ORM models.
+
+All models share the same declarative Base and use timezone-aware
+UTC timestamps via the utc_now() helper.
+"""
+
 from datetime import datetime, timezone
 
 from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text
@@ -7,10 +14,13 @@ from app.database import Base
 
 
 def utc_now() -> datetime:
+    """Return the current UTC datetime (timezone-aware)."""
     return datetime.now(timezone.utc)
 
 
 class DatasetRecord(Base):
+    """Tracks every CSV file uploaded for training or prediction."""
+
     __tablename__ = "datasets"
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -26,6 +36,8 @@ class DatasetRecord(Base):
 
 
 class TrainingRun(Base):
+    """Records model performance metrics from each training run."""
+
     __tablename__ = "training_runs"
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -43,6 +55,8 @@ class TrainingRun(Base):
 
 
 class Alert(Base):
+    """Represents a single anomalous row detected during a prediction run."""
+
     __tablename__ = "alerts"
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -54,7 +68,7 @@ class Alert(Base):
 
 
 class ThreatReport(Base):
-    """Stores the latest generated threat analysis report after a prediction run."""
+    """Stores the aggregated threat analysis report after each prediction run."""
 
     __tablename__ = "threat_reports"
 
@@ -66,10 +80,10 @@ class ThreatReport(Base):
     anomaly_count: Mapped[int] = mapped_column(Integer, default=0)
     anomaly_percentage: Mapped[float] = mapped_column(Float, default=0.0)
     risk_level: Mapped[str] = mapped_column(String(20), default="Low")
-    # Optional supervised metrics (populated when the CSV has a Label column)
+    # Optional supervised metrics — populated when the CSV has a Label column.
     accuracy: Mapped[float | None] = mapped_column(Float, nullable=True)
     precision: Mapped[float | None] = mapped_column(Float, nullable=True)
     recall: Mapped[float | None] = mapped_column(Float, nullable=True)
     f1_score: Mapped[float | None] = mapped_column(Float, nullable=True)
-    # Full report data serialised as JSON text for SQLite/PostgreSQL compatibility
+    # Full report payload serialised as JSON for easy retrieval.
     report_json: Mapped[str | None] = mapped_column(Text, nullable=True)

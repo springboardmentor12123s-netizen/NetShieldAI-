@@ -1,3 +1,10 @@
+"""
+NetShield AI — Monitoring and activity endpoints.
+
+Provides dashboard statistics, alert listings, and dataset upload history
+for the frontend.
+"""
+
 from fastapi import APIRouter, Depends
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -10,6 +17,12 @@ router = APIRouter(tags=["Monitoring"])
 
 @router.get("/dashboard")
 def dashboard(db: Session = Depends(get_db)):
+    """
+    Return aggregated statistics for the security overview dashboard.
+
+    Includes totals, traffic distribution, and per-dataset activity
+    for the eight most recently uploaded datasets.
+    """
     total_datasets = db.scalar(select(func.count()).select_from(DatasetRecord)) or 0
     total_records = db.scalar(select(func.coalesce(func.sum(DatasetRecord.row_count), 0))) or 0
     normal_count = db.scalar(select(func.coalesce(func.sum(DatasetRecord.normal_count), 0))) or 0
@@ -39,6 +52,7 @@ def dashboard(db: Session = Depends(get_db)):
 
 @router.get("/alerts")
 def alerts(db: Session = Depends(get_db)):
+    """Return all anomaly alerts ordered by most recent first."""
     rows = db.execute(
         select(Alert, DatasetRecord.original_name)
         .join(DatasetRecord, Alert.dataset_id == DatasetRecord.id)
@@ -59,6 +73,7 @@ def alerts(db: Session = Depends(get_db)):
 
 @router.get("/history")
 def history(db: Session = Depends(get_db)):
+    """Return the full dataset upload history ordered by most recent first."""
     rows = db.scalars(select(DatasetRecord).order_by(DatasetRecord.uploaded_at.desc())).all()
     return [
         {

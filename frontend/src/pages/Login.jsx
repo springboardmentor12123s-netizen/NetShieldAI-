@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import { Navigate, useNavigate } from "react-router-dom";
 import api from "../services/api";
 
-// Role options for the "Login As" dropdown
+// Role options for the "Login As" convenience dropdown.
 const ROLE_OPTIONS = [
   { label: "Admin", username: "admin", hint: "admin / admin123" },
   { label: "Security Analyst", username: "analyst", hint: "analyst / analyst123" },
@@ -25,7 +25,7 @@ export default function Login() {
   const handleRoleChange = (event) => {
     const chosen = ROLE_OPTIONS.find((r) => r.label === event.target.value) || ROLE_OPTIONS[0];
     setSelectedRole(chosen);
-    // Auto-fill username based on selected role; password stays blank for security
+    // Auto-fill username based on selected role; password stays blank for security.
     setForm((prev) => ({ ...prev, username: chosen.username }));
   };
 
@@ -34,13 +34,13 @@ export default function Login() {
     setLoading(true);
 
     try {
-      // Always send actual credentials to backend – role from dropdown is UX only
+      // Always send actual credentials to the backend — the dropdown is UX only.
       const response = await api.post("/login", {
         username: form.username,
         password: form.password,
       });
 
-      // Store the role/name returned by the backend, NOT the dropdown selection
+      // Store role/name returned by the backend, not the dropdown selection.
       localStorage.setItem("netshield_auth", "true");
       localStorage.setItem("netshield_user", response.data.username);
       localStorage.setItem("netshield_role", response.data.role);
@@ -49,7 +49,7 @@ export default function Login() {
       toast.success(`Welcome, ${response.data.name}!`);
       navigate("/dashboard");
     } catch (error) {
-      toast.error(error.response?.data?.detail || error.message);
+      toast.error(error.message);
     } finally {
       setLoading(false);
     }
@@ -76,7 +76,7 @@ export default function Login() {
         </div>
 
         <form className="space-y-5" onSubmit={submit}>
-          {/* ── Login As (role selector) ─────────────────────────────── */}
+          {/* Login As (role selector) */}
           <label className="block" id="login-role-label">
             <span className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-400">
               Login As
@@ -101,7 +101,7 @@ export default function Login() {
             </span>
           </label>
 
-          {/* ── Username ─────────────────────────────────────────────── */}
+          {/* Username */}
           <label className="block">
             <span className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-400">
               Username
@@ -122,7 +122,7 @@ export default function Login() {
             </span>
           </label>
 
-          {/* ── Password ─────────────────────────────────────────────── */}
+          {/* Password */}
           <label className="block">
             <span className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-400">
               Password
@@ -147,11 +147,7 @@ export default function Login() {
                 onClick={() => setVisible(!visible)}
                 type="button"
               >
-                {visible ? (
-                  <EyeOff className="h-5 w-5" />
-                ) : (
-                  <Eye className="h-5 w-5" />
-                )}
+                {visible ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
               </button>
             </span>
           </label>

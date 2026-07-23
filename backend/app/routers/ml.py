@@ -1,3 +1,10 @@
+"""
+NetShield AI — Machine learning training router.
+
+Exposes a single endpoint that trains (or retrains) the Isolation Forest
+model on the most recently uploaded training dataset.
+"""
+
 from pathlib import Path
 
 import pandas as pd
@@ -10,6 +17,7 @@ from app.models import DatasetRecord, TrainingRun
 from app.services.ml_service import train_model
 
 router = APIRouter(tags=["Machine Learning"])
+
 BACKEND_DIR = Path(__file__).resolve().parents[2]
 MODEL_PATH = BACKEND_DIR / "saved_models" / "isolation_forest.joblib"
 UPLOAD_DIR = BACKEND_DIR / "uploads"
@@ -17,6 +25,12 @@ UPLOAD_DIR = BACKEND_DIR / "uploads"
 
 @router.post("/train")
 def train(dataset_id: int | None = None, db: Session = Depends(get_db)):
+    """
+    Train the Isolation Forest on the latest (or specified) training dataset.
+
+    Persists the trained model to disk and records evaluation metrics in the
+    TrainingRun table.  Returns the full metrics dict alongside dataset info.
+    """
     query = select(DatasetRecord).where(DatasetRecord.purpose == "training")
     if dataset_id is not None:
         query = query.where(DatasetRecord.id == dataset_id)

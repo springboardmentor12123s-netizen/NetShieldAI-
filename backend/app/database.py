@@ -1,3 +1,10 @@
+"""
+NetShield AI — SQLAlchemy database engine and session factory.
+
+DATABASE_URL must be set as an environment variable (or in backend/.env)
+before the server starts.  Only PostgreSQL connection strings are accepted.
+"""
+
 import os
 import sys
 
@@ -5,7 +12,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 from dotenv import load_dotenv
 
-# Load .env file if present so DATABASE_URL can be set there during development.
+# Load .env so DATABASE_URL can be configured during local development.
 load_dotenv()
 
 DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
@@ -26,7 +33,6 @@ if not DATABASE_URL.startswith("postgresql"):
         "Expected format: postgresql://user:password@host:port/dbname\n"
     )
 
-# PostgreSQL does not need check_same_thread.
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
@@ -36,6 +42,7 @@ class Base(DeclarativeBase):
 
 
 def get_db():
+    """Yield a database session and ensure it is closed after use."""
     db = SessionLocal()
     try:
         yield db

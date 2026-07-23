@@ -29,13 +29,48 @@ export default function Predict() {
 
   return (
     <>
-      <PageHeader title="Run prediction" description="Analyze a compatible CSV using the latest trained Isolation Forest model." />
-      <section className="panel p-6"><FileDrop file={file} onChange={(value) => { setFile(value); setResult(null); }} /><div className="mt-5 flex justify-end"><button className="button-primary" disabled={loading || !file} onClick={run}><ScanSearch className="h-4 w-4" />{loading ? "Analyzing traffic..." : "Detect anomalies"}</button></div></section>
+      <PageHeader
+        title="Run prediction"
+        description="Analyze a compatible CSV using the latest trained Isolation Forest model."
+      />
+
+      <section className="panel p-6">
+        <FileDrop
+          file={file}
+          onChange={(value) => {
+            setFile(value);
+            setResult(null);
+          }}
+        />
+        <div className="mt-5 flex justify-end">
+          <button
+            className="button-primary"
+            disabled={loading || !file}
+            onClick={run}
+          >
+            <ScanSearch className="h-4 w-4" />
+            {loading ? "Analyzing traffic..." : "Detect anomalies"}
+          </button>
+        </div>
+      </section>
+
       {result && (
         <section className="panel mt-6 p-6">
           <div className="mb-5 flex flex-col justify-between gap-4 md:flex-row md:items-center">
-            <div><h2 className="font-semibold text-white">Prediction results</h2><p className="mt-1 text-xs text-slate-500">{result.total_rows} records • {result.normal_count} normal • {result.anomaly_count} anomalies • {result.severity} severity</p></div>
-            <a className="button-secondary" href={`${API_URL}${result.download_url.replace("/api", "")}`}><Download className="h-4 w-4" />Download CSV</a>
+            <div>
+              <h2 className="font-semibold text-white">Prediction results</h2>
+              <p className="mt-1 text-xs text-slate-500">
+                {result.total_rows} records • {result.normal_count} normal •{" "}
+                {result.anomaly_count} anomalies • {result.severity} severity
+              </p>
+            </div>
+            <a
+              className="button-secondary"
+              href={`${API_URL}${result.download_url.replace("/api", "")}`}
+            >
+              <Download className="h-4 w-4" />
+              Download CSV
+            </a>
           </div>
           <DataTable rows={result.preview} />
         </section>

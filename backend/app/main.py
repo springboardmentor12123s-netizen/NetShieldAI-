@@ -1,3 +1,10 @@
+"""
+NetShield AI — FastAPI application entry point.
+
+Bootstraps the database, creates required directories, configures CORS,
+and registers all API routers.
+"""
+
 import os
 from pathlib import Path
 
@@ -10,6 +17,8 @@ from app.routers import auth, datasets, ml, monitoring, reports
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
+
+# Ensure runtime directories exist before the first request arrives.
 for folder in ("uploads", "predictions", "saved_models"):
     (BASE_DIR / folder).mkdir(parents=True, exist_ok=True)
 
@@ -20,6 +29,7 @@ app = FastAPI(
     description="Local network anomaly detection and monitoring API",
     version="2.0.0",
 )
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -31,12 +41,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Prefixed routes exposed in the OpenAPI schema.
 app.include_router(auth.router, prefix="/api")
 app.include_router(datasets.router, prefix="/api")
 app.include_router(ml.router, prefix="/api")
 app.include_router(monitoring.router, prefix="/api")
 app.include_router(reports.router, prefix="/api")
-# Root aliases preserve the endpoint contract specified for the college project.
+
+# Unprefixed aliases preserve the legacy endpoint contract.
 app.include_router(auth.router, include_in_schema=False)
 app.include_router(datasets.router, include_in_schema=False)
 app.include_router(ml.router, include_in_schema=False)

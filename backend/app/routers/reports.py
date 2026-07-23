@@ -1,3 +1,10 @@
+"""
+NetShield AI — Threat report retrieval router.
+
+The threat report is built and persisted automatically after each
+successful prediction run; this router exposes the most recent one.
+"""
+
 import json
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -14,6 +21,7 @@ router = APIRouter(tags=["Reports"])
 def get_latest_report(db: Session = Depends(get_db)):
     """
     Return the most recently generated threat analysis report.
+
     The report is produced automatically after each successful prediction run.
     """
     report = db.scalars(
@@ -43,12 +51,12 @@ def get_latest_report(db: Session = Depends(get_db)):
         "anomaly_count": report.anomaly_count,
         "anomaly_percentage": report.anomaly_percentage,
         "risk_level": report.risk_level,
-        # Supervised metrics – present only when the prediction CSV had labels
+        # Supervised metrics — present only when the prediction CSV had labels.
         "accuracy": report.accuracy,
         "precision": report.precision,
         "recall": report.recall,
         "f1_score": report.f1_score,
-        # Rich report detail from the JSON blob
+        # Rich report detail from the JSON blob.
         "threat_category_summary": report_data.get("threat_category_summary", {}),
         "severity_summary": report_data.get("severity_summary", {}),
         "top_risky_rows": report_data.get("top_risky_rows", []),

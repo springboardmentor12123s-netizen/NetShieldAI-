@@ -1,3 +1,10 @@
+"""
+NetShield AI — Dataset upload, prediction, and download router.
+
+Handles CSV ingestion, anomaly detection inference, alert generation,
+and prediction-result downloads.
+"""
+
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
@@ -11,6 +18,7 @@ from app.services.ml_service import predict
 from app.services.report_service import build_and_save_report
 
 router = APIRouter(tags=["Datasets"])
+
 BACKEND_DIR = Path(__file__).resolve().parents[2]
 UPLOAD_DIR = BACKEND_DIR / "uploads"
 PREDICTION_DIR = BACKEND_DIR / "predictions"
@@ -19,6 +27,7 @@ MODEL_PATH = BACKEND_DIR / "saved_models" / "isolation_forest.joblib"
 
 @router.post("/upload")
 async def upload_dataset(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    """Persist an uploaded CSV and return its metadata with a preview."""
     path, frame = await save_csv(file, UPLOAD_DIR)
     record = DatasetRecord(
         original_name=file.filename or "dataset.csv",
@@ -40,9 +49,16 @@ async def upload_dataset(file: UploadFile = File(...), db: Session = Depends(get
 
 @router.post("/predict")
 async def predict_dataset(file: UploadFile = File(...), db: Session = Depends(get_db)):
-    path, frame = await save_csv(file, UPLOAD_DIR)
+    """
+    Run the Isolation Forest on an uploaded CSV and persist anomaly alerts.
 
-    # predict() now returns (enriched_df, supervised_metrics | None)
+    Severity is determined by the number of anomalies in the file:
+    - 1 anomaly   → Low
+    - 2–5         → Medium
+    - >5          → High
+    - 0           → None
+    """
+    path, frame = await save_csv(file, UPLOAD_DIR)
     output, supervised_metrics = predict(frame, MODEL_PATH)
 
     anomaly_indices = output.index[output["Prediction"] == "Anomaly"].tolist()
@@ -65,6 +81,7 @@ async def predict_dataset(file: UploadFile = File(...), db: Session = Depends(ge
     )
     db.add(record)
     db.flush()
+
     for index in anomaly_indices:
         db.add(Alert(dataset_id=record.id, row_number=int(index) + 1, severity=severity))
 
@@ -73,11 +90,11 @@ async def predict_dataset(file: UploadFile = File(...), db: Session = Depends(ge
     output.to_csv(PREDICTION_DIR / result_name, index=False)
     db.commit()
 
-    # Build and persist threat report (non-blocking – errors are logged, not raised)
+    # Build and persist the threat report; errors here must not break the response.
     try:
         build_and_save_report(output, db, supervised_metrics=supervised_metrics)
     except Exception:
-        pass  # Report generation failure must not break the predict response
+        pass
 
     response: dict = {
         "dataset_id": record.id,
@@ -96,6 +113,7 @@ async def predict_dataset(file: UploadFile = File(...), db: Session = Depends(ge
 
 @router.get("/predictions/{dataset_id}/download")
 def download_predictions(dataset_id: int, db: Session = Depends(get_db)):
+    """Stream the prediction-result CSV for a given dataset ID."""
     record = db.get(DatasetRecord, dataset_id)
     path = PREDICTION_DIR / f"predictions_{dataset_id}.csv"
     if not record or not path.exists():
