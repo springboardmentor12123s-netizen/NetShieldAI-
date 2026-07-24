@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+@theme {
+  /* Cyber Dark Backgrounds */
+  --color-cyber-bg: #0B0F19;
+  --color-cyber-card: #111827;
+  --color-cyber-border: #1F2937;
+  
+  /* Neon Status Colors */
+  --color-cyber-cyan: #06B6D4;
+  --color-cyber-red: #EF4444;
+  --color-cyber-amber: #F59E0B;
+  --color-cyber-green: #10B981;
+
+  /* Fonts */
+  --font-mono: "Menlo", "Monaco", "Consolas", "Liberation Mono", "monospace";
+}
+
+body {
+  @apply bg-cyber-bg text-cyber-cyan font-mono;
+}

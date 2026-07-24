@@ -19,3 +19,7 @@ ml_engine/models/*.h5
 
 # Environment Variables
 .env
+
+# Ignore massive dataset files and trained AI models
+*.csv
+*.pkl
