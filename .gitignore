@@ -1,19 +1,7 @@
-# Python
+ml/models/model.pkl
+backend/.env
+datasets/
+ml/cleaned_dataset.csv
+ml/prediction_report.csv
 __pycache__/
-*.py[cod]
-*.pyo
-*.pyd
-
-# Virtual environments
-venv/
-.env
-
-# Node.js
-node_modules/
-
-# VS Code
-.vscode/
-
-# OS files
-.DS_Store
-Thumbs.db
+*.pyc

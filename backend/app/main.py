@@ -1,50 +1,45 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import ai
-from app.database.database import engine, Base
-from app.database import models
 
-from app.routers import auth
-from app.routers import users
-from app.routers import teams
-from app.routers import audit
-from app.routers import traffic
+from app.database import Base, engine
 
-Base.metadata.create_all(bind=engine)
+from app.models.user import User
+from app.models.network_packet import NetworkPacket
+from app.models.anomaly import Anomaly
+from app.models.ai_dataset import AIDataset
+
+from app.routes.auth import router as auth_router
+from app.routes.network import router as network_router
+from app.routes.anomaly import router as anomaly_router
+from app.routes.analytics import router as analytics_router
+from app.routes.websocket import router as websocket_router
 
 app = FastAPI(
-    title="NetShield AI",
-    version="1.0.0",
-    description="AI Network Anomaly Detection & Threat Monitoring System"
+    title="NetShield AI"
 )
-
-# ---------------- CORS ----------------
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:3006",
-        "http://127.0.0.1:3006",
+        "http://localhost:8080",
+        "http://localhost:5173",
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# --------------------------------------
+Base.metadata.create_all(bind=engine)
 
-app.include_router(auth.router)
-app.include_router(users.router)
-app.include_router(teams.router)
-app.include_router(audit.router)
-app.include_router(traffic.router)
-app.include_router(ai.router)
+app.include_router(auth_router)
+app.include_router(network_router)
+app.include_router(anomaly_router)
+app.include_router(analytics_router)
+app.include_router(websocket_router)
+
+
 @app.get("/")
-def root():
-    return {"message": "Welcome to NetShield AI 🚀"}
-
-@app.get("/health")
-def health():
-    return {"status": "Server is running"}
+def home():
+    return {
+        "message": "Welcome to NetShield AI"
+    }
