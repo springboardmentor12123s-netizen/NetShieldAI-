@@ -1,50 +1,43 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import ai
-from app.database.database import engine, Base
-from app.database import models
+from sqlalchemy import select
+from app.config import get_settings
+from app.database import init_postgres, init_mongo_indexes, engine, AsyncSessionLocal
+from app.models.user import Role, User
+from app.auth.security import get_password_hash
+from app.api import auth, users, traffic, ingestion, ml
 
-from app.routers import auth
-from app.routers import users
-from app.routers import teams
-from app.routers import audit
-from app.routers import traffic
+settings = get_settings()
 
-Base.metadata.create_all(bind=engine)
+async def seed_roles_and_admin():
+    async with AsyncSessionLocal() as db:
+        res = await db.execute(select(Role))
+        if not res.scalars().all():
+            db.add_all([Role(name="admin", permissions="all"), Role(name="analyst", permissions="read,analyze"), Role(name="viewer", permissions="read")])
+            await db.commit()
+        admin_role = (await db.execute(select(Role).where(Role.name == "admin"))).scalar_one_or_none()
+        if admin_role:
+            existing = (await db.execute(select(User).where(User.username == "admin"))).scalar_one_or_none()
+            if not existing:
+                db.add(User(username="admin", email="admin@netshield.ai", hashed_password=get_password_hash("admin"), role_id=admin_role.id, is_superuser=True))
+                await db.commit()
 
-app = FastAPI(
-    title="NetShield AI",
-    version="1.0.0",
-    description="AI Network Anomaly Detection & Threat Monitoring System"
-)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await init_postgres()
+    await init_mongo_indexes()
+    await seed_roles_and_admin()
+    yield
+    await engine.dispose()
 
-# ---------------- CORS ----------------
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:3006",
-        "http://127.0.0.1:3006",
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# --------------------------------------
-
-app.include_router(auth.router)
-app.include_router(users.router)
-app.include_router(teams.router)
-app.include_router(audit.router)
-app.include_router(traffic.router)
-app.include_router(ai.router)
-@app.get("/")
-def root():
-    return {"message": "Welcome to NetShield AI 🚀"}
+app = FastAPI(title="NetShield AI", version="1.0.0", lifespan=lifespan)
+app.add_middleware(CORSMiddleware, allow_origins=[o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+app.include_router(auth.router, prefix="/api/v1")
+app.include_router(users.router, prefix="/api/v1")
+app.include_router(traffic.router, prefix="/api/v1")
+app.include_router(ingestion.router, prefix="/api/v1")
+app.include_router(ml.router, prefix="/api/v1")
 
 @app.get("/health")
-def health():
-    return {"status": "Server is running"}
+async def health(): return {"status": "ok"}

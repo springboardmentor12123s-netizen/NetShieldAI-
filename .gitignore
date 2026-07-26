@@ -1,19 +1,6 @@
-# Python
-__pycache__/
-*.py[cod]
-*.pyo
-*.pyd
-
-# Virtual environments
-venv/
-.env
-
-# Node.js
 node_modules/
-
-# VS Code
-.vscode/
-
-# OS files
+__pycache__/
+.env
+.venv/
+models/
 .DS_Store
-Thumbs.db
