@@ -1,0 +1,23 @@
+# ---- Secrets ----
+backend/.env
+.env
+*.env.local
+
+# ---- Python ----
+backend/venv/
+**/__pycache__/
+*.pyc
+
+# ---- Node / frontend ----
+frontend/node_modules/
+frontend/dist/
+
+# ---- Generated data (uploads + training candidates only — the shipped
+# seed dataset and active model ARE tracked, so don't ignore those) ----
+backend/app/data/uploads/
+backend/app/data/model_candidates/
+
+# ---- OS / editor ----
+.DS_Store
+.vscode/
+*.log

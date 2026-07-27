@@ -1,0 +1,153 @@
+{
+  "trained_at": "2026-07-25T01:47:31.472585",
+  "training_samples": 8000,
+  "testing_samples": 2000,
+  "classes": [
+    "botnet",
+    "bruteforce",
+    "ddos",
+    "normal",
+    "portscan"
+  ],
+  "accuracy": 0.9935,
+  "precision": 0.997,
+  "recall": 0.9878,
+  "f1_score": 0.9922,
+  "roc_auc": 0.9994,
+  "confusion_matrix": [
+    [
+      188,
+      0,
+      0,
+      12,
+      0
+    ],
+    [
+      0,
+      200,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      200,
+      0,
+      0
+    ],
+    [
+      0,
+      1,
+      0,
+      1199,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      200
+    ]
+  ],
+  "confusion_matrix_labels": [
+    "botnet",
+    "bruteforce",
+    "ddos",
+    "normal",
+    "portscan"
+  ],
+  "feature_importance": [
+    {
+      "feature": "flow_rate",
+      "importance": 0.4163
+    },
+    {
+      "feature": "dst_bytes",
+      "importance": 0.1823
+    },
+    {
+      "feature": "duration",
+      "importance": 0.1722
+    },
+    {
+      "feature": "src_bytes",
+      "importance": 0.1619
+    },
+    {
+      "feature": "protocol_type_tcp",
+      "importance": 0.0234
+    },
+    {
+      "feature": "protocol_type_udp",
+      "importance": 0.0223
+    },
+    {
+      "feature": "count",
+      "importance": 0.0054
+    },
+    {
+      "feature": "srv_count",
+      "importance": 0.0054
+    },
+    {
+      "feature": "packet_count",
+      "importance": 0.0052
+    },
+    {
+      "feature": "wrong_fragment",
+      "importance": 0.0042
+    },
+    {
+      "feature": "urgent",
+      "importance": 0.0014
+    }
+  ],
+  "classification_report": {
+    "botnet": {
+      "precision": 1.0,
+      "recall": 0.94,
+      "f1-score": 0.9690721649484536,
+      "support": 200.0
+    },
+    "bruteforce": {
+      "precision": 0.9950248756218906,
+      "recall": 1.0,
+      "f1-score": 0.9975062344139651,
+      "support": 200.0
+    },
+    "ddos": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 200.0
+    },
+    "normal": {
+      "precision": 0.9900908340214699,
+      "recall": 0.9991666666666666,
+      "f1-score": 0.9946080464537537,
+      "support": 1200.0
+    },
+    "portscan": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 200.0
+    },
+    "accuracy": 0.9935,
+    "macro avg": {
+      "precision": 0.9970231419286721,
+      "recall": 0.9878333333333333,
+      "f1-score": 0.9922372891632346,
+      "support": 2000.0
+    },
+    "weighted avg": {
+      "precision": 0.993556987975071,
+      "recall": 0.9935,
+      "f1-score": 0.9934226678084941,
+      "support": 2000.0
+    }
+  },
+  "training_time_seconds": 2.5
+}
