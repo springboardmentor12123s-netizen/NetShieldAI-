@@ -27,7 +27,7 @@ export default function SignupPage() {
     setSuccess(false);
 
     try {
-      const response = await fetch(`${apiBaseUrl}/signup`, {
+      const response = await fetch(`${apiBaseUrl}/api/auth/signup`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -36,7 +36,6 @@ export default function SignupPage() {
         body: JSON.stringify({
           email: formData.email,
           password: formData.password,
-          full_name: formData.fullName,
           role: formData.role,
         }),
       });

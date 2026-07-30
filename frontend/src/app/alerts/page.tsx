@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Activity, ShieldAlert, Server, LogOut, LayoutDashboard, Settings } from "lucide-react";
+import AppShell from "../../components/AppShell";
 
 export default function AlertsDashboard() {
   const router = useRouter();
@@ -62,67 +62,42 @@ export default function AlertsDashboard() {
     return <div className="flex h-screen items-center justify-center bg-gray-950 text-red-500 font-bold text-xl animate-pulse">Loading Threat Database...</div>;
   }
 
-  const handleIsolate = async (incidentId: string, sourceIp: string) => {
+  const handleIsolate = async (incidentId) => {
+    // Optional: Add a confirmation dialog
+    if (!window.confirm(`Are you sure you want to isolate the host for incident ${incidentId}?`)) {
+      return;
+    }
+
     try {
-      // Send the kill command to the FastAPI backend
-      const res = await fetch("http://127.0.0.1:8000/api/isolate", {
-        method: "POST",
+      const res = await fetch(`http://127.0.0.1:8000/api/incidents/${incidentId}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ incident_id: incidentId, source_ip: sourceIp })
+        body: JSON.stringify({ 
+          status: "Isolated", 
+          assigned_to: "Security Analyst" // This can be dynamic later based on the logged-in user
+        })
       });
 
       if (res.ok) {
-        // Update the UI to show the host is isolated
-        setIsolatedIncidents(prev => new Set(prev).add(incidentId));
+        alert(`Host successfully isolated!`);
+        // If you have a fetchAlerts() function, call it here to refresh the table!
+        // fetchAlerts(); 
+      } else {
+        alert("Failed to isolate host. Check backend logs.");
       }
     } catch (error) {
-      console.error("Failed to isolate host:", error);
+      console.error("Error isolating host:", error);
     }
   };
 
   return (
-    <div className="flex h-screen bg-gray-950 text-white font-sans overflow-hidden">
-      
-      {/* Sidebar Navigation */}
-      <aside className="hidden w-64 flex-col border-r border-gray-800 bg-gray-900 md:flex">
-        <div className="p-6 border-b border-gray-800">
-          <h2 className="text-2xl font-bold text-blue-500 flex items-center gap-2">
-            <ShieldAlert size={28} /> NetShield AI
-          </h2>
-          <p className="text-xs text-gray-400 mt-1 uppercase tracking-wider">{role} Portal</p>
-        </div>
-        
-        <nav className="flex-1 p-4 space-y-2">
-          <a href="/dashboard" className="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-colors">
-            <LayoutDashboard size={20} /> Dashboard
-          </a>
-          <a href="/users" className="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-colors">
-            <Server size={20} /> User Management
-          </a>
-          <a href="/alerts" className="flex items-center gap-3 px-4 py-3 bg-red-600/10 text-red-400 rounded-lg transition-colors">
-            <Activity size={20} /> Alerts
-          </a>
-          <a href="/settings" className="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-colors">
-            <Settings size={20} /> Settings
-          </a>
-        </nav>
-      </aside>
-
-      {/* Main Content Area */}
-      <main className="flex-1 flex flex-col overflow-y-auto">
-        
-        {/* Top Header */}
-        <header className="flex justify-between items-center p-6 bg-gray-950 border-b border-gray-800 sticky top-0 z-10">
-          <h1 className="text-2xl font-semibold text-gray-100">Threat Intelligence & Alerts</h1>
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 bg-gray-800 hover:bg-red-600 text-gray-300 hover:text-white py-2 px-4 rounded-lg transition-all duration-200 border border-gray-700 hover:border-red-500"
-          >
-            <LogOut size={18} /> Log Out
-          </button>
-        </header>
-
-        <div className="p-6">
+    <AppShell
+      role={role}
+      title="Threat Intelligence & Alerts"
+      activePath="/alerts"
+      onLogout={handleLogout}
+    >
+      <div>
           <div className="bg-gray-900 rounded-xl border border-gray-800 shadow-sm overflow-hidden">
             <div className="p-6 border-b border-gray-800 flex justify-between items-center">
               <h2 className="text-xl font-semibold">Active Incident Queue</h2>
@@ -176,8 +151,8 @@ export default function AlertsDashboard() {
                         </button>
                       ) : (
                         <button 
-                          onClick={() => handleIsolate(alert.incident, alert.source)}
-                          className="text-white hover:text-white bg-red-900/80 hover:bg-red-700 transition-colors text-xs border border-red-800 px-3 py-1.5 rounded-lg"
+                          onClick={() => handleIsolate(alert?.incident_id || alert?.id)}
+                          className="bg-red-900/40 text-red-400 border border-red-800 hover:bg-red-800 px-3 py-1 rounded text-sm transition-colors"
                         >
                           Isolate Host
                         </button>
@@ -192,7 +167,6 @@ export default function AlertsDashboard() {
             </div>
           </div>
         </div>
-      </main>
-    </div>
+    </AppShell>
   );
 }

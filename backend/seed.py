@@ -1,6 +1,5 @@
 # this wd hash the admin password
-from database.postgres import SessionLocal
-from database.models.user import User
+from database.postgres import SessionLocal, User
 from passlib.context import CryptContext
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -19,8 +18,6 @@ def seed_admin():
     hashed_pwd = pwd_context.hash("admin123")
     admin_user = User(
         username="admin@netshield.com",
-        email="admin@netshield.com",
-        full_name="System Administrator",
         hashed_password=hashed_pwd,
         role="Administrator"
     )

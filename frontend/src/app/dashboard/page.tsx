@@ -15,7 +15,8 @@ import {
   ChartData
 } from "chart.js";
 import { Line, Doughnut } from "react-chartjs-2";
-import { Activity, ShieldAlert, Zap, Server, LogOut, LayoutDashboard, Network, Settings } from "lucide-react";
+import { Activity, ShieldAlert, Zap, Server } from "lucide-react";
+import AppShell from "../../components/AppShell";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement);
 
@@ -169,51 +170,13 @@ const [doughnutData, setDoughnutData] = useState<ChartData<"doughnut">>({
   }
 
   return (
-    <div className="flex h-screen bg-gray-950 text-white font-sans overflow-hidden">
-      
-      {/* Sidebar Navigation */}
-      <aside className="hidden w-64 flex-col border-r border-gray-800 bg-gray-900 md:flex">
-        <div className="p-6 border-b border-gray-800">
-          <h2 className="text-2xl font-bold text-blue-500 flex items-center gap-2">
-            <ShieldAlert size={28} /> NetShield AI
-          </h2>
-          <p className="text-xs text-gray-400 mt-1 uppercase tracking-wider">{role} Portal</p>
-        </div>
-        
-        <nav className="flex-1 p-4 space-y-2">
-          <a href="/dashboard" className="flex items-center gap-3 px-4 py-3 bg-blue-600/10 text-blue-400 rounded-lg transition-colors">
-            <LayoutDashboard size={20} /> Dashboard
-          </a>
-          <a href="/users" className="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-colors">
-            <Server size={20} /> User Management
-          </a>
-          <a href="/alerts" className="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-colors">
-            <Network size={20} /> Threat Alerts
-          </a>
-          <a href="/analytics" className="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-colors">
-            <Settings size={20} /> Analytics
-          </a>
-          <a href="/reports" className="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-colors">
-            <ShieldAlert size={20} /> Intelligence Reports
-          </a>
-        </nav>
-      </aside>
-
-      {/* Main Content Area */}
-      <main className="flex-1 flex flex-col overflow-y-auto">
-        
-        {/* Top Header */}
-        <header className="flex justify-between items-center p-6 bg-gray-950 border-b border-gray-800 sticky top-0 z-10">
-          <h1 className="text-2xl font-semibold text-gray-100">Traffic Analytics Dashboard</h1>
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 bg-gray-800 hover:bg-red-600 text-gray-300 hover:text-white py-2 px-4 rounded-lg transition-all duration-200 border border-gray-700 hover:border-red-500"
-          >
-            <LogOut size={18} /> Log Out
-          </button>
-        </header>
-
-        <div className="p-6 space-y-6">
+    <AppShell
+      role={role}
+      title="Traffic Analytics Dashboard"
+      activePath="/dashboard"
+      onLogout={handleLogout}
+    >
+      <div className="space-y-6">
           
           {/* Key Performance Indicators (KPIs) */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -306,7 +269,6 @@ const [doughnutData, setDoughnutData] = useState<ChartData<"doughnut">>({
           </div>
 
         </div>
-      </main>
-    </div>
+    </AppShell>
   );
 }

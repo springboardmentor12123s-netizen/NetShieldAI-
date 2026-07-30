@@ -24,6 +24,24 @@ services:
       - "27017:27017"
     volumes:
       - mongo_data:/data/db
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - postgres_db
+      - mongo_db
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://backend:8000
+    depends_on:
+      - backend
 
 volumes:
   postgres_data:

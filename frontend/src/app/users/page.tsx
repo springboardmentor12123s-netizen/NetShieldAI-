@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from 'react';
+import AppShell from "../../components/AppShell";
 
 export default function UserManagementDashboard() {
   const [teamMembers, setTeamMembers] = useState([]);
@@ -116,7 +117,8 @@ export default function UserManagementDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-8 relative">
+    <AppShell role="Admin" title="User Management Module" activePath="/users" onLogout={() => window.location.assign("/login")}>
+      <div className="relative">
       <h1 className="text-3xl font-bold mb-6">User Management Module</h1>
       
       {isLoading ? (
@@ -336,6 +338,7 @@ export default function UserManagementDashboard() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </AppShell>
   );
 }

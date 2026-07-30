@@ -10,14 +10,20 @@ from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from bson import ObjectId
+from passlib.context import CryptContext
+from pydantic import BaseModel
+from models import Incident, User, AuditLog 
 
+
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 # --- Path Fix ---
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # --- Internal Imports ---
 from database import get_mongo_db
 from database.postgres import get_db, engine, Base, User
-from auth import router as auth_router
+# from auth import router as auth_router
 from threat_ops import build_dashboard_snapshot, classify_threat
 
 # ==========================================
@@ -40,7 +46,7 @@ app.add_middleware(
 )
 
 # Include external routers
-app.include_router(auth_router)
+# app.include_router(auth_router)
 
 # Auto-generate PostgreSQL tables on startup
 Base.metadata.create_all(bind=engine)
@@ -65,6 +71,11 @@ IN_MEMORY_ALERTS = []
 # ==========================================
 # These models define the exact structure of data expected from the frontend
 
+
+class IncidentUpdate(BaseModel):
+    status: str  # 'Investigating', 'Isolated', 'Resolved'
+    assigned_to: str = None
+    
 class UserCreate(BaseModel):
     username: str
     password: str
@@ -80,6 +91,7 @@ class LoginRequest(BaseModel):
 class IsolateRequest(BaseModel):
     incident_id: str
     source_ip: str
+
 
 
 # ==========================================
@@ -99,7 +111,7 @@ def signup_user(user: UserCreate, db: Session = Depends(get_db)):
 
         db.execute(
             text("INSERT INTO users (username, hashed_password, role) VALUES (:u, :p, :r)"),
-            {"u": user.username, "p": f"hashed_{user.password}", "r": user.role}
+            {"u": user.username, "p": pwd_context.hash(user.password), "r": user.role}
         )
         db.commit()
         return {"status": "success", "message": f"User {user.username} created."}
@@ -116,7 +128,7 @@ def login_user(req: LoginRequest, db: Session = Depends(get_db)):
     ).fetchone()
 
     # Handle Invalid Login
-    if not user or user[2] != f"hashed_{req.password}":
+    if not user or not pwd_context.verify(req.password, user[2]):
         db.execute(
             text("INSERT INTO audit_logs (username, event, severity) VALUES (:u, :e, :s)"),
             {"u": req.username, "e": "Failed login attempt (Invalid credentials)", "s": "Critical"}
@@ -233,6 +245,80 @@ async def get_live_alerts():
             logger.error(f"Error fetching alerts: {e}")
             
     return {"data": [], "count": 0}
+@app.get("/api/incidents")
+async def get_incidents():
+    """Groups current alerts by source IP into incidents."""
+    alerts_response = await get_live_alerts()
+    alerts = alerts_response["data"]
+
+    grouped: dict = {}
+    for a in alerts:
+        key = a["source"]
+        if key not in grouped:
+            grouped[key] = {
+                "id": f"INC-{len(grouped) + 1}",
+                "source_ip": key,
+                "alert_count": 0,
+                "highest_severity": "LOW",
+                "alerts": [],
+            }
+        grouped[key]["alert_count"] += 1
+        grouped[key]["alerts"].append(a["id"])
+        severity_rank = {"LOW": 0, "MEDIUM": 1, "HIGH": 2, "CRITICAL": 3}
+        if severity_rank.get(a["severity"], 0) > severity_rank.get(grouped[key]["highest_severity"], 0):
+            grouped[key]["highest_severity"] = a["severity"]
+
+    return {"data": list(grouped.values()), "count": len(grouped)}
+
+@app.post("/api/incidents")
+def create_incident(req: IsolateRequest, db: Session = Depends(get_db)):
+    """Creates a new incident ticket when a critical threat is detected."""
+    try:
+        new_incident = Incident(
+            incident_id=req.incident_id,
+            source_ip=req.source_ip,
+            status="New"
+        )
+        db.add(new_incident)
+        
+        # Log this creation in the audit log
+        db.execute(
+            text("INSERT INTO audit_logs (username, event, severity) VALUES ('System', :e, 'Warning')"),
+            {"e": f"Incident {req.incident_id} automatically created for IP {req.source_ip}"}
+        )
+        db.commit()
+        return {"status": "success", "message": f"Incident {req.incident_id} logged."}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
+@app.put("/api/incidents/{incident_id}")
+def update_incident_status(incident_id: str, update: IncidentUpdate, db: Session = Depends(get_db)):
+    """Allows a SOC analyst to update the status of an active incident."""
+    try:
+        # Test query to see if the Incident table even responds
+        incident = db.query(Incident).filter(Incident.incident_id == incident_id).first()
+        if not incident:
+            # Let's auto-create it on the fly if it doesn't exist yet so it stops 404ing/crashing
+            incident = Incident(incident_id=incident_id, source_ip="192.168.1.100", status="New")
+            db.add(incident)
+            db.commit()
+            db.refresh(incident)
+            
+        incident.status = update.status
+        incident.assigned_to = update.assigned_to
+        db.commit()
+        return {"status": "success", "message": f"Incident {incident_id} updated to {update.status}."}
+    except Exception as e:
+        db.rollback()
+        import traceback
+        err_msg = traceback.format_exc()
+        print("--- FULL TRACEBACK ERROR ---")
+        print(err_msg)
+        raise HTTPException(status_code=500, detail=str(e))
+    
 @app.delete("/api/users/{user_id}")
 def delete_user(user_id: int, db: Session = Depends(get_db)):
     """Deletes a user from the PostgreSQL database."""
@@ -294,12 +380,22 @@ async def receive_live_traffic(request: Request) -> dict:
     return {"status": "success", "inserted": inserted}
 
 @app.get("/api/reports")
-async def reports() -> dict:
-    """Generates an executive summary report of current network health."""
+async def reports(db: Session = Depends(get_db)) -> dict:
+    """Generates an executive summary report using direct database metrics."""
+    # Query the database directly
+    total_incidents = db.query(Incident).count()
+    isolated_count = db.query(Incident).filter(Incident.status == "Isolated").count()
+    
+    # Get the standard snapshot just for background packet stats if needed
     snapshot = build_dashboard_snapshot(SAMPLE_PACKETS)
+
     return {
         "data": {
-            "summary": snapshot,
+            "summary": {
+                **snapshot,
+                "database_incidents_tracked": total_incidents,
+                "hosts_actively_isolated": isolated_count,
+            },
             "recommendations": [
                 "Isolate high-risk source IPs and review affected services.",
                 "Escalate DDoS and intrusion indicators to the SOC lead.",

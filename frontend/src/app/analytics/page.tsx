@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, ShieldCheck, TrendingUp, Activity } from "lucide-react";
+import AppShell from "../../components/AppShell";
 
 interface IncidentItem {
   id: number;
@@ -54,7 +55,7 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 p-6 text-slate-100">
+    <AppShell role="Analyst" title="Security analytics dashboard" activePath="/analytics" onLogout={() => window.location.assign("/login")}>
       <div className="mx-auto max-w-7xl space-y-6">
         <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-6 shadow-xl">
           <div className="flex items-center justify-between">
@@ -124,6 +125,6 @@ export default function AnalyticsPage() {
           </div>
         </div>
       </div>
-    </div>
+    </AppShell>
   );
 }
