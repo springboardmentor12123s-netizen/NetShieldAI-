@@ -19,6 +19,7 @@ const navigationItems = [
   { href: "/alerts", label: "Alerts", icon: Activity },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/reports", label: "Reports", icon: FileText },
+  { href: "/visualization", label: "Visualization", icon: FileText },
 ];
 
 export default function AppShell({ role, title, activePath, onLogout, children }: AppShellProps) {
