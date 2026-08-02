@@ -13,6 +13,8 @@ from app.routers import analytics
 from app.routers import alerts
 from app.routers import reports
 
+from app.services.packet_capture import run_packet_capture
+
 from app.routers import prediction
 
 
@@ -91,6 +93,11 @@ app.include_router(
     prefix="/predict",
     tags=["Prediction"]
 )
+
+@app.on_event("startup")
+def startup_event():
+    print("Starting Live Packet Capture...")
+    run_packet_capture()
 
 
 @app.get("/")

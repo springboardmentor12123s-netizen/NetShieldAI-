@@ -1,87 +1,59 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from sqlalchemy import text
 
 from app.database.database import get_db
-
+from app.database.models import Alert
+from fastapi import HTTPException
 router = APIRouter()
 
 
 @router.get("/")
-def get_alerts(
-    search: str = "",
-    severity: str = "",
-    page: int = Query(default=1, ge=1),
-    db: Session = Depends(get_db),
-):
-    limit = 20
-    offset = (page - 1) * limit
+def get_alerts(db: Session = Depends(get_db)):
 
-    conditions = ["label != 'BENIGN'"]
-
-    params = {
-        "limit": limit,
-        "offset": offset,
-    }
-
-    if search:
-        conditions.append("""
-        (
-            CAST(destination_port AS TEXT) ILIKE :search
-            OR protocol ILIKE :search
-            OR label ILIKE :search
-        )
-        """)
-        params["search"] = f"%{search}%"
-
-    if severity:
-        conditions.append("""
-            CASE
-    WHEN label ILIKE '%DDoS%' THEN 'Critical'
-    WHEN label ILIKE '%DoS%' THEN 'High'
-    WHEN label ILIKE '%PortScan%' THEN 'Medium'
-    ELSE 'High'
-END
-            END = :severity
-        """)
-        params["severity"] = severity
-
-    where_clause = " AND ".join(conditions)
-
-    result = db.execute(
-        text(f"""
-            SELECT
-                id,
-                destination_port,
-                protocol,
-                label,
-
-                CASE
-                    WHEN label = 'BENIGN' THEN 'Low'
-                    WHEN label ILIKE '%PortScan%' THEN 'Medium'
-                    WHEN label ILIKE '%DoS%' THEN 'High'
-                    WHEN label ILIKE '%DDoS%' THEN 'Critical'
-                    ELSE 'High'
-                END AS severity
-
-            FROM network_traffic
-
-            WHERE {where_clause}
-
-            ORDER BY id DESC
-
-            LIMIT :limit OFFSET :offset
-        """),
-        params,
+    alerts = (
+        db.query(Alert)
+        .order_by(Alert.detected_at.desc())
+        .all()
     )
 
     return [
         {
-            "id": row.id,
-            "destination_port": row.destination_port,
-            "protocol": row.protocol,
-            "label": row.label,
-            "severity": row.severity,
+            "id": alert.id,
+            "source_ip": alert.source_ip,
+            "destination_ip": alert.destination_ip,
+            "protocol": alert.protocol,
+            "attack_type": alert.attack_type,
+            "severity": alert.severity,
+            "status": alert.status,
+            "detected_at": alert.detected_at,
         }
-        for row in result
+        for alert in alerts
     ]
+@router.put("/{alert_id}")
+def update_alert_status(
+    alert_id: int,
+    status: str,
+    db: Session = Depends(get_db),
+):
+
+    alert = (
+        db.query(Alert)
+        .filter(Alert.id == alert_id)
+        .first()
+    )
+
+    if not alert:
+        raise HTTPException(
+            status_code=404,
+            detail="Alert not found"
+        )
+
+    alert.status = status.upper()
+
+    db.commit()
+    db.refresh(alert)
+
+    return {
+        "message": "Alert updated successfully",
+        "alert": alert,
+    }

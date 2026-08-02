@@ -3,7 +3,9 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 
 from app.database.database import get_db
-
+from app.services.packet_capture import get_live_packets
+from app.services.flow_builder import get_flows
+from app.services.prediction_service import predict_live_traffic
 router = APIRouter()
 
 
@@ -102,3 +104,25 @@ def get_labels(db: Session = Depends(get_db)):
     labels = [row.label for row in result]
 
     return labels
+
+
+@router.get("/live")
+def get_live_traffic():
+    """
+    Returns the latest captured live packets.
+    """
+    return get_live_packets()
+
+@router.get("/flows")
+def get_live_flows():
+    """
+    Returns calculated live network flows.
+    """
+    return get_flows()
+
+@router.get("/predictions")
+def get_predictions(
+    db: Session = Depends(get_db)
+):
+   
+    return predict_live_traffic(db)

@@ -4,27 +4,21 @@ import { useState, useEffect } from "react";
 import API from "../services/api";
 import TrafficPieChart from "../components/TrafficPieChart";
 import AttackChart from "../components/AttackChart";
-
+import { toast } from "react-toastify";
+import { useRef } from "react";
 function Dashboard() {
   const navigate = useNavigate();
-
-  const [summary, setSummary] = useState({
-  total_traffic: 0,
-  benign_traffic: 0,
-  attack_traffic: 0,
-  attack_percentage: 0,
-
-  low: 0,
-  medium: 0,
-  high: 0,
-  critical: 0,
-  average_risk_score: 0
-});
-
-  const [traffic, setTraffic] = useState([]);
+  const lastAlertId = useRef(null);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState("");
-  const [prediction, setPrediction] = useState(null);
+  const [livePredictions, setLivePredictions] = useState([]);
+  const [liveAlerts, setLiveAlerts] = useState([]);
+  const [liveStats, setLiveStats] = useState({
+  totalPackets: 0,
+  benign: 0,
+  attacks: 0,
+  critical: 0
+});
   useEffect(() => {
     loadDashboard();
 
@@ -39,72 +33,92 @@ function Dashboard() {
     setLoading(true);
 
     await Promise.all([
-      fetchSummary(),
-      fetchTraffic(),
-      fetchLatestPrediction(),
+      fetchLivePredictions(),
+      fetchLiveAlerts(),
     ]);
+    await checkForNewAlerts();
 
     setLastUpdated(new Date().toLocaleString());
 
     setLoading(false);
   };
 
-  const fetchSummary = async () => {
+
+const fetchLivePredictions = async () => {
+
   try {
 
-    const response = await API.get("/reports/summary");
+    const response = await API.get("/traffic/predictions");
 
-    const data = response.data;
 
-    setSummary({
-      total_traffic: data.total_records,
-      benign_traffic: data.benign,
-      attack_traffic: data.attacks,
-      attack_percentage: (
-        (data.attacks / data.total_records) * 100
-      ).toFixed(2),
+    calculateLiveStats(response.data);
 
-      low: data.low,
-      medium: data.medium,
-      high: data.high,
-      critical: data.critical,
-      average_risk_score: data.average_risk_score
-    });
+    setLivePredictions(response.data);
+
+  } catch (error) {
+    console.log(error);
+  }
+
+};
+ const calculateLiveStats = (data) => {
+
+  const benign = data.filter(
+    p => p.prediction === "BENIGN"
+  ).length;
+
+  const attacks = data.length - benign;
+
+  const critical = data.filter(
+    p => p.severity === "CRITICAL"
+  ).length;
+
+
+  
+
+  setLiveStats({
+    totalPackets: data.length,
+    benign,
+    attacks,
+    critical
+  });
+
+};
+
+const fetchLiveAlerts = async () => {
+  try {
+    const response = await API.get("/alerts/");
+
+    setLiveAlerts(response.data);
 
   } catch (error) {
     console.log(error);
   }
 };
+const checkForNewAlerts = async () => {
+  try {
+    const response = await API.get("/alerts/");
 
-  const fetchTraffic = async () => {
-    try {
-      const response = await API.get("/dashboard/traffic");
-      setTraffic(response.data);
-    } catch (error) {
-      console.log(error);
+    if (response.data.length === 0) return;
+
+    const latestAlert = response.data[0];
+
+    if (lastAlertId.current !== latestAlert.id) {
+
+      lastAlertId.current = latestAlert.id;
+
+      toast.error(
+        `🚨 ${latestAlert.attack_type}\nSeverity: ${latestAlert.severity}`,
+        {
+          autoClose: 6000,
+        }
+      );
     }
-  };
-  const fetchLatestPrediction = async () => {
-  try {
-
-    const trafficResponse = await API.get("/dashboard/traffic");
-
-    if (trafficResponse.data.length === 0) return;
-
-    const latestTraffic = trafficResponse.data[0];
-
-    const predictionResponse = await API.get(
-      `/predict/${latestTraffic.id}`
-    );
-
-    setPrediction(predictionResponse.data);
 
   } catch (error) {
-
     console.log(error);
-
   }
 };
+  
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -189,48 +203,25 @@ function Dashboard() {
         <div className="cards">
 
           <div className="card">
-            <h3>Total Traffic</h3>
-            <p>{summary.total_traffic.toLocaleString()}</p>
+            <h3>Live Packets</h3>
+            <p>{liveStats.totalPackets}</p>
           </div>
 
           <div className="card">
-            <h3>Attack Traffic</h3>
-            <p>{summary.attack_traffic.toLocaleString()}</p>
+            <h3>Benign</h3>
+            <p>{liveStats.benign}</p>
           </div>
 
           <div className="card">
-            <h3>Benign Traffic</h3>
-            <p>{summary.benign_traffic.toLocaleString()}</p>
+            <h3>Attacks</h3>
+            <p>{liveStats.attacks}</p>
           </div>
 
           <div className="card">
-            <h3>Attack %</h3>
-            <p>{summary.attack_percentage}%</p>
+            <h3>Critical</h3>
+            <p>{liveStats.critical}</p>
           </div>
-          <div className="card">
-            <h3>Critical Threats</h3>
-              <p>{summary.critical.toLocaleString()}</p>
-          </div>
-
-          <div className="card">
-              <h3>High Threats</h3>
-              <p>{summary.high.toLocaleString()}</p>
-          </div>
-
-          <div className="card">
-              <h3>Medium Threats</h3>
-              <p>{summary.medium.toLocaleString()}</p>
-          </div>
-
-          <div className="card">
-              <h3>Low Threats</h3>
-              <p>{summary.low.toLocaleString()}</p>
-          </div>
-
-          <div className="card">
-              <h3>Average Risk</h3>
-              <p>{summary.average_risk_score}</p>
-          </div>
+          
 
         </div>
 
@@ -243,8 +234,8 @@ function Dashboard() {
             <h2>Traffic Distribution</h2>
 
             <TrafficPieChart
-              benign={summary.benign_traffic}
-              attack={summary.attack_traffic}
+              benign={liveStats.benign}
+              attack={liveStats.attacks}
             />
 
           </div>
@@ -252,37 +243,117 @@ function Dashboard() {
           <AttackChart />
 
         </div>
-        {/* AI Prediction */}
+        <div className="alerts" style={{ marginTop: "30px" }}>
 
-        <div className="card" style={{ marginTop: "30px" }}>
+          <h2>🌐 Live AI Predictions</h2>
 
-          <h2>🤖 Latest AI Prediction</h2>
+          <table>
 
-          {prediction ? (
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Source IP</th>
+                <th>Destination IP</th>
+                <th>Protocol</th>
+                <th>Prediction</th>
+                <th>Severity</th>
+                <th>Status</th>
+             </tr>
+            </thead>
 
-          <div style={{ lineHeight: "2" }}>
+          <tbody>
 
-             <p><strong>Traffic ID:</strong> {prediction.traffic_id}</p>
+            {livePredictions.length > 0 ? (
 
-             <p><strong>Prediction:</strong> {prediction.predicted_label}</p>
+                livePredictions.map((packet, index) => (
 
-             <p><strong>Status:</strong> {prediction.status}</p>
+                  <tr key={index}>
 
-              <p><strong>Threat Level:</strong> {prediction.threat_level}</p>
+                    <td>{index + 1}</td>
 
-              <p><strong>Risk Score:</strong> {prediction.risk_score}</p>
+                    <td>{packet.source_ip}</td>
 
-              <p><strong>Confidence:</strong> {prediction.confidence}%</p>
+                    <td>{packet.destination_ip}</td>
 
-          </div>
+                    <td>{packet.protocol}</td>
 
-         ) : (
+                    <td>{packet.prediction}</td>
 
-            <p>No prediction available.</p>
+                    <td>{packet.severity}</td>
 
-           )}
+                    <td>{packet.status}</td>
+
+                  </tr>
+
+              ))
+
+            ) : (
+
+               <tr>
+                  <td colSpan="7">
+                   No live traffic detected.
+                  </td>
+                </tr>
+
+            )}
+
+          </tbody>
+
+         </table>
 
         </div>
+        <div className="alerts" style={{ marginTop: "30px" }}>
+
+  <h2>🚨 Live Alerts</h2>
+
+  <table>
+
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Attack</th>
+        <th>Severity</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+
+    <tbody>
+
+      {liveAlerts.length > 0 ? (
+
+        liveAlerts.map((alert, index) => (
+
+          <tr key={alert.id}>
+
+            <td>{index + 1}</td>
+
+            <td>{alert.attack_type}</td>
+
+            <td>{alert.severity}</td>
+
+            <td>{alert.status}</td>
+
+          </tr>
+
+        ))
+
+      ) : (
+
+        <tr>
+          <td colSpan="4">
+            No Active Alerts
+          </td>
+        </tr>
+
+      )}
+
+    </tbody>
+
+  </table>
+
+</div>
+
+        
               {/* System Health */}
 
         <div className="system-health">
@@ -313,8 +384,8 @@ function Dashboard() {
               <span className="health-dot green"></span>
 
               <div>
-                <h4>Dataset</h4>
-                <p>CICIDS2017 Loaded</p>
+                <h4>Packet Capture</h4>
+                <p>Live Monitoring</p>
               </div>
             </div>
 
@@ -330,91 +401,9 @@ function Dashboard() {
        </div>
       </div>
 
-        {/* Recent Network Traffic */}
+       
 
-        <div className="alerts">
-
-          <h2>Recent Network Traffic</h2>
-
-          <table>
-
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Destination Port</th>
-                <th>Protocol</th>
-                <th>Flow Duration</th>
-                <th>Traffic Label</th>
-              </tr>
-            </thead>
-
-            <tbody>
-
-              {traffic.length > 0 ? (
-
-                traffic.map((row, index) => (
-
-                  <tr key={index}>
-
-                    <td>{index + 1}</td>
-
-                    <td>{row.destination_port}</td>
-
-                    <td>{row.protocol}</td>
-
-                    <td>{row.flow_duration}</td>
-
-                    <td>
-
-                      <div className="status-container">
-
-                        <span
-                          className={`status-dot ${
-                            row.label === "BENIGN"
-                              ? "green"
-                              : row.label.includes("PortScan")
-                              ? "yellow"
-                              : row.label.includes("DoS")
-                              ? "orange"
-                              : row.label.includes("DDoS")
-                              ? "red"
-                              : row.label.includes("Bot")
-                              ? "purple"
-                              : row.label.includes("Web Attack")
-                              ? "blue"
-                              : row.label.includes("Heartbleed")
-                              ? "pink"
-                              : "red"
-                          }`}
-                        ></span>
-
-                        <span className="status-text">
-                          {row.label}
-                        </span>
-
-                      </div>
-
-                    </td>
-
-                  </tr>
-
-                ))
-
-              ) : (
-
-                <tr>
-                  <td colSpan="5">
-                    No traffic records found.
-                  </td>
-                </tr>
-
-              )}
-
-            </tbody>
-
-          </table>
-
-        </div>
+        
 
       </div>
 

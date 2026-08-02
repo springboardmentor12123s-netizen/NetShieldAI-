@@ -1,5 +1,7 @@
-from sqlalchemy import Column, Integer, String,Float
+from sqlalchemy import Column, Integer, String,Float, DateTime
 from app.database.database import Base
+from datetime import datetime
+
 
 class User(Base):
     __tablename__ = "users"
@@ -40,3 +42,29 @@ class NetworkTraffic(Base):
     flow_packets_per_sec = Column(Float)
 
     label = Column(String(100))
+
+
+
+
+
+class Alert(Base):
+    __tablename__ = "alerts"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    source_ip = Column(String(50), nullable=False)
+
+    destination_ip = Column(String(50), nullable=False)
+
+    protocol = Column(String(20), nullable=False)
+
+    attack_type = Column(String(100), nullable=False)
+
+    severity = Column(String(20), nullable=False)
+
+    status = Column(String(30), default="OPEN")
+
+    detected_at = Column(
+        DateTime,
+        default=datetime.utcnow
+    )

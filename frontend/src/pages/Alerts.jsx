@@ -1,93 +1,69 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import API from "../services/api";
-import "../styles/Alerts.css";
-
+import { toast } from "react-toastify";
 function Alerts() {
   const [alerts, setAlerts] = useState([]);
-  const [search, setSearch] = useState("");
-  const [severity, setSeverity] = useState("");
-  const [page, setPage] = useState(1);
 
   useEffect(() => {
-    fetchAlerts(search, severity, page);
-  }, [page]);
+    fetchAlerts();
 
-  const fetchAlerts = async (
-    searchValue = "",
-    severityValue = "",
-    pageNumber = 1
-  ) => {
+    const interval = setInterval(() => {
+      fetchAlerts();
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchAlerts = async () => {
     try {
-      const response = await API.get("/alerts", {
-        params: {
-          search: searchValue,
-          severity: severityValue,
-          page: pageNumber,
-        },
-      });
-
+      const response = await API.get("/alerts");
       setAlerts(response.data);
     } catch (error) {
       console.log(error);
     }
   };
+const updateStatus = async (id, status) => {
 
-  const getSeverityColor = (severity) => {
-    switch (severity) {
-      case "Low":
-        return "#10b981";
-      case "Medium":
-        return "#facc15";
-      case "High":
-        return "#f97316";
-      case "Critical":
-        return "#ef4444";
-      default:
-        return "#9ca3af";
-    }
-  };
+  try {
 
+    await API.put(`/alerts/${id}?status=${status}`);
+
+    toast.success("Alert updated successfully");
+
+    fetchAlerts();
+
+  } catch (error) {
+
+    console.log(error);
+
+    toast.error("Failed to update alert");
+
+  }
+
+};
   return (
-    <div className="alerts-page">
-      <h1>🚨 Security Alerts</h1>
+    <div style={{ padding: "30px" }}>
+      <h1>🚨 Live Alerts</h1>
 
-      <div className="search-box">
-        <input
-          type="text"
-          placeholder="Search by Port, Protocol or Attack..."
-          value={search}
-          onChange={(e) => {
-            const value = e.target.value;
-            setSearch(value);
-            setPage(1);
-            fetchAlerts(value, severity, 1);
-          }}
-        />
-
-        <select
-          value={severity}
-          onChange={(e) => {
-            const value = e.target.value;
-            setSeverity(value);
-            setPage(1);
-            fetchAlerts(search, value, 1);
-          }}
-        >
-          <option value="">All Severities</option>
-          <option value="Medium">Medium</option>
-          <option value="High">High</option>
-          <option value="Critical">Critical</option>
-        </select>
-      </div>
-
-      <table className="alerts-table">
+      <table
+        border="1"
+        cellPadding="10"
+        style={{
+          width: "100%",
+          marginTop: "20px",
+          borderCollapse: "collapse",
+        }}
+      >
         <thead>
           <tr>
             <th>ID</th>
-            <th>Destination Port</th>
-            <th>Protocol</th>
             <th>Attack Type</th>
             <th>Severity</th>
+            <th>Source IP</th>
+            <th>Destination IP</th>
+            <th>Protocol</th>
+            <th>Status</th>
+            <th>Detected At</th>
           </tr>
         </thead>
 
@@ -96,56 +72,47 @@ function Alerts() {
             alerts.map((alert) => (
               <tr key={alert.id}>
                 <td>{alert.id}</td>
-                <td>{alert.destination_port}</td>
+                <td>{alert.attack_type}</td>
+                <td>{alert.severity}</td>
+                <td>{alert.source_ip}</td>
+                <td>{alert.destination_ip}</td>
                 <td>{alert.protocol}</td>
-                <td>{alert.label}</td>
-
                 <td>
-                  <div className="severity-container">
-                    <span
-                      className="severity-dot"
-                      style={{
-                        backgroundColor: getSeverityColor(alert.severity),
-                      }}
-                    ></span>
 
-                    <span>{alert.severity}</span>
-                  </div>
+                    <select
+                        value={alert.status}
+                        onChange={(e) =>
+                        updateStatus(alert.id, e.target.value)
+                        }
+                    >
+
+                      <option value="OPEN">
+                          OPEN
+                      </option>
+
+                      <option value="INVESTIGATING">
+                          INVESTIGATING
+                      </option>
+
+                      <option value="RESOLVED">
+                          RESOLVED
+                      </option>
+
+                    </select>
+
                 </td>
+                    <td>{alert.detected_at}</td>
               </tr>
             ))
           ) : (
             <tr>
-              <td colSpan="5">No Alerts Found</td>
+              <td colSpan="8" style={{ textAlign: "center" }}>
+                No alerts detected.
+              </td>
             </tr>
           )}
         </tbody>
       </table>
-
-      <div className="pagination">
-        <button
-          disabled={page === 1}
-          onClick={() => {
-            const newPage = page - 1;
-            setPage(newPage);
-            fetchAlerts(search, severity, newPage);
-          }}
-        >
-          Previous
-        </button>
-
-        <span>Page {page}</span>
-
-        <button
-          onClick={() => {
-            const newPage = page + 1;
-            setPage(newPage);
-            fetchAlerts(search, severity, newPage);
-          }}
-        >
-          Next
-        </button>
-      </div>
     </div>
   );
 }

@@ -1,9 +1,14 @@
 from fastapi import APIRouter, Depends
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
+import csv
+import io
+
 from app.database.database import get_db
-from app.database.models import NetworkTraffic
+from app.database.models import NetworkTraffic, Alert
+from app.services.prediction_service import predict_live_traffic
 
 router = APIRouter()
 
@@ -98,3 +103,89 @@ def report_summary(db: Session = Depends(get_db)):
         "critical": critical,
         "average_risk_score": average_risk
     }
+
+
+@router.get("/traffic/csv")
+def download_live_traffic_csv(
+    db: Session = Depends(get_db)
+):
+
+    predictions = predict_live_traffic(db)
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    writer.writerow([
+        "Source IP",
+        "Destination IP",
+        "Protocol",
+        "Prediction",
+        "Severity",
+        "Status"
+    ])
+
+    for packet in predictions:
+        writer.writerow([
+            packet["source_ip"],
+            packet["destination_ip"],
+            packet["protocol"],
+            packet["prediction"],
+            packet["severity"],
+            packet["status"]
+        ])
+
+    output.seek(0)
+
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={
+            "Content-Disposition":
+            "attachment; filename=live_traffic_report.csv"
+        }
+    )
+
+
+@router.get("/alerts/csv")
+def download_alerts_csv(
+    db: Session = Depends(get_db)
+):
+
+    alerts = db.query(Alert).all()
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    writer.writerow([
+        "ID",
+        "Source IP",
+        "Destination IP",
+        "Protocol",
+        "Attack Type",
+        "Severity",
+        "Status",
+        "Detected At"
+    ])
+
+    for alert in alerts:
+        writer.writerow([
+            alert.id,
+            alert.source_ip,
+            alert.destination_ip,
+            alert.protocol,
+            alert.attack_type,
+            alert.severity,
+            alert.status,
+            alert.detected_at
+        ])
+
+    output.seek(0)
+
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={
+            "Content-Disposition":
+            "attachment; filename=alerts_report.csv"
+        }
+    )

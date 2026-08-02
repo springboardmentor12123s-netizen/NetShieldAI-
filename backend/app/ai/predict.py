@@ -30,6 +30,19 @@ def predict_attack(data):
         [data]
     )
 
+    # Convert live traffic feature names to training feature names
+    input_data = input_data.rename(columns={
+        "Destination Port": "destination_port",
+        "Flow Duration": "flow_duration",
+        "Total Fwd Packets": "total_fwd_packets",
+        "Total Backward Packets": "total_backward_packets",
+        "Total Length of Fwd Packets": "total_length_fwd_packets",
+        "Total Length of Bwd Packets": "total_length_backward_packets",
+        "Flow Bytes/s": "flow_bytes_per_sec",
+        "Flow Packets/s": "flow_packets_per_sec"
+    })
+
+
     prediction = model.predict(
         input_data
     )

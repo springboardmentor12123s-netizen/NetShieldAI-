@@ -1,120 +1,119 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from sqlalchemy import text
+from collections import Counter
 
 from app.database.database import get_db
+from app.services.prediction_service import predict_live_traffic
 
 router = APIRouter()
+
+
+@router.get("/summary")
+def analytics_summary(db: Session = Depends(get_db)):
+
+    predictions = predict_live_traffic(db)
+
+    total = len(predictions)
+
+    benign = sum(
+        1 for p in predictions
+        if p["prediction"] == "BENIGN"
+    )
+
+    attacks = total - benign
+
+    attack_counter = Counter(
+        p["prediction"]
+        for p in predictions
+        if p["prediction"] != "BENIGN"
+    )
+
+    top_attack = (
+        attack_counter.most_common(1)[0][0]
+        if attack_counter
+        else "None"
+    )
+
+    return {
+        "total_traffic": total,
+        "benign_traffic": benign,
+        "attack_traffic": attacks,
+        "top_attack": top_attack
+    }
 
 
 @router.get("/attack-types")
 def attack_types(db: Session = Depends(get_db)):
 
-    result = db.execute(text("""
-        SELECT
-            label,
-            COUNT(*) AS total
-        FROM network_traffic
-        GROUP BY label
-        ORDER BY total DESC
-    """))
+    predictions = predict_live_traffic(db)
+
+    counter = Counter(
+        p["prediction"]
+        for p in predictions
+    )
 
     return [
         {
-            "label": row.label,
-            "total": row.total
+            "label": label,
+            "total": total
         }
-        for row in result
+        for label, total in counter.items()
     ]
 
 
 @router.get("/protocol-distribution")
 def protocol_distribution(db: Session = Depends(get_db)):
 
-    result = db.execute(text("""
-        SELECT
-            protocol,
-            COUNT(*) AS total
-        FROM network_traffic
-        GROUP BY protocol
-        ORDER BY total DESC
-    """))
+    predictions = predict_live_traffic(db)
+
+    counter = Counter(
+        p["protocol"]
+        for p in predictions
+    )
 
     return [
         {
-            "protocol": row.protocol,
-            "total": row.total
+            "protocol": protocol,
+            "total": total
         }
-        for row in result
+        for protocol, total in counter.items()
     ]
-
-
 @router.get("/top-ports")
 def top_ports(db: Session = Depends(get_db)):
 
-    result = db.execute(text("""
-        SELECT
-            destination_port,
-            COUNT(*) AS total
-        FROM network_traffic
-        GROUP BY destination_port
-        ORDER BY total DESC
-        LIMIT 10
-    """))
+    predictions = predict_live_traffic(db)
+
+    counter = Counter()
+
+    for packet in predictions:
+
+        port = packet.get("destination_port")
+
+        if port is not None:
+            counter[port] += 1
 
     return [
         {
-            "destination_port": row.destination_port,
-            "total": row.total
+            "destination_port": port,
+            "total": total
         }
-        for row in result
+        for port, total in counter.most_common(10)
     ]
-@router.get("/summary")
-def analytics_summary(db: Session = Depends(get_db)):
-
-    total = db.execute(text("""
-        SELECT COUNT(*) FROM network_traffic
-    """)).scalar()
-
-    benign = db.execute(text("""
-        SELECT COUNT(*) FROM network_traffic
-        WHERE label='BENIGN'
-    """)).scalar()
-
-    attack = total - benign
-
-    top_attack = db.execute(text("""
-        SELECT label, COUNT(*) AS total
-        FROM network_traffic
-        WHERE label != 'BENIGN'
-        GROUP BY label
-        ORDER BY total DESC
-        LIMIT 1
-    """)).first()
-
-    return {
-        "total_traffic": total,
-        "benign_traffic": benign,
-        "attack_traffic": attack,
-        "top_attack": top_attack.label if top_attack else "None"
-    }
 
 @router.get("/traffic-trend")
 def traffic_trend(db: Session = Depends(get_db)):
 
-    result = db.execute(text("""
-        SELECT
-            label,
-            COUNT(*) AS total
-        FROM network_traffic
-        GROUP BY label
-        ORDER BY total DESC
-    """))
+    predictions = predict_live_traffic(db)
+
+    counter = Counter(
+        p["prediction"]
+        for p in predictions
+    )
 
     return [
         {
-            "name": row.label,
-            "traffic": row.total
+            "name": label,
+            "traffic": total
         }
-        for row in result
+        for label, total in counter.items()
     ]

@@ -6,7 +6,7 @@ import pandas as pd
 
 from app.database.database import get_db
 from app.database.models import NetworkTraffic
-
+from app.database.models import Alert
 router = APIRouter()
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -108,6 +108,19 @@ def predict_attack(
         if predicted_attack == "BENIGN"
         else "Attack Detected"
     )
+    if predicted_attack != "BENIGN":
+
+        new_alert = Alert(
+            attack_type=predicted_attack,
+            severity=threat,
+            confidence=confidence,
+            source=f"Traffic ID: {traffic_id}",
+            status="Open"
+        )
+
+        db.add(new_alert)
+        db.commit()
+        db.refresh(new_alert)
 
     return {
 
@@ -122,7 +135,8 @@ def predict_attack(
         "threat_level": threat,
 
         "risk_score": risk,
-        "confidence": round(confidence, 2)
+        "confidence": round(confidence, 2),
+        "alert_created": predicted_attack != "BENIGN"
 
 
     }

@@ -2,13 +2,12 @@ import { useEffect, useState } from "react";
 import API from "../services/api";
 import AttackTypesChart from "../components/AttackTypesChart";
 import ProtocolPieChart from "../components/ProtocolPieChart";
-import TopPortsChart from "../components/TopPortsChart";
 import TrafficTrendChart from "../components/TrafficTrendChart";
 function Analytics() {
   const [attackTypes, setAttackTypes] = useState([]);
   const [protocolData, setProtocolData] = useState([]);
-  const [topPorts, setTopPorts] = useState([]);
   const [trafficTrend, setTrafficTrend] = useState([]);
+  const [topPorts, setTopPorts] = useState([]);
   const [summary,setSummary]=useState({
     total_traffic:0,
     benign_traffic:0,
@@ -16,13 +15,23 @@ function Analytics() {
     top_attack:"",
     
   });
-  useEffect(() => {
+useEffect(() => {
+
+  const loadAnalytics = () => {
     fetchSummary();
     fetchAttackTypes();
     fetchProtocolDistribution();
     fetchTopPorts();
     fetchTrafficTrend();
-  }, []);
+  };
+
+  loadAnalytics();
+
+  const interval = setInterval(loadAnalytics, 10000);
+
+  return () => clearInterval(interval);
+
+}, []);
 
   const fetchAttackTypes = async () => {
     try {
@@ -33,13 +42,16 @@ function Analytics() {
     }
   };
   const fetchTopPorts = async () => {
-  try {
-    const response = await API.get("/analytics/top-ports");
-    setTopPorts(response.data);
-  } catch (error) {
-    console.log(error);
-  }
-};
+    try {
+      const response = await API.get("/analytics/top-ports");
+      setTopPorts(response.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+
+
 const fetchSummary = async () => {
   try {
     const response = await API.get("/analytics/summary");
@@ -173,20 +185,7 @@ const fetchTrafficTrend = async () => {
 
           <ProtocolPieChart data={protocolData} />
         </div>
-        <div
-            style={{
-            backgroundColor: "#263143",
-            padding: "20px",
-            borderRadius: "12px",
-            marginTop: "20px",
-      }}
->
-    <h2 style={{ marginBottom: "20px" }}>
-    Top 10 Destination Ports
-    </h2>
-
-    <TopPortsChart data={topPorts} />
-    </div>
+       
     <div
       style={{
       backgroundColor: "#263143",

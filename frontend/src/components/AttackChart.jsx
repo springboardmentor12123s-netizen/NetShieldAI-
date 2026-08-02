@@ -16,12 +16,27 @@ function AttackChart() {
 
   useEffect(() => {
     fetchChart();
+
+    const interval = setInterval(() => {
+      fetchChart();
+    }, 5000);
+
+    return () => clearInterval(interval);
+
   }, []);
 
   const fetchChart = async () => {
     try {
-      const response = await API.get("/dataset/attack-distribution");
-      setData(response.data);
+
+      const response = await API.get("/analytics/attack-types");
+
+      const chartData = response.data.map(item => ({
+        label: item.label,
+        count: item.total,
+      }));
+
+      setData(chartData);
+
     } catch (error) {
       console.log(error);
     }
@@ -29,10 +44,13 @@ function AttackChart() {
 
   return (
     <div className="chart-card">
-      <h2>Attack Distribution</h2>
+
+      <h2>Live Attack Distribution</h2>
 
       <ResponsiveContainer width="100%" height={400}>
+
         <BarChart data={data}>
+
           <CartesianGrid strokeDasharray="3 3" />
 
           <XAxis
@@ -52,8 +70,11 @@ function AttackChart() {
             fill="#2563eb"
             radius={[6, 6, 0, 0]}
           />
+
         </BarChart>
+
       </ResponsiveContainer>
+
     </div>
   );
 }
