@@ -25,16 +25,19 @@ export default function LoginPage() {
           // 2. Send it as JSON so FastAPI's Pydantic can read it
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username: username.trim().toLowerCase(), password }),
       });
 
       if (!response.ok) {
-        throw new Error("Invalid credentials");
+        const errorData = await response.json().catch(() => null);
+        const message = errorData?.detail ?? errorData?.message ?? "Invalid credentials";
+        throw new Error(message);
       }
 
       const data = await response.json();
       
       // 3. Store the returned data securely to maintain the session
+      localStorage.setItem("token", data.access_token); // FIXED: Added missing token
       localStorage.setItem("username", data.username);
       localStorage.setItem("userRole", data.role); 
       

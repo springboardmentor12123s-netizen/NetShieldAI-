@@ -21,46 +21,54 @@ interface IncidentItem {
 
 export default function AnalyticsPage() {
   const [incidents, setIncidents] = useState<IncidentItem[]>([]);
-  const [summary, setSummary] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function load() {
+    async function loadLiveStats() {
       try {
-        const [incidentsRes, reportsRes] = await Promise.all([
-          // Changed to /api/alerts to ensure we grab the rich mock data (severity, risk_score)
-          fetch("http://127.0.0.1:8000/api/alerts"),
-          fetch("http://127.0.0.1:8000/api/reports"),
-        ]);
-
-        const incidentsData = await incidentsRes.json();
-        const reportsData = await reportsRes.json();
+        // Just fetch the live alerts, we will calculate the stats dynamically!
+        const res = await fetch("http://127.0.0.1:8000/api/alerts");
+        const incidentsData = await res.json();
         
-        // Handles both { data: [...] } and strict array [...] payload structures
         setIncidents(incidentsData.data || incidentsData || []);
-        setSummary(reportsData.data?.summary || null);
       } catch (error) {
-        console.error(error);
+        console.error("Failed to fetch live stats:", error);
       } finally {
         setLoading(false);
       }
     }
 
-    load();
+    // 1. Initial Load
+    loadLiveStats();
+
+    // 2. Set up Auto-Refresh (Polling every 3 seconds)
+    const intervalId = setInterval(loadLiveStats, 3000);
+
+    // 3. Clean up interval if user leaves the page
+    return () => clearInterval(intervalId);
   }, []);
 
-  // FIXED: Normalizes all severity strings to lowercase so the math matches
-  const severityBreakdown = useMemo(() => {
+  // Calculate dynamic stats based on live traffic
+  const { severityBreakdown, averageRisk } = useMemo(() => {
     const counts: Record<string, number> = { critical: 0, high: 0, medium: 0, low: 0 };
+    let totalRisk = 0;
+
     incidents.forEach((incident) => {
+      // Calculate Severities
       const sev = (incident.severity || "high").toLowerCase();
       if (counts[sev] !== undefined) {
         counts[sev]++;
       } else {
         counts[sev] = 1;
       }
+      
+      // Calculate Risk
+      totalRisk += (incident.risk_score || 0);
     });
-    return counts;
+
+    const avgRisk = incidents.length > 0 ? (totalRisk / incidents.length).toFixed(1) : "0";
+
+    return { severityBreakdown: counts, averageRisk: avgRisk };
   }, [incidents]);
 
   if (loading) {
@@ -80,24 +88,28 @@ export default function AnalyticsPage() {
     >
       <div className="mx-auto max-w-7xl space-y-6">
         
-        {/* Header Card (FIXED: Removed redundant h1) */}
+        {/* Header Card */}
         <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-6 shadow-xl">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm uppercase tracking-[0.3em] text-slate-400">Threat Intelligence</p>
               <h1 className="mt-2 text-3xl font-semibold text-slate-100">Analytics Overview</h1>
             </div>
-            <div className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-sm text-emerald-300">
+            <div className="flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-sm text-emerald-300">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
               SOC operations online
             </div>
           </div>
         </div>
 
-        {/* Metrics Grid */}
+        {/* Metrics Grid - NOW FULLY DYNAMIC */}
         <div className="grid gap-4 md:grid-cols-4">
           <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4">
-            <div className="flex items-center gap-3 text-blue-400"><Activity size={18} /> Total packets</div>
-            <p className="mt-3 text-3xl font-semibold">{summary?.total_packets ?? 0}</p>
+            <div className="flex items-center gap-3 text-blue-400"><Activity size={18} /> Total packets tracked</div>
+            <p className="mt-3 text-3xl font-semibold">{incidents.length}</p>
           </div>
           <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4">
             <div className="flex items-center gap-3 text-red-400"><AlertTriangle size={18} /> Critical alerts</div>
@@ -105,7 +117,7 @@ export default function AnalyticsPage() {
           </div>
           <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4">
             <div className="flex items-center gap-3 text-amber-400"><TrendingUp size={18} /> Average risk</div>
-            <p className="mt-3 text-3xl font-semibold">{summary?.risk_score_avg ?? 0}</p>
+            <p className="mt-3 text-3xl font-semibold">{averageRisk}</p>
           </div>
           <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4">
             <div className="flex items-center gap-3 text-emerald-400"><ShieldCheck size={18} /> Incident count</div>
@@ -126,7 +138,6 @@ export default function AnalyticsPage() {
                 </div>
               ) : (
                 incidents.map((incident, idx) => {
-                  // FIXED: Added strict fallbacks to map correctly regardless of API shape
                   const title = incident.incident || incident.title || incident.incident_id || "Unknown Threat";
                   const source = incident.source || incident.source_ip || "Unknown IP";
                   const dest = incident.destination || incident.destination_ip || "Unknown Dest";
@@ -165,7 +176,7 @@ export default function AnalyticsPage() {
             </div>
           </div>
 
-          {/* Severity Breakdown (FIXED: Displays correct totals) */}
+          {/* Severity Breakdown */}
           <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-6 h-fit">
             <h2 className="text-xl font-semibold mb-4 text-slate-100">Severity breakdown</h2>
             <div className="space-y-3">

@@ -35,6 +35,7 @@ export default function SignupPage() {
         // FastApi expects JSON for this endpoint, unlike the OAuth2 form data for login
         body: JSON.stringify({
           email: formData.email,
+          full_name: formData.fullName,
           password: formData.password,
           role: formData.role,
         }),
@@ -42,7 +43,13 @@ export default function SignupPage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.detail || "Registration failed");
+        const detail = errorData.detail ?? errorData.message ?? "Registration failed";
+        const formattedError = typeof detail === "string"
+          ? detail
+          : Array.isArray(detail)
+            ? detail.map((item) => `${item.loc?.join(".")}: ${item.msg}`).join("; ")
+            : JSON.stringify(detail);
+        throw new Error(formattedError);
       }
 
       setSuccess(true);
@@ -52,7 +59,7 @@ export default function SignupPage() {
       }, 2000);
       
     } catch (err: any) {
-      console.error("Full error details:", err); // <-- This prints the raw error to your F12 Console
+      setError(err.message || "An unexpected error occurred."); // <-- This prints the raw error to your F12 Console
       
       // Safety check in case FastAPI sends an array instead of a string
       if (typeof err.message === 'string') {

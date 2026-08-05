@@ -55,7 +55,7 @@ def verify_password(plain_password, hashed_password):
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
-    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=15))
+    expire = datetime.utcnow() + (expires_delta if expires_delta else timedelta(minutes=120))
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
@@ -70,27 +70,30 @@ def authenticate_user(username: str, password: str):
 
 
 # 5. Routes
-@router.post("/login", response_model=Token)
-async def login_for_access_token(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db),
-):
-    del db
-    user = authenticate_user(form_data.username, form_data.password)
-    if not user:
+@router.post("/login")
+def login(user_credentials: UserLoginSchema, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.username == user_credentials.username).first()
+    
+    if not user or not verify_password(user_credentials.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-            headers={"WWW-Authenticate": "Bearer"},
+            detail="Invalid credentials"
         )
 
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    # Inject username AND role into the signed JWT payload
     access_token = create_access_token(
-        data={"sub": user["username"], "role": user["role"]},
-        expires_delta=access_token_expires,
+        data={
+            "sub": user.username,
+            "role": user.role  # <-- Role is securely encoded into JWT
+        }
     )
-
-    return {"access_token": access_token, "token_type": "bearer", "role": user["role"]}
+    
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "username": user.username,
+        "role": user.role  # Returned to Next.js for client-side state
+    }
 
 
 @router.post("/signup", status_code=status.HTTP_201_CREATED)

@@ -74,10 +74,11 @@ IN_MEMORY_ALERTS = []
 
 class IncidentUpdate(BaseModel):
     status: str  # 'Investigating', 'Isolated', 'Resolved'
-    assigned_to: str = None
+    assigned_to: str = "System"
     
 class UserCreate(BaseModel):
-    username: str
+    email: str
+    full_name: str
     password: str
     role: str
 
@@ -102,19 +103,20 @@ class IsolateRequest(BaseModel):
 def signup_user(user: UserCreate, db: Session = Depends(get_db)):
     """Registers a new user in the PostgreSQL database."""
     try:
+        normalized_email = user.email.strip().lower()
         existing_user = db.execute(
-            text("SELECT id FROM users WHERE username = :u"), {"u": user.username}
+            text("SELECT id FROM users WHERE username = :u"), {"u": normalized_email}
         ).fetchone()
         
         if existing_user:
-            raise HTTPException(status_code=400, detail="Username already exists")
+            raise HTTPException(status_code=400, detail="Email already registered")
 
         db.execute(
             text("INSERT INTO users (username, hashed_password, role) VALUES (:u, :p, :r)"),
-            {"u": user.username, "p": pwd_context.hash(user.password), "r": user.role}
+            {"u": normalized_email, "p": pwd_context.hash(user.password), "r": user.role}
         )
         db.commit()
-        return {"status": "success", "message": f"User {user.username} created."}
+        return {"status": "success", "message": f"User {normalized_email} created."}
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
@@ -122,9 +124,10 @@ def signup_user(user: UserCreate, db: Session = Depends(get_db)):
 @app.post("/api/auth/login")
 def login_user(req: LoginRequest, db: Session = Depends(get_db)):
     """Authenticates a user and writes to the audit log."""
+    normalized_username = req.username.strip().lower()
     user = db.execute(
         text("SELECT id, username, hashed_password, role FROM users WHERE username = :u"),
-        {"u": req.username}
+        {"u": normalized_username}
     ).fetchone()
 
     # Handle Invalid Login
@@ -218,31 +221,36 @@ def calculate_risk_metrics(label, dest_port):
 
 @app.get("/api/alerts")
 async def get_live_alerts():
-    """Generates real-time alerts from anomalous network traffic."""
+    """Generates real-time alerts directly from MongoDB."""
     alerts_list = []
     if mongo_db is not None:
         try:
+            # We removed the {"_id": 0} filter so the real ID is returned
             raw_threats = list(mongo_db.network_traffic_stats.find(
-                {"Label": {"$nin": ["BENIGN", "0", 0]}}, {"_id": 0}
+                {"Label": {"$nin": ["BENIGN", "0", 0]}}
             ).sort("_id", -1).limit(50))
             
-            for index, threat in enumerate(raw_threats):
+            for threat in raw_threats:
                 label = threat.get("Label", "Anomalous Traffic")
                 dest_port = threat.get("Destination Port", 0)
+                
+                # Assuming your risk function is already defined in your file
                 risk_score, severity = calculate_risk_metrics(label, dest_port)
                 
                 alerts_list.append({
-                    "id": f"INC-{1000 + index}",
+                    "id": str(threat["_id"]),  # Converts Mongo ObjectId to string
+                    "incident_id": str(threat["_id"]),
                     "incident": f"Detected {label}",
                     "severity": severity,
                     "risk_score": risk_score,
                     "source": threat.get("Source IP", "192.168.1.50"),
                     "destination": f"{threat.get('Destination IP', '10.0.0.1')}:{dest_port}",
-                    "timestamp": threat.get("timestamp", "Just now")
+                    "timestamp": threat.get("timestamp", "Just now"),
+                    "status": threat.get("status", "Active") # Grabs the real status!
                 })
             return {"data": alerts_list, "count": len(alerts_list)}
         except Exception as e:
-            logger.error(f"Error fetching alerts: {e}")
+            print(f"Error fetching MongoDB alerts: {e}")
             
     return {"data": [], "count": 0}
 @app.get("/api/incidents")
@@ -270,6 +278,30 @@ async def get_incidents():
 
     return {"data": list(grouped.values()), "count": len(grouped)}
 
+@app.put("/api/incidents/{incident_id}")
+def update_incident_status(incident_id: str, update: IncidentUpdate):
+    """Updates the packet status directly in MongoDB so the UI instantly syncs."""
+    if mongo_db is None:
+        raise HTTPException(status_code=500, detail="MongoDB not connected")
+        
+    try:
+        # Locates the exact packet in MongoDB using its _id and updates the status
+        result = mongo_db.network_traffic_stats.update_one(
+            {"_id": ObjectId(incident_id)},
+            {"$set": {
+                "status": update.status,
+                "assigned_to": update.assigned_to
+            }}
+        )
+        
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Incident not found in MongoDB.")
+            
+        return {"status": "success", "message": f"Incident {incident_id} updated to {update.status}."}
+        
+    except Exception as e:
+        print(f"Error isolating host in MongoDB: {e}")
+
 @app.post("/api/incidents")
 def create_incident(req: IsolateRequest, db: Session = Depends(get_db)):
     """Creates a new incident ticket when a critical threat is detected."""
@@ -294,30 +326,6 @@ def create_incident(req: IsolateRequest, db: Session = Depends(get_db)):
 
 
 
-@app.put("/api/incidents/{incident_id}")
-def update_incident_status(incident_id: str, update: IncidentUpdate, db: Session = Depends(get_db)):
-    """Allows a SOC analyst to update the status of an active incident."""
-    try:
-        # Test query to see if the Incident table even responds
-        incident = db.query(Incident).filter(Incident.incident_id == incident_id).first()
-        if not incident:
-            # Let's auto-create it on the fly if it doesn't exist yet so it stops 404ing/crashing
-            incident = Incident(incident_id=incident_id, source_ip="192.168.1.100", status="New")
-            db.add(incident)
-            db.commit()
-            db.refresh(incident)
-            
-        incident.status = update.status
-        incident.assigned_to = update.assigned_to
-        db.commit()
-        return {"status": "success", "message": f"Incident {incident_id} updated to {update.status}."}
-    except Exception as e:
-        db.rollback()
-        import traceback
-        err_msg = traceback.format_exc()
-        print("--- FULL TRACEBACK ERROR ---")
-        print(err_msg)
-        raise HTTPException(status_code=500, detail=str(e))
     
 @app.delete("/api/users/{user_id}")
 def delete_user(user_id: int, db: Session = Depends(get_db)):
@@ -380,20 +388,28 @@ async def receive_live_traffic(request: Request) -> dict:
     return {"status": "success", "inserted": inserted}
 
 @app.get("/api/reports")
-async def reports(db: Session = Depends(get_db)) -> dict:
-    """Generates an executive summary report using direct database metrics."""
-    # Query the database directly
-    total_incidents = db.query(Incident).count()
-    isolated_count = db.query(Incident).filter(Incident.status == "Isolated").count()
+async def get_reports():
+    """Generates dashboard stats using live counts from MongoDB."""
+    total_packets = 0
+    isolated_count = 0
     
-    # Get the standard snapshot just for background packet stats if needed
-    snapshot = build_dashboard_snapshot(SAMPLE_PACKETS)
+    if mongo_db is not None:
+        try:
+            # Count every packet the sniffer has logged
+            #total_packets = mongo_db.network_traffic_stats.count_documents({})
+            # below is for only bad packets
+            total_packets = mongo_db.network_traffic_stats.count_documents({"Label": {"$nin": ["BENIGN", "0", 0]}})
+            
+            # Count only the packets where you clicked "Isolate Host"
+            isolated_count = mongo_db.network_traffic_stats.count_documents({"status": "Isolated"})
+        except Exception as e:
+            print(f"Error counting MongoDB stats: {e}")
 
     return {
         "data": {
             "summary": {
-                **snapshot,
-                "database_incidents_tracked": total_incidents,
+                "total_packets": total_packets,
+                "database_incidents_tracked": total_packets,
                 "hosts_actively_isolated": isolated_count,
             },
             "recommendations": [

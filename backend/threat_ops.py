@@ -1,5 +1,5 @@
 from __future__ import annotations
-
+from notifications import send_critical_alert
 from collections import Counter
 from datetime import datetime, timezone
 from typing import Any, Dict, List
@@ -51,12 +51,28 @@ def classify_threat(packet: Dict[str, Any]) -> Dict[str, Any]:
         risk_score = min(100, risk_score + 4)
     if packet.get("Flow Duration", 0) > 1000:
         risk_score = min(100, risk_score + 3)
+        
+    # Extract source IP and severity early so we can pass them to the alert
+    source_ip = packet.get("Source IP") or packet.get("src_ip") or "unknown"
+    severity = profile["severity"]
+    
+    
+    # --- NEW: Fire Slack alert for high-risk threats ---
+    # We restrict this to scores >= 90 to prevent Slack from rate-limiting 
+    # the bot during a massive flood of packets.
+    if risk_score >= 90:
+        send_critical_alert(
+            source_ip=source_ip,
+            threat_type=label,
+            severity=severity.upper(),
+            details=f"AI Risk Score: {risk_score}. Immediate isolation recommended."
+        )
 
     return {
         "category": label,
-        "severity": profile["severity"],
+        "severity": severity,
         "risk_score": risk_score,
-        "source_ip": packet.get("Source IP") or packet.get("src_ip") or "unknown",
+        "source_ip": source_ip,
         "destination_ip": packet.get("Destination IP") or packet.get("dst_ip") or "unknown",
         "destination_port": packet.get("Destination Port") or packet.get("DestPort") or 0,
         "timestamp": datetime.now(timezone.utc).isoformat(),
