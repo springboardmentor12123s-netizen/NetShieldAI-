@@ -65,14 +65,14 @@ export default function LoginPage() {
 
         <form onSubmit={handleLogin} className="space-y-5">
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-300">Username</label>
+            <label className="mb-2 block text-sm font-medium text-slate-300">User Id</label>
             <input
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
               className="w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-3 text-white outline-none transition focus:border-blue-500"
-              placeholder="e.g., Admin User"
+              placeholder="e.g., a@gmail.com"
             />
           </div>
 
@@ -97,6 +97,12 @@ export default function LoginPage() {
         </form>
 
         <div className="mt-6 text-center text-sm text-slate-400">
+          Forgot your password?{" "}
+          <Link href="/forgot" className="font-medium text-blue-400 transition hover:text-blue-300">
+            Reset it here
+          </Link>
+        </div>
+        <div className="mt-3 text-center text-sm text-slate-400">
           Don&apos;t have an account?{" "}
           <Link href="/signup" className="font-medium text-blue-400 transition hover:text-blue-300">
             Sign up here

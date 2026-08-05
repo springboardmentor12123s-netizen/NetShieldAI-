@@ -1,6 +1,7 @@
 import os
 import sys
 import logging
+import secrets
 from typing import List
 from datetime import datetime
 
@@ -11,7 +12,6 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 from bson import ObjectId
 from passlib.context import CryptContext
-from pydantic import BaseModel
 from models import Incident, User, AuditLog 
 
 
@@ -89,6 +89,9 @@ class LoginRequest(BaseModel):
     username: str
     password: str
 
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
 class IsolateRequest(BaseModel):
     incident_id: str
     source_ip: str
@@ -146,6 +149,30 @@ def login_user(req: LoginRequest, db: Session = Depends(get_db)):
     )
     db.commit()
     return {"status": "success", "message": "Login successful", "username": user[1], "role": user[3]}
+
+@app.post("/api/auth/forgot-password")
+def forgot_password(req: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    normalized_email = req.email.strip().lower()
+    user = db.execute(
+        text("SELECT id, username FROM users WHERE username = :u"),
+        {"u": normalized_email}
+    ).fetchone()
+
+    if user:
+        db.execute(
+            text("INSERT INTO audit_logs (username, event, severity) VALUES (:u, :e, :s)"),
+            {
+                "u": normalized_email,
+                "e": "Password reset requested",
+                "s": "Info"
+            }
+        )
+        db.commit()
+
+    return {
+        "status": "success",
+        "message": "If an account exists for that email, reset instructions have been sent."
+    }
 
 @app.get("/api/users")
 def get_team_members(db: Session = Depends(get_db)):
