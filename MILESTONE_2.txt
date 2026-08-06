@@ -1,0 +1,88 @@
+================================================================================
+NETSHIELD AI SOC PLATFORM - MILESTONE 2 DOCUMENTATION
+================================================================================
+
+--------------------------------------------------------------------------------
+1. BRIEF INTRODUCTION TO MILESTONE 2
+--------------------------------------------------------------------------------
+Milestone 2 focuses on building high-throughput network packet log ingestion,
+integrating NoSQL database storage for telemetry, implementing full-duplex 
+WebSocket real-time streaming, configuring asynchronous background task queues,
+and assembling an interactive Next.js web application for SOC analysts.
+
+--------------------------------------------------------------------------------
+2. PROBLEM STATEMENT
+--------------------------------------------------------------------------------
+Relational databases struggle to scale when receiving continuous, high-volume
+streams of network packet logs (thousands of records per second). Furthermore:
+  * Security analysts require continuous, zero-latency visibility into live
+    network traffic and anomalies without manual page reloads.
+  * Heavy computational tasks (such as background anomaly scanning and batch
+    analytics) cannot be executed synchronously on the main API server without
+    blocking user HTTP requests.
+  * Network security operations need a dynamic, responsive user interface with
+    live metrics, real-time charts, and interactive filtering options.
+
+--------------------------------------------------------------------------------
+3. TECHNIQUES USED & HOW IT IS RESOLVED
+--------------------------------------------------------------------------------
+Milestone 2 resolves these operational challenges through the following techniques:
+  * NoSQL Telemetry Database: Integrated MongoDB using Motor (an asynchronous 
+    Python driver) for high-performance, non-blocking ingestion of network log 
+    documents into the `traffic_logs` collection.
+  * Real-Time WebSocket Streaming: Implemented custom WebSocket routing and a
+    `ConnectionManager` in FastAPI (`app/websocket/`) to push live packet logs
+    and threat alerts directly to connected web browser sessions.
+  * Asynchronous Worker & Scheduler: Integrated Celery background workers with
+    Redis serving as both the task broker and result store. Configured Celery Beat
+    for executing periodic network traffic scans.
+  * Network Telemetry Simulation Engine: Built Python traffic emulation tooling
+    (`scripts/generate_traffic.py`, `scripts/load_datasets.py`) loading packet
+    signatures from benchmark datasets (CICIDS2017 and UNSW-NB15).
+  * Modern SOC Frontend Web App: Built a Next.js (TypeScript, React, TailwindCSS,
+    Shadcn UI, Chart.js) frontend client equipped with dynamic charts, live alert
+    tables, and responsive navigation modules.
+
+--------------------------------------------------------------------------------
+4. TASK-BY-TASK BREAKDOWN
+--------------------------------------------------------------------------------
+Task 2.1: MongoDB NoSQL Storage Integration & Repository Layer
+  - Configured async MongoDB client initialization (`app/core/mongodb.py`).
+  - Created `TrafficRepository` (`app/repositories/traffic_repository.py`) to handle
+    packet flow insertions, range queries, aggregations, and filtering.
+
+Task 2.2: Traffic Telemetry REST API Endpoints
+  - Developed REST endpoints (`app/api/v1/traffic.py`) supporting time-series
+    queries, flow pagination, packet inspection, and protocol stats.
+
+Task 2.3: WebSocket Connection Manager & Alert Pipeline
+  - Built `ConnectionManager` (`app/websocket/connection_manager.py`) to manage
+    active client sockets and handle concurrent broadcasts.
+  - Implemented `/ws/traffic` WebSocket endpoint (`app/websocket/traffic_ws.py`)
+    broadcasting live network events to frontend subscribers.
+
+Task 2.4: Celery Worker & Redis Task Infrastructure
+  - Configured Celery application settings (`app/tasks/celery_app.py`).
+  - Defined asynchronous tasks (`app/tasks/traffic_tasks.py`) for automated log
+    cleaning, periodic threat scans, and background aggregation.
+
+Task 2.5: Synthetic Telemetry Generator & Dataset Loaders
+  - Implemented `scripts/load_datasets.py` to ingest static CSV flows from
+    CICIDS2017 and UNSW-NB15 benchmark datasets into MongoDB.
+  - Built `scripts/generate_traffic.py` to continuously simulate network flows
+    (benign packets, DoS floods, recon sweeps) for live testing.
+
+Task 2.6: Next.js SOC Dashboard & UI Components
+  - Assembled Next.js frontend pages (`frontend/src/pages/` and `src/app/`).
+  - Built interactive charts, real-time alert widgets, and telemetry tables.
+  - Connected the client interface to backend REST APIs and WebSocket streams.
+
+--------------------------------------------------------------------------------
+5. FINAL SUMMARY OF MILESTONE 2
+--------------------------------------------------------------------------------
+Milestone 2 successfully delivered high-scale telemetry ingestion, real-time
+streaming, background task processing, and frontend visualization for NetShield AI.
+By combining MongoDB, WebSockets, Redis, Celery, and Next.js, the system provides
+SOC analysts with a live, zero-latency operational dashboard capable of processing
+and displaying network events in real time.
+================================================================================

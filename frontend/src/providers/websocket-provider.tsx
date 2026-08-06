@@ -82,10 +82,10 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
             };
 
             ws.onerror = (error) => {
-                console.error("WebSocket error:", error);
+                console.warn("WebSocket error:", error);
             };
         } catch (e) {
-            console.error("WebSocket connection initiation failed:", e);
+            console.warn("WebSocket connection initiation failed:", e);
         }
     }, [WS_URL]);
 

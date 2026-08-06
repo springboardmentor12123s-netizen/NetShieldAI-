@@ -51,3 +51,7 @@ coverage.xml
 # Misc
 *.bak
 *.tmp
+
+# Large datasets
+backend/app/ai/datasets/Network Intrusion dataset(CIC-IDS- 2017)/
+

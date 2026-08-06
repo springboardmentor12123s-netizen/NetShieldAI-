@@ -38,8 +38,13 @@ class ConnectionManager:
             f"Client WebSocket connected to channel: {channel}. Total connections for {channel}: {len(self.active_connections[channel])}"
         )
 
-        # Make sure Redis listener for this channel is active
-        await self.start_redis_listener(channel)
+        # Make sure Redis listener for this channel is active if Redis is running
+        if await RedisManager.is_available():
+            await self.start_redis_listener(channel)
+        else:
+            logger.warning(
+                f"Redis is not available - WebSocket running in local in-memory fallback helper mode for channel: {channel}"
+            )
 
     def disconnect(self, websocket: WebSocket, channel: str) -> None:
         """Remove connection from the channel client pool."""

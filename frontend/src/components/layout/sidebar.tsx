@@ -1,21 +1,26 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import NextLink from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import {
-    Shield,
     LayoutDashboard,
-    Users,
-    UserSquare2,
     Activity,
     BarChart3,
-    History,
     Settings,
     LogOut,
     ChevronLeft,
-    ChevronRight
+    ChevronRight,
+    Brain,
+    TrendingUp,
+    Bell,
+    Globe,
+    User,
+    Layers,
+    ClipboardList,
+    ShieldAlert,
+    FileText
 } from "lucide-react";
 
 interface SidebarItem {
@@ -26,13 +31,19 @@ interface SidebarItem {
 }
 
 const SIDEBAR_ITEMS: SidebarItem[] = [
-    { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
-    { name: "Traffic Monitor", href: "/traffic", icon: Activity, roles: ["admin", "security_analyst"] },
-    { name: "Traffic Analytics", href: "/traffic/analytics", icon: BarChart3, roles: ["admin", "security_analyst"] },
-    { name: "User Management", href: "/users", icon: Users, roles: ["admin"] },
-    { name: "Team Management", href: "/teams", icon: UserSquare2, roles: ["admin", "security_analyst"] },
-    { name: "Audit Logs", href: "/audit-logs", icon: History, roles: ["admin"] },
-    { name: "Profile & settings", href: "/profile", icon: Settings },
+    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    { name: "Network Monitoring", href: "/network-monitoring", icon: Activity, roles: ["admin", "security_analyst"] },
+    { name: "AI Detection", href: "/ai-detection", icon: Brain, roles: ["admin", "security_analyst"] },
+    { name: "Threat Prediction", href: "/threat-prediction", icon: TrendingUp, roles: ["admin", "security_analyst"] },
+    { name: "Threat Classification", href: "/threat-classification", icon: Layers, roles: ["admin", "security_analyst"] },
+    { name: "Detection Reports", href: "/detection-reports", icon: ClipboardList, roles: ["admin", "security_analyst"] },
+    { name: "Alert Management", href: "/alert-management", icon: Bell, roles: ["admin", "security_analyst", "analyst"] },
+    { name: "Incident Management", href: "/incident-management", icon: ShieldAlert, roles: ["admin", "security_analyst", "analyst"] },
+    { name: "Threat Intelligence", href: "/threat-intelligence", icon: Globe, roles: ["admin", "security_analyst"] },
+    { name: "Analytics", href: "/analytics", icon: BarChart3, roles: ["admin", "security_analyst"] },
+    { name: "Reports", href: "/reports", icon: FileText, roles: ["admin", "security_analyst"] },
+    { name: "Profile", href: "/profile", icon: User },
+    { name: "Settings", href: "/settings", icon: Settings }
 ];
 
 export function Sidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCollapsed: (val: boolean) => void }) {
@@ -51,8 +62,8 @@ export function Sidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCo
             {/* Sidebar Header */}
             <div className="flex h-16 items-center justify-between px-4 border-b border-slate-900">
                 <NextLink href="/dashboard" className="flex items-center gap-2.5 font-bold text-white overflow-hidden">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-indigo-500/40 bg-indigo-955/30 text-indigo-400">
-                        <Shield className="h-4.5 w-4.5" />
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-indigo-500/40 bg-indigo-950/30 text-indigo-400">
+                        <Brain className="h-4.5 w-4.5 animate-pulse" />
                     </div>
                     {!collapsed && (
                         <span className="text-sm font-semibold tracking-wide">
@@ -71,7 +82,7 @@ export function Sidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCo
             </div>
 
             {/* Navigation Items */}
-            <nav className="flex-1 space-y-1.5 px-3 py-6 overflow-y-auto">
+            <nav className="flex-1 space-y-1 px-3 py-6 overflow-y-auto">
                 {collapsed && (
                     <div className="flex justify-center pb-4">
                         <button
@@ -84,19 +95,19 @@ export function Sidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCo
                 )}
 
                 {filteredItems.map((item) => {
-                    const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+                    const isParentActive = pathname === item.href;
                     const Icon = item.icon;
 
                     return (
                         <NextLink
                             key={item.href}
                             href={item.href}
-                            className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${isActive
-                                    ? "bg-indigo-600/10 text-indigo-400 border-l-2 border-indigo-500 font-semibold"
-                                    : "text-slate-400 hover:bg-slate-900 hover:text-white"
+                            className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all ${isParentActive
+                                ? "bg-indigo-650/10 text-indigo-400 border-l border-indigo-500 font-semibold"
+                                : "text-slate-400 hover:bg-slate-900 hover:text-white"
                                 }`}
                         >
-                            <Icon className={`h-4.5 w-4.5 shrink-0 ${isActive ? "text-indigo-400" : "text-slate-400"}`} />
+                            <Icon className={`h-4.5 w-4.5 shrink-0 ${isParentActive ? "text-indigo-405" : "text-slate-450"}`} />
                             {!collapsed && <span>{item.name}</span>}
                         </NextLink>
                     );
@@ -116,7 +127,7 @@ export function Sidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCo
 
                 <button
                     onClick={logout}
-                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-red-400 hover:bg-red-950/20 hover:text-red-300 transition-colors"
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-red-400 hover:bg-red-950/20 hover:text-red-300 transition-colors"
                 >
                     <LogOut className="h-4.5 w-4.5 shrink-0" />
                     {!collapsed && <span>System Logout</span>}
@@ -125,4 +136,5 @@ export function Sidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCo
         </aside>
     );
 }
+
 export default Sidebar;

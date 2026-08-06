@@ -72,7 +72,7 @@ def get_auth_token(api_url: str) -> str:
     login_url = f"{api_url}/auth/login"
     payload = {"email": "admin@netshield.io", "password": "AdminPassword123!"}
     try:
-        r = requests.post(login_url, json=payload, timeout=5)
+        r = requests.post(login_url, json=payload, timeout=30)
         r.raise_for_status()
         token = r.json()["data"]["access_token"]
         print("OK: Logged in successfully to API server.")
@@ -135,7 +135,7 @@ def main():
             while True:
                 batch = [generate_packet() for _ in range(args.batch_size)]
                 payload = {"packets": batch}
-                r = requests.post(ingest_url, json=payload, headers=headers, timeout=5)
+                r = requests.post(ingest_url, json=payload, headers=headers, timeout=30)
                 r.raise_for_status()
                 print(f"Ingested {len(batch)} packets via API gateway. Response code: {r.status_code}")
                 time.sleep(args.interval)

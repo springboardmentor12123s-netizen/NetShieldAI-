@@ -16,7 +16,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const PUBLIC_PATHS = ["/login", "/forgot-password", "/reset-password"];
+const PUBLIC_PATHS = ["/login", "/forgot-password", "/reset-password", "/register"];
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<UserProfile | null>(null);
@@ -25,11 +25,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const [, startTransition] = useTransition();
 
+    const normalizeUserRole = (u: any) => {
+        if (!u) return u;
+        const rawRole = u.role || u.role_name || "";
+        const role = rawRole.toLowerCase().trim().replace(/\s+/g, "_");
+        return { ...u, role };
+    };
+
     const refreshProfile = async () => {
         try {
             const profile = await authService.getProfile();
-            setUser(profile);
-            localStorage.setItem("netshield_user", JSON.stringify(profile));
+            const normalized = normalizeUserRole(profile);
+            setUser(normalized);
+            localStorage.setItem("netshield_user", JSON.stringify(normalized));
         } catch (error) {
             console.error("Failed to fetch user profile:", error);
             logout();
@@ -41,11 +49,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
             const response = await authService.login(credentials);
             const { access_token, refresh_token, user: userData } = response.data;
+            const normalized = normalizeUserRole(userData);
 
             localStorage.setItem("netshield_access_token", access_token);
             localStorage.setItem("netshield_refresh_token", refresh_token);
-            localStorage.setItem("netshield_user", JSON.stringify(userData));
-            setUser(userData);
+            localStorage.setItem("netshield_user", JSON.stringify(normalized));
+            setUser(normalized);
 
             startTransition(() => {
                 router.push("/dashboard");
@@ -84,11 +93,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             if (storedToken && storedUser) {
                 try {
-                    setUser(JSON.parse(storedUser));
+                    const parsedUser = JSON.parse(storedUser);
+                    setUser(normalizeUserRole(parsedUser));
                     // Refresh background profile to ensure session is valid
                     const profile = await authService.getProfile();
-                    setUser(profile);
-                    localStorage.setItem("netshield_user", JSON.stringify(profile));
+                    const normalized = normalizeUserRole(profile);
+                    setUser(normalized);
+                    localStorage.setItem("netshield_user", JSON.stringify(normalized));
                 } catch {
                     // If profile fetch fails, force logout
                     localStorage.removeItem("netshield_access_token");

@@ -12,6 +12,7 @@ class RedisManager:
     """Manages Redis connection pool lifecycle."""
 
     pool: Optional[aioredis.Redis] = None
+    _available: bool = False
 
     @classmethod
     async def connect(cls) -> None:
@@ -22,10 +23,14 @@ class RedisManager:
             decode_responses=True,
             max_connections=50,
         )
+        # Test connection immediately
+        await cls.pool.ping()
+        cls._available = True
 
     @classmethod
     async def disconnect(cls) -> None:
         """Close Redis connection pool."""
+        cls._available = False
         if cls.pool:
             await cls.pool.close()
             cls.pool = None
@@ -36,6 +41,19 @@ class RedisManager:
         if cls.pool is None:
             raise RuntimeError("Redis not initialized. Call connect() first.")
         return cls.pool
+
+    @classmethod
+    async def is_available(cls) -> bool:
+        """Check if Redis connection is active and reachable."""
+        if cls.pool is None:
+            return False
+        try:
+            await cls.pool.ping()
+            cls._available = True
+            return True
+        except Exception:
+            cls._available = False
+            return False
 
 
 async def get_redis() -> aioredis.Redis:
@@ -60,15 +78,27 @@ class JWTBlacklist:
     @classmethod
     async def add(cls, jti: str, ttl_seconds: int) -> None:
         """Add a token JTI to the blacklist."""
-        client = RedisManager.get_client()
-        await client.setex(f"{cls.PREFIX}{jti}", ttl_seconds, "1")
+        if not RedisManager._available:
+            return
+        try:
+            client = RedisManager.get_client()
+            await client.setex(f"{cls.PREFIX}{jti}", ttl_seconds, "1")
+        except Exception as e:
+            # Redis connection lost
+            RedisManager._available = False
 
     @classmethod
     async def is_blacklisted(cls, jti: str) -> bool:
         """Check if a token JTI is blacklisted."""
-        client = RedisManager.get_client()
-        result = await client.get(f"{cls.PREFIX}{jti}")
-        return result is not None
+        if not RedisManager._available:
+            return False
+        try:
+            client = RedisManager.get_client()
+            result = await client.get(f"{cls.PREFIX}{jti}")
+            return result is not None
+        except Exception:
+            RedisManager._available = False
+            return False
 
 
 class RateLimiter:
@@ -88,20 +118,27 @@ class RateLimiter:
         Returns:
             Tuple of (is_allowed, remaining_requests)
         """
-        client = RedisManager.get_client()
-        redis_key = f"{cls.PREFIX}{key}"
+        if not RedisManager._available:
+            return True, max_requests
 
-        current = await client.get(redis_key)
-        if current is None:
-            await client.setex(redis_key, window_seconds, 1)
-            return True, max_requests - 1
+        try:
+            client = RedisManager.get_client()
+            redis_key = f"{cls.PREFIX}{key}"
 
-        count = int(current)
-        if count >= max_requests:
-            return False, 0
+            current = await client.get(redis_key)
+            if current is None:
+                await client.setex(redis_key, window_seconds, 1)
+                return True, max_requests - 1
 
-        await client.incr(redis_key)
-        return True, max_requests - count - 1
+            count = int(current)
+            if count >= max_requests:
+                return False, 0
+
+            await client.incr(redis_key)
+            return True, max_requests - count - 1
+        except Exception:
+            RedisManager._available = False
+            return True, max_requests
 
 
 class CacheManager:
@@ -112,24 +149,46 @@ class CacheManager:
     @classmethod
     async def get(cls, key: str) -> Optional[str]:
         """Get cached value."""
-        client = RedisManager.get_client()
-        return await client.get(f"{cls.PREFIX}{key}")
+        if not RedisManager._available:
+            return None
+        try:
+            client = RedisManager.get_client()
+            return await client.get(f"{cls.PREFIX}{key}")
+        except Exception:
+            RedisManager._available = False
+            return None
 
     @classmethod
     async def set(cls, key: str, value: str, ttl_seconds: int = 300) -> None:
         """Set cached value with TTL."""
-        client = RedisManager.get_client()
-        await client.setex(f"{cls.PREFIX}{key}", ttl_seconds, value)
+        if not RedisManager._available:
+            return
+        try:
+            client = RedisManager.get_client()
+            await client.setex(f"{cls.PREFIX}{key}", ttl_seconds, value)
+        except Exception:
+            RedisManager._available = False
 
     @classmethod
     async def delete(cls, key: str) -> None:
         """Delete cached value."""
-        client = RedisManager.get_client()
-        await client.delete(f"{cls.PREFIX}{key}")
+        if not RedisManager._available:
+            return
+        try:
+            client = RedisManager.get_client()
+            await client.delete(f"{cls.PREFIX}{key}")
+        except Exception:
+            RedisManager._available = False
 
     @classmethod
     async def delete_pattern(cls, pattern: str) -> None:
         """Delete all keys matching pattern."""
-        client = RedisManager.get_client()
-        async for key in client.scan_iter(f"{cls.PREFIX}{pattern}"):
-            await client.delete(key)
+        if not RedisManager._available:
+            return
+        try:
+            client = RedisManager.get_client()
+            async for key in client.scan_iter(f"{cls.PREFIX}{pattern}"):
+                await client.delete(key)
+        except Exception:
+            RedisManager._available = False
+

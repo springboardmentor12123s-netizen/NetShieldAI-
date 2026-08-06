@@ -98,10 +98,10 @@ async def seed_traffic_logs(count: int = 150):
     try:
         db = MongoDBManager.get_database()
         # Seed indexes
-        db["traffic_logs"].create_index([("timestamp", -1)])
-        db["traffic_logs"].create_index([("src_ip", 1)])
-        db["traffic_logs"].create_index([("dst_ip", 1)])
-        db["traffic_logs"].create_index([("protocol", 1)])
+        await db["traffic_logs"].create_index([("timestamp", -1)])
+        await db["traffic_logs"].create_index([("src_ip", 1)])
+        await db["traffic_logs"].create_index([("dst_ip", 1)])
+        await db["traffic_logs"].create_index([("protocol", 1)])
 
         repo = TrafficRepository(db)
 
@@ -174,6 +174,79 @@ async def seed_traffic_logs(count: int = 150):
         await MongoDBManager.disconnect()
 
 
+async def seed_alerts_feed(count: int = 25):
+    """Seed MongoDB alerts collection with realistic security alert details."""
+    await MongoDBManager.connect()
+    try:
+        db = MongoDBManager.get_database()
+        
+        # Drop alerts collection if it exists to cleanly seed
+        await db["alerts"].drop()
+        await db["alerts"].create_index([("timestamp", -1)])
+        await db["alerts"].create_index([("severity", 1)])
+        
+        import uuid
+        
+        # Sample alert templates
+        alert_templates = [
+            {
+                "severity": "critical",
+                "alert_type": "DDoS Activity",
+                "source_ip": "185.120.45.62",
+                "dest_ip": "192.168.1.15",
+                "description": "High volume packet flood / Port Scan rate anomaly detected on internal subnet gateway."
+            },
+            {
+                "severity": "high",
+                "alert_type": "Authentication Anomalies",
+                "source_ip": "91.240.118.5",
+                "dest_ip": "192.168.1.10",
+                "description": "Multiple persistent SSH authentication failures from unverified external node."
+            },
+            {
+                "severity": "medium",
+                "alert_type": "Database Scanning",
+                "source_ip": "10.0.0.145",
+                "dest_ip": "192.168.1.20",
+                "description": "External port swept request rejected by database monitoring credentials rule."
+            },
+            {
+                "severity": "low",
+                "alert_type": "Hardware Alert",
+                "source_ip": "127.0.0.1",
+                "dest_ip": "127.0.0.1",
+                "description": "Process monitoring logs warn that processor server temp exceeds threshold."
+            }
+        ]
+        
+        alerts = []
+        now = datetime.now(timezone.utc)
+        for i in range(count):
+            tpl = random.choice(alert_templates)
+            time_offset = random.randint(0, 10800)  # spread over past 3 hours
+            alert_time = now - timedelta(seconds=time_offset)
+            
+            alert_doc = {
+                "_id": str(uuid.uuid4()),
+                "severity": tpl["severity"],
+                "alert_type": tpl["alert_type"],
+                "source_ip": tpl["source_ip"],
+                "dest_ip": tpl["dest_ip"],
+                "description": tpl["description"],
+                "timestamp": alert_time,
+                "metadata": {
+                    "injected": False,
+                    "rule_id": f"RULE_SIG_{random.randint(100, 999)}"
+                }
+            }
+            alerts.append(alert_doc)
+            
+        await db["alerts"].insert_many(alerts)
+        print(f"OK: Seeded {len(alerts)} alerts in MongoDB (alerts collection).")
+    finally:
+        await MongoDBManager.disconnect()
+
+
 async def main():
     print("Starting NetShield AI Database Seeder...")
     # 1. Base RBAC
@@ -182,6 +255,8 @@ async def main():
     await seed_teams_and_analysts()
     # 3. MongoDB Traffic Logs
     await seed_traffic_logs(200)
+    # 4. MongoDB Alerts Logs
+    await seed_alerts_feed(25)
     print("Database seeding finished successfully.")
 
 

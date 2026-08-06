@@ -44,13 +44,17 @@ export function LiveAlerts() {
     const [alerts, setAlerts] = useState<AlertItem[]>(MOCK_INITIAL_ALERTS);
 
     // Subscribe to live backend security alert socket stream
-    useWebSocket("security_alerts", (newAlert: AlertItem) => {
+    useWebSocket("security_alerts", (newAlert: any) => {
+        const normalized: AlertItem = {
+            id: newAlert.id || newAlert._id || Math.random().toString(),
+            timestamp: newAlert.timestamp || new Date().toISOString(),
+            message: newAlert.message || newAlert.description || "",
+            severity: newAlert.severity || "info",
+            src_ip: newAlert.src_ip || newAlert.source_ip || "",
+            type: newAlert.type || newAlert.alert_type || "Anomaly"
+        };
         setAlerts((prev) => [
-            {
-                ...newAlert,
-                id: newAlert.id || Math.random().toString(),
-                timestamp: newAlert.timestamp || new Date().toISOString(),
-            },
+            normalized,
             ...prev.slice(0, 9), // limit to 10 alerts
         ]);
     });
