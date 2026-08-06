@@ -24,8 +24,7 @@ frontend/dist/
 dataset/
 
 # --- Binary ML Models ---
-backend/models/*.pkl
-*.pkl
+# *.pkl files are intentionally tracked (small storage footprint)
 
 # --- SQLite Databases & telemetry logs ---
 *.db
