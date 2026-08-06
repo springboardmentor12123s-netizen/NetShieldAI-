@@ -1,0 +1,48 @@
+# --- Python Cache / Compiled Files ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+
+# --- Virtual Environments ---
+venv/
+.venv/
+env/
+.env
+
+# --- JavaScript / React Dependencies ---
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+.eslintcache
+
+# --- Large Datasets ---
+dataset/
+
+# --- Binary ML Models ---
+backend/models/*.pkl
+*.pkl
+
+# --- SQLite Databases & telemetry logs ---
+*.db
+netshield_sql.db
+*.log
+
+# --- IDEs / Editors ---
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# --- OS System Files ---
+.DS_Store
+Thumbs.db
+
+*.pdf
