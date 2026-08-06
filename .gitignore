@@ -55,3 +55,8 @@ coverage.xml
 # Large datasets
 backend/app/ai/datasets/Network Intrusion dataset(CIC-IDS- 2017)/
 
+# Milestones
+MILESTONE_*.txt
+docs/MILESTONE_*.txt
+
+
