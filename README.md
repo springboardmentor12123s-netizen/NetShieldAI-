@@ -1,85 +1,85 @@
-# NetShieldAI – AI Network Anomaly Detection & SOC Threat Monitoring
+# NetShieldAI - AI Network Anomaly Detection & SOC Threat Monitoring
 
 NetShieldAI is a full-stack **Security Operations Center (SOC)** platform that detects, classifies, and visualizes network anomalies in real time. It combines a **FastAPI + SQLite + MongoDB** backend with a **React + Vite** dashboard, and uses production-trained **scikit-learn** machine learning models (Isolation Forest + Random Forest) trained on the **UNSW-NB15** and **CICIDS2017** datasets.
 
 ---
 
-## 🎯 Project Status
+## Project Status
 
-- ✅ **Milestone 2** — Core SOC dashboard with real-time monitoring completed.
-- ✅ **Milestone 3** — ML model training, real-time Wi-Fi packet sniffer, and enhanced frontend completed.
-- ✅ Trained AI models on a clean, balanced 10,000-record sample (2,500 normal + 2,500 attack per dataset).
-- 🚀 **Current focus:** Increasing dataset utilization for model training and expanding threat-detection coverage.
+- **Milestone 2** - Core SOC dashboard with real-time monitoring completed.
+- **Milestone 3** - ML model training, real-time Wi-Fi packet sniffer, and enhanced frontend completed.
+- Trained AI models on a clean, balanced 10,000-record sample (2,500 normal + 2,500 attack per dataset).
+- **Current focus:** Increasing dataset utilization for model training and expanding threat-detection coverage.
 
 ---
 
-## ✨ Key Features
+## Key Features
 
-### 🔐 Authentication & Role-Based Access
+### Authentication & Role-Based Access
 - JWT-based authentication (2-hour expiring tokens) via `bcrypt` password hashing.
 - Pre-seeded role-based users: **Admin**, **Analyst**, and **Auditor**.
 - Registration endpoint for adding new users.
 
-### 🤖 AI-Driven Detection & Classification
-- **Anomaly Detection** — Isolation Forest flags suspicious traffic and returns an anomaly score.
-- **Attack Classification** — Random Forest classifies attacks (e.g., DDoS, PortScan, Brute Force, Web Attack) with confidence percentages and per-class probabilities.
+### AI-Driven Detection & Classification
+- **Anomaly Detection** - Isolation Forest flags suspicious traffic and returns an anomaly score.
+- **Attack Classification** - Random Forest classifies attacks (e.g., DDoS, PortScan, Brute Force, Web Attack) with confidence percentages and per-class probabilities.
 - Live packet feature extraction (TTL, total length, protocol, payload bytes) feeds the models in real time.
 
-### 📡 Real-Time Wi-Fi Packet Sniffer (Scapy)
+### Real-Time Wi-Fi Packet Sniffer (Scapy)
 - Captures live packets on the Wi-Fi/Ethernet interface.
 - Extracts features and runs real-time inference; auto-labels attacks (`Web Attack`, `SSH Brute Force`, `DDoS Flood`, `PortScan`, etc.).
 - Automatically creates **Alerts** and **Incidents** in the database when a threat is detected.
 - Start / stop / status / reset control endpoints.
 
-### 📊 SOC Dashboard & Analytics
+### SOC Dashboard & Analytics
 - Live traffic visualization, protocol distribution, hourly trends, and severity distribution.
 - Dashboard stats: packets processed, alerts triggered, active incidents, MongoDB packet records, CPU/RAM usage, and anomaly rate.
 - Database-backed **incident management** (open/close, assign).
 - **Threat Intelligence** summary with top threat sources and attack-category breakdown.
 - **CSV report export** of all alerts/threats.
 
-### 📥 PCAP Analyzer
+### PCAP Analyzer
 - Upload `.pcap` files for offline analysis.
 - Parses and stores PCAP metadata into MongoDB.
 
-### 🗄️ Hybrid Data Storage
+### Hybrid Data Storage
 - **SQLite** (relational): users, alerts, incidents.
 - **MongoDB** (NoSQL): packet records and PCAP telemetry (with automatic in-memory mock fallback if MongoDB is unavailable).
 
 ---
 
-## 🏗️ System Architecture
+## System Architecture
 
 ```
-┌──────────────────────────────────────────────────────────┐
-│                    React + Vite Frontend                │
-│   SOC Dashboard · AI Detection · Alerts · Traffic ·     │
-│   Threat Intel · Incidents · Task Tracker · PCAP        │
-└───────────────────────────┬─────────────────────────────┘
-                            │  REST API (JWT)
-┌───────────────────────────▼─────────────────────────────┐
-│                    FastAPI Backend                      │
-│  auth.py  ·  routes.py  ·  main.py  ·  database.py      │
-│  models.py  ·  packet_sniffer.py  ·  train_model.py     │
-└───────────────┬──────────────────────────┬──────────────┘
-                │                          │
-     ┌──────────▼─────────┐      ┌─────────▼──────────┐
-     │   SQLite (SQLAlchemy)│     │  MongoDB (NoSQL)  │
-     │  users · alerts ·    │     │  packets · meta   │
-     │  incidents           │     │  (mock fallback)  │
-     └──────────────────────┘     └────────────────────┘
-                │
-     ┌──────────▼─────────┐
-     │  ML Models (.pkl)  │
-     │  Isolation Forest  │
-     │  Random Forest     │
-     │  Scaler/Encoder    │
-     └────────────────────┘
++----------------------------------------------------------+
+|                    React + Vite Frontend                |
+|   SOC Dashboard + AI Detection + Alerts + Traffic +     |
+|   Threat Intel + Incidents + Task Tracker + PCAP        |
++----------------------------+----------------------------+
+                             |  REST API (JWT)
++----------------------------v----------------------------+
+|                    FastAPI Backend                      |
+|  auth.py  +  routes.py  +  main.py  +  database.py      |
+|  models.py  +  packet_sniffer.py  +  train_model.py     |
++----------------+---------------------------+-----------+
+                 |                           |
+      +----------v---------+      +----------v-----------+
+      |   SQLite (SQLAlchemy)|     |  MongoDB (NoSQL)   |
+      |  users + alerts +   |     |  packets + meta     |
+      |  incidents           |     |  (mock fallback)   |
+      +-----------------------+     +--------------------+
+                 |
+      +----------v---------+
+      |  ML Models (.pkl)  |
+      |  Isolation Forest  |
+      |  Random Forest     |
+      |  Scaler/Encoder    |
+      +--------------------+
 ```
 
 ---
 
-## 🧱 Tech Stack
+## Tech Stack
 
 | Layer       | Technology |
 |-------------|------------|
@@ -92,7 +92,7 @@ NetShieldAI is a full-stack **Security Operations Center (SOC)** platform that d
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 NetShieldAI/
@@ -118,7 +118,7 @@ NetShieldAI/
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### 1. Backend Setup
 
@@ -160,7 +160,7 @@ On first startup, the backend seeds these users:
 
 ---
 
-## 🔌 API Endpoints
+## API Endpoints
 
 ### Auth
 | Method | Endpoint        | Description |
@@ -210,7 +210,7 @@ On first startup, the backend seeds these users:
 
 ---
 
-## 🧠 Machine Learning Models
+## Machine Learning Models
 
 ### Training Pipeline (`train_model.py`)
 1. Loads up to **50,000 rows** from each of the UNSW-NB15 and CICIDS2017 datasets.
@@ -233,15 +233,15 @@ On first startup, the backend seeds these users:
 
 ---
 
-## 📊 Dataset Source
+## Dataset Source
 
 - [UNSW-NB15 & CICIDS2017 labelled PCAP data (Kaggle)](https://www.kaggle.com/datasets/yasiralifarrukh/unsw-and-cicids2017-labelled-pcap-data)
 
-> **Note:** The `dataset/` folder is git-ignored (large files). Download the CSVs locally and place them at `dataset/Payload_data_UNSW.csv` and `dataset/Payload_data_CICIDS2017.csv` before training.
+**Note:** The `dataset/` folder is git-ignored (large files). Download the CSVs locally and place them at `dataset/Payload_data_UNSW.csv` and `dataset/Payload_data_CICIDS2017.csv` before training.
 
 ---
 
-## 🛠️ Troubleshooting & Notes
+## Troubleshooting & Notes
 
 - **MongoDB not running?** The backend automatically falls back to an in-memory mock store, so the app still works end-to-end.
 - **Scapy not installed / no admin rights?** The sniffer endpoints return a clear error; the rest of the dashboard continues to function using simulated traffic.
