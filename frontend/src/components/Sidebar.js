@@ -7,6 +7,8 @@ import {
   FaNetworkWired,
   FaChartBar,
   FaRobot,
+  FaBell,
+  FaFileAlt,
   FaSignOutAlt
 } from "react-icons/fa";
 
@@ -78,7 +80,23 @@ function Sidebar() {
           <span>AI Dashboard</span>
         </li>
 
-      </ul>
+      <li
+  className={location.pathname === "/alerts" ? "active" : ""}
+  onClick={() => navigate("/alerts")}
+>
+  <FaBell />
+  <span>Alerts</span>
+</li>
+
+<li
+  className={location.pathname === "/report" ? "active" : ""}
+  onClick={() => navigate("/report")}
+>
+  <FaFileAlt />
+  <span>Threat Report</span>
+</li>
+
+</ul>
 
       <button className="logout-btn" onClick={logout}>
         <FaSignOutAlt />
@@ -86,6 +104,7 @@ function Sidebar() {
       </button>
 
     </div>
+    
 
   );
 

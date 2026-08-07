@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getIntrusionReport } from "../services/ai";
+import axios from "axios";
 import {
   PieChart,
   Pie,
@@ -18,20 +18,30 @@ import "./AIDashboard.css";
 
 function AIDashboard() {
 
-  const [report, setReport] = useState(null);
+  const [liveDashboard, setLiveDashboard] = useState(null);
+  const [liveHistory, setLiveHistory] = useState([]);
   const [lastUpdated, setLastUpdated] = useState("");
 
   useEffect(() => {
 
-    const fetchReport = () => {
-    getIntrusionReport()
-        .then((res) => {
-            setReport(res.data);
-            setLastUpdated(new Date().toLocaleTimeString());
-        })
-        .catch((err) => console.log(err));
-};
+    const fetchReport = async () => {
+  try {
+    const dashboard = await axios.get(
+      "http://127.0.0.1:8000/traffic/live/dashboard"
+    );
 
+    const history = await axios.get(
+      "http://127.0.0.1:8000/traffic/live/history"
+    );
+
+    setLiveDashboard(dashboard.data);
+    setLiveHistory(history.data);
+
+    setLastUpdated(new Date().toLocaleTimeString());
+  } catch (err) {
+    console.log(err);
+  }
+};
     // Load data immediately
     fetchReport();
 
@@ -43,16 +53,16 @@ function AIDashboard() {
 
 }, []);
 
-  if (!report) return <h2>Loading...</h2>;
+  if (!liveDashboard) return <h2>Loading...</h2>;
 
-  const riskData = [
-    { name: "Low", value: report.risk_summary.Low },
-    { name: "Medium", value: report.risk_summary.Medium },
-    { name: "High", value: report.risk_summary.High },
-    { name: "Critical", value: report.risk_summary.Critical }
-  ];
+  const riskData = Object.entries(liveDashboard.risks).map(
+  ([name, value]) => ({
+    name,
+    value,
+  })
+);
 
-  const threatData = Object.entries(report.threat_summary).map(
+  const threatData = Object.entries(liveDashboard.predictions).map(
     ([name, value]) => ({
       name,
       value
@@ -79,22 +89,35 @@ function AIDashboard() {
 
         <div className="card">
           <h3>Records Analyzed</h3>
-          <h2>{report.records_analyzed}</h2>
+          <h2>{liveDashboard.total_packets}</h2>
         </div>
 
         <div className="card">
           <h3>Normal Traffic</h3>
-          <h2>{report.normal_traffic}</h2>
+          <h2>{liveDashboard.predictions.Benign || 0}</h2>
         </div>
 
         <div className="card">
           <h3>Attacks Detected</h3>
-          <h2>{report.attacks_detected}</h2>
+          <h2>
+  {liveDashboard.total_packets -
+    (liveDashboard.predictions.Benign || 0)}
+</h2>
         </div>
 
         <div className="card">
           <h3>Detection Rate</h3>
-          <h2>{report.detection_rate}%</h2>
+          <h2>
+  {liveDashboard.total_packets > 0
+    ? (
+        ((liveDashboard.total_packets -
+          (liveDashboard.predictions.Benign || 0)) /
+          liveDashboard.total_packets) *
+        100
+      ).toFixed(1)
+    : 0}
+  %
+</h2>
         </div>
 
       </div>
@@ -166,41 +189,99 @@ function AIDashboard() {
 
       </div>
 
-      <div className="table-card">
+      <div
+  style={{
+    background: "#fff",
+    padding: "20px",
+    borderRadius: "12px",
+    boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+    overflowX: "auto",
+    marginTop: "30px"
+  }}
+>
 
-        <h2>Threat Details</h2>
+  <h2>Threat Details</h2>
 
-        <table>
+  <table
+    style={{
+      width: "100%",
+      borderCollapse: "collapse",
+      textAlign: "center"
+    }}
+  >
 
-          <thead>
+    <thead>
+      <tr
+        style={{
+          background: "#2962FF",
+          color: "white"
+        }}
+      >
+        <th style={{ padding: "12px" }}>Time</th>
+        <th style={{ padding: "12px" }}>Source IP</th>
+        <th style={{ padding: "12px" }}>Destination IP</th>
+        <th style={{ padding: "12px" }}>Protocol</th>
+        <th style={{ padding: "12px" }}>Prediction</th>
+        <th style={{ padding: "12px" }}>Confidence</th>
+        <th style={{ padding: "12px" }}>Risk</th>
+      </tr>
+    </thead>
 
-            <tr>
-              <th>Threat Type</th>
-              <th>Count</th>
-            </tr>
+    <tbody>
 
-          </thead>
+      {liveHistory.slice(0, 10).map((packet, index) => (
 
-          <tbody>
+        <tr key={index}>
 
-            {threatData.map((item, index) => (
+          <td style={{ padding: "10px", borderBottom: "1px solid #eee" }}>
+            {packet.timestamp}
+          </td>
 
-              <tr key={index}>
+          <td style={{ padding: "10px", borderBottom: "1px solid #eee" }}>
+            {packet.source}
+          </td>
 
-                <td>{item.name}</td>
+          <td style={{ padding: "10px", borderBottom: "1px solid #eee" }}>
+            {packet.destination}
+          </td>
 
-                <td>{item.value}</td>
+          <td style={{ padding: "10px", borderBottom: "1px solid #eee" }}>
+            {packet.protocol}
+          </td>
 
-              </tr>
+          <td style={{ padding: "10px", borderBottom: "1px solid #eee" }}>
+            {packet.prediction}
+          </td>
 
-            ))}
+          <td style={{ padding: "10px", borderBottom: "1px solid #eee" }}>
+            {packet.confidence}%
+          </td>
 
-          </tbody>
+          <td
+            style={{
+              padding: "10px",
+              borderBottom: "1px solid #eee",
+              fontWeight: "bold",
+              color:
+                packet.risk === "Critical"
+                  ? "#dc3545"
+                  : packet.risk === "High"
+                  ? "#fd7e14"
+                  : "#28a745"
+            }}
+          >
+            {packet.risk}
+          </td>
 
-        </table>
+        </tr>
 
-      </div>
+      ))}
 
+    </tbody>
+
+  </table>
+
+</div>
     </div>
 
   );

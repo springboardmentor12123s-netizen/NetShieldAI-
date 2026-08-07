@@ -1,13 +1,15 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import AIDashboard from "./pages/AIDashboard";
+
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Users from "./pages/Users";
 import Teams from "./pages/Teams";
 import Monitoring from "./pages/Monitoring";
 import Analytics from "./pages/Analytics";
+import AIDashboard from "./pages/AIDashboard";
+import Alerts from "./pages/Alerts";
 import NotFound from "./pages/NotFound";
-
+import ThreatReport from "./pages/ThreatReport";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
@@ -71,16 +73,42 @@ function App() {
           }
         />
 
-        {/* 404 Page */}
-        <Route path="*" element={<NotFound />} />
+        {/* AI Dashboard */}
         <Route
           path="/ai"
-          element={<AIDashboard />}
+          element={
+            <ProtectedRoute>
+              <AIDashboard />
+            </ProtectedRoute>
+          }
         />
+
+        {/* Alerts */}
+        <Route
+          path="/alerts"
+          element={
+            <ProtectedRoute>
+              <Alerts />
+            </ProtectedRoute>
+          }
+        />
+        {/* Threat Report */}
+<Route
+  path="/report"
+  element={
+    <ProtectedRoute>
+      <ThreatReport />
+    </ProtectedRoute>
+  }
+/>
+
+        {/* 404 */}
+        <Route path="*" element={<NotFound />} />
+
       </Routes>
 
     </BrowserRouter>
-
+        
   );
 
 }

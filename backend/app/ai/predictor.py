@@ -21,7 +21,6 @@ def predict_attack(data):
     attack = label_encoder.inverse_transform([prediction])[0]
 
     confidence = round(float(confidence) * 100, 2)
-
     # Risk Level
     if attack == "Benign":
         risk = "Low"

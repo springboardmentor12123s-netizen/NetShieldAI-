@@ -12,27 +12,31 @@ function Monitoring() {
 
     useEffect(() => {
 
-        const fetchPackets = async () => {
+    const fetchPackets = async () => {
 
-            try {
+        try {
 
-                const response = await axios.get(
-                    "http://127.0.0.1:8000/traffic/packets"
-                );
+            const response = await axios.get(
+                "http://127.0.0.1:8000/traffic/live/history"
+            );
 
-                setPackets(response.data);
+            setPackets(response.data);
 
-            } catch (error) {
+        } catch (error) {
 
-                console.error(error);
+            console.error(error);
 
-            }
+        }
 
-        };
+    };
 
-        fetchPackets();
+    fetchPackets();
 
-    }, []);
+    const interval = setInterval(fetchPackets, 2000);
+
+    return () => clearInterval(interval);
+
+}, []);
 
     const getProtocol = (protocol) => {
 
@@ -53,6 +57,7 @@ function Monitoring() {
         }
 
     };
+    console.log(packets);
 
     return (
 
@@ -79,7 +84,7 @@ function Monitoring() {
                     <h3>Packet Collection Summary</h3>
 
                     <p>
-                        <strong>Dataset:</strong> CICIDS2017
+                        <strong>Source:</strong> Live Network Traffic
                     </p>
 
                     <p>
@@ -87,8 +92,8 @@ function Monitoring() {
                     </p>
 
                     <p>
-                        The following table displays network traffic records
-                        collected from the CICIDS2017 dataset.
+                        The following table displays packets captured and
+analyzed in real time.
                     </p>
 
                 </div>
@@ -113,58 +118,65 @@ function Monitoring() {
                             }}
                         >
 
-                            <th style={{ padding: "12px" }}>Protocol</th>
-                            <th style={{ padding: "12px" }}>Flow Duration</th>
-                            <th style={{ padding: "12px" }}>Packet Length</th>
-                            <th style={{ padding: "12px" }}>Flow Bytes/s</th>
-                            <th style={{ padding: "12px" }}>Flow Packets/s</th>
-                            <th style={{ padding: "12px" }}>Attack Label</th>
-
+                            <th style={{ padding: "12px" }}>Time</th>
+<th style={{ padding: "12px" }}>Source IP</th>
+<th style={{ padding: "12px" }}>Destination IP</th>
+<th style={{ padding: "12px" }}>Protocol</th>
+<th style={{ padding: "12px" }}>Prediction</th>
+<th style={{ padding: "12px" }}>Risk</th>
+<th style={{ padding: "12px" }}>Confidence</th>
                         </tr>
 
                     </thead>
 
                     <tbody>
 
-                        {packets.slice(0, 20).map((packet, index) => (
+{packets
+    .slice()
+    .reverse()
+    .map((packet, index) => (
 
-                            <tr
-                                key={index}
-                                style={{
-                                    borderBottom: "1px solid #ddd",
-                                    textAlign: "center"
-                                }}
-                            >
+<tr
+    key={index}
+    style={{
+        borderBottom: "1px solid #ddd",
+        textAlign: "center"
+    }}
+>
 
-                                <td style={{ padding: "12px" }}>
-                                    {getProtocol(packet.protocol)}
-                                </td>
+    <td style={{ padding: "12px" }}>
+        {packet.timestamp}
+    </td>
 
-                                <td style={{ padding: "12px" }}>
-                                    {packet.flow_duration}
-                                </td>
+    <td style={{ padding: "12px" }}>
+        {packet.source}
+    </td>
 
-                                <td style={{ padding: "12px" }}>
-                                    {packet.packet_length.toFixed(2)}
-                                </td>
+    <td style={{ padding: "12px" }}>
+        {packet.destination}
+    </td>
 
-                                <td style={{ padding: "12px" }}>
-                                    {packet.flow_bytes_per_sec.toFixed(2)}
-                                </td>
+    <td style={{ padding: "12px" }}>
+        {packet.protocol}
+    </td>
 
-                                <td style={{ padding: "12px" }}>
-                                    {packet.flow_packets_per_sec.toFixed(2)}
-                                </td>
+    <td style={{ padding: "12px" }}>
+        {packet.prediction}
+    </td>
 
-                                <td style={{ padding: "12px" }}>
-                                    {packet.label}
-                                </td>
+    <td style={{ padding: "12px" }}>
+        {packet.risk}
+    </td>
 
-                            </tr>
+    <td style={{ padding: "12px" }}>
+        {packet.confidence}%
+    </td>
 
-                        ))}
+</tr>
 
-                    </tbody>
+))}
+
+</tbody>
 
                 </table>
 
