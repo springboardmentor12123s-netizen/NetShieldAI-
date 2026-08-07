@@ -1,9 +1,4 @@
-"""
-Alert Management Module.
-Full workflow engine (notifications, incident lifecycle) lands in Milestone 3,
-but the model is defined now so the risk-scoring engine (Milestone 2) can
-create alerts for high/critical risk flows immediately.
-"""
+
 import enum
 import uuid
 from datetime import datetime
@@ -29,14 +24,16 @@ class Alert(Base):
 
     title = Column(String, nullable=False)
     description = Column(String, nullable=True)
-    severity = Column(String, default="low")        # low/medium/high/critical
+    severity = Column(String, default="low")
     risk_score = Column(Float, default=0.0)
 
     status = Column(Enum(AlertStatus), default=AlertStatus.OPEN)
     assigned_to = Column(String, ForeignKey("users.id"), nullable=True)
+    notes = Column(String, nullable=True)
 
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    resolved_at = Column(DateTime, nullable=True)
 
     anomaly_result = relationship("AnomalyResult")
     assignee = relationship("User")

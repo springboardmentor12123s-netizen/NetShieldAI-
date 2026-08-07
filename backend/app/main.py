@@ -1,7 +1,4 @@
-"""
-NetShield AI backend entrypoint.
-Run with: uvicorn app.main:app --reload --port 8000
-"""
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -9,7 +6,7 @@ from app.config import settings
 from app.database import Base, engine
 from app import models  # noqa: F401  (ensures models are registered on Base metadata)
 
-from app.routers import auth, users, traffic, anomaly, alerts, dashboard
+from app.routers import auth, users, traffic, anomaly, alerts, dashboard, reports
 
 Base.metadata.create_all(bind=engine)
 
@@ -33,6 +30,7 @@ app.include_router(traffic.router)
 app.include_router(anomaly.router)
 app.include_router(alerts.router)
 app.include_router(dashboard.router)
+app.include_router(reports.router)
 
 
 @app.get("/api/health", tags=["Health"])

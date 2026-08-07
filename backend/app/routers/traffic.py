@@ -1,8 +1,3 @@
-"""
-Network Monitoring Module.
-Endpoints for packet/flow collection, traffic listing, and analytics
-that power the Traffic Monitoring dashboard page.
-"""
 from collections import Counter
 from datetime import datetime, timedelta
 
@@ -17,6 +12,7 @@ from app.schemas.traffic import TrafficRecordOut, TrafficStats, GenerateTrafficR
 from app.auth.dependencies import get_current_user
 from app.ml.synthetic_traffic import generate_flows
 from app.utils.audit import log_action
+from app.services.live_capture import start_capture, stop_capture, is_running
 
 router = APIRouter(prefix="/api/traffic", tags=["Network Monitoring"])
 
@@ -88,7 +84,7 @@ def traffic_stats(db: Session = Depends(get_db), current_user: User = Depends(ge
         talker_bytes[r.src_ip] += r.byte_count
     top_talkers = [{"ip": ip, "bytes": b} for ip, b in talker_bytes.most_common(5)]
 
-    # Bucket flows per minute for the last 30 minutes (traffic visualization line chart)
+    
     buckets: dict[str, int] = {}
     now = datetime.utcnow()
     for i in range(30, -1, -1):
@@ -110,3 +106,34 @@ def traffic_stats(db: Session = Depends(get_db), current_user: User = Depends(ge
         top_talkers=top_talkers,
         flows_per_minute=flows_per_minute,
     )
+
+
+@router.post("/live/start")
+def start_live_capture(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Starts real packet capture on the configured Wi-Fi interface using Scapy/Npcap.
+    Requires the backend process to be run with Administrator privileges.
+    """
+    result = start_capture(interface="Wi-Fi", local_ips=["10.227.189.210"])
+    log_action(db, current_user.id, "LIVE_CAPTURE_STARTED", "Started live packet capture")
+    return result
+
+
+@router.post("/live/stop")
+def stop_live_capture(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    result = stop_capture()
+    log_action(db, current_user.id, "LIVE_CAPTURE_STOPPED", "Stopped live packet capture")
+    return result
+
+
+@router.get("/live/status")
+def live_capture_status(
+    current_user: User = Depends(get_current_user),
+):
+    return {"running": is_running()}

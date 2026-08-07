@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from "react";
-import Layout from "../components/Layout";
 import { BarRow, Badge, EmptyState } from "../components/UI";
 import { Api } from "../lib/api";
 import { useToast } from "../context/ToastContext";
@@ -48,7 +47,6 @@ export default function AnomalyDetection() {
 
   useEffect(() => {
     Promise.all([loadRuns(), loadReport(), loadResults(onlyAnomalies)]).catch((err) => showToast(err.message, "error"));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -87,11 +85,10 @@ export default function AnomalyDetection() {
   const attackMax = attackEntries.length ? Math.max(...attackEntries.map(([, v]) => v), 1) : 1;
 
   return (
-    <Layout>
+    <>
       <div className="topbar">
         <div>
           <h1>Anomaly Detection &amp; Intrusion Prediction</h1>
-          <div className="topbar-sub">Isolation Forest + One-Class SVM ensemble, Random Forest attack classification, composite risk scoring</div>
         </div>
       </div>
 
@@ -110,7 +107,6 @@ export default function AnomalyDetection() {
               <option value="cicids2017">CICIDS2017</option>
               <option value="unsw-nb15">UNSW-NB15</option>
             </select>
-            <div className="field-hint">Falls back to synthetic data automatically if the benchmark CSV isn't present in <code>data/raw/</code>.</div>
           </div>
           <div className="field">
             <label htmlFor="sampleSize">Sample size</label>
@@ -128,7 +124,6 @@ export default function AnomalyDetection() {
               <div className="panel-title">Score captured traffic</div>
             </div>
           </div>
-          <p className="section-desc">Runs every not-yet-scored flow through the trained ensemble and classifier, writes risk scores, and opens alerts for high/critical results.</p>
           <div className="field">
             <label htmlFor="scoreLimit">Flows to score (max per run)</label>
             <input id="scoreLimit" type="number" min={10} max={5000} value={scoreLimit} onChange={(e) => setScoreLimit(e.target.value)} />
@@ -221,6 +216,6 @@ export default function AnomalyDetection() {
           </table>
         </div>
       </div>
-    </Layout>
+    </>
   );
 }

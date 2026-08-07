@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
-import Layout from "../components/Layout";
+import { useCallback, useEffect, useRef, useState } from "react";
 import LineChart from "../components/LineChart";
 import { StatCard, BarRow, EmptyState } from "../components/UI";
 import { Icon } from "../components/Icon";
@@ -15,6 +14,9 @@ export default function TrafficMonitoring() {
   const [rows, setRows] = useState([]);
   const [protocol, setProtocol] = useState("");
   const [capturing, setCapturing] = useState(false);
+  const [liveActive, setLiveActive] = useState(false);
+  const [liveToggling, setLiveToggling] = useState(false);
+  const pollRef = useRef(null);
 
   const loadStats = useCallback(async () => {
     const data = await Api.get("/traffic/stats");
@@ -35,6 +37,29 @@ export default function TrafficMonitoring() {
     loadTable(protocol).catch((err) => showToast(err.message, "error"));
   }, [protocol, loadTable, showToast]);
 
+  // Check live capture status on mount
+  useEffect(() => {
+    Api.get("/traffic/live/status")
+      .then((res) => setLiveActive(res.running))
+      .catch(() => {});
+  }, []);
+
+  // Poll for fresh data every 4s while live capture is active
+  useEffect(() => {
+    if (liveActive) {
+      pollRef.current = setInterval(() => {
+        loadStats().catch(() => {});
+        loadTable(protocol).catch(() => {});
+      }, 4000);
+    } else if (pollRef.current) {
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
+  }, [liveActive, protocol, loadStats, loadTable]);
+
   async function handleCapture() {
     setCapturing(true);
     try {
@@ -48,18 +73,51 @@ export default function TrafficMonitoring() {
     }
   }
 
+  async function handleToggleLive() {
+    setLiveToggling(true);
+    try {
+      if (liveActive) {
+        await Api.post("/traffic/live/stop", {});
+        showToast("Live capture stopped");
+        setLiveActive(false);
+      } else {
+        await Api.post("/traffic/live/start", {});
+        showToast("Live capture started — sniffing real Wi-Fi traffic");
+        setLiveActive(true);
+      }
+    } catch (err) {
+      showToast(err.message, "error");
+    } finally {
+      setLiveToggling(false);
+    }
+  }
+
   const protoMax = stats ? Math.max(...Object.values(stats.protocol_breakdown), 1) : 1;
 
   return (
-    <Layout>
+    <>
       <div className="topbar">
         <div>
           <h1>Traffic Monitoring</h1>
           <div className="topbar-sub">Packet capture, flow analysis, and protocol visibility</div>
         </div>
-        <button className="btn btn-primary" onClick={handleCapture} disabled={capturing}>
-          {Icon.plus} {capturing ? "Capturing…" : "Capture new flows"}
-        </button>
+        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          {liveActive && (
+            <div className="pulse-live">
+              <span className="pulse-dot"></span> LIVE CAPTURE
+            </div>
+          )}
+          <button
+            className={liveActive ? "btn btn-secondary" : "btn btn-primary"}
+            onClick={handleToggleLive}
+            disabled={liveToggling}
+          >
+            {liveToggling ? "Working…" : liveActive ? "Stop Live Capture" : "Start Live Capture"}
+          </button>
+          <button className="btn btn-secondary" onClick={handleCapture} disabled={capturing}>
+            {Icon.plus} {capturing ? "Capturing…" : "Simulate flows"}
+          </button>
+        </div>
       </div>
 
       {stats && (
@@ -128,6 +186,6 @@ export default function TrafficMonitoring() {
           </table>
         </div>
       </div>
-    </Layout>
+    </>
   );
 }

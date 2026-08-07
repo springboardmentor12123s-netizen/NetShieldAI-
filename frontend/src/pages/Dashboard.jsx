@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import Layout from "../components/Layout";
 import LineChart from "../components/LineChart";
 import { StatCard, BarRow, EmptyState } from "../components/UI";
 import { Icon } from "../components/Icon";
@@ -45,7 +44,7 @@ export default function Dashboard() {
   const talkerMax = stats?.top_talkers?.length ? Math.max(...stats.top_talkers.map((t) => t.bytes), 1) : 1;
 
   return (
-    <Layout>
+    <>
       <div className="topbar">
         <div>
           <h1>Security Overview</h1>
@@ -121,6 +120,6 @@ export default function Dashboard() {
           ) : <EmptyState>Run detection to see results</EmptyState>}
         </div>
       </div>
-    </Layout>
+    </>
   );
 }
