@@ -38,6 +38,12 @@ frontend/node_modules/
 # Build Output
 dist/
 frontend/dist/
+.vite/
+frontend/.vite/
+
+# PNPM
+.pnpm-workspace-state-v1.json
+frontend/.pnpm-workspace-state-v1.json
 
 # --------------------------
 # Database Files

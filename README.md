@@ -1,585 +1,132 @@
-# 🛡️ NetShield AI – Network Anomaly Detection & Threat Monitoring System
+# NetShield AI – Network Anomaly Detection & Threat Monitoring System
 
-An AI-powered cybersecurity monitoring system that detects anomalous network traffic using Machine Learning.
+![NetShield AI Dashboard](https://via.placeholder.com/1200x600?text=NetShield+AI+Dashboard)
 
-NetShield AI enables security analysts to upload network traffic datasets, train anomaly detection models, predict suspicious traffic, classify cyber threats, generate risk scores, create security alerts, and monitor threat analytics through an interactive dashboard.
+## 📌 Project Overview
+NetShield AI is a comprehensive, full-stack cybersecurity platform designed to detect network anomalies and classify threats using Machine Learning (Isolation Forest). It processes raw network traffic (PCAP) or live packet captures, extracts relevant features, and performs real-time inference to detect attacks like DDoS, Brute Force, Port Scans, and more. It also features a built-in Security Operations Center (SOC) dashboard to monitor incidents, prioritize alerts based on severity, and manage threats efficiently.
 
-> **Status:** Milestone 1 ✅ Completed | Milestone 2 ✅ Completed
+## 🚀 Features
+- **Machine Learning Engine**: Trains an Isolation Forest model to detect anomalous network traffic accurately.
+- **Real-Time Threat Detection**: Captures live network packets (via Npcap) and predicts threats on the fly.
+- **Automated Feature Extraction**: Processes raw PCAP files and extracts statistical flow features required for the model.
+- **Interactive SOC Dashboard**: Real-time charts and telemetry using Recharts.
+- **Incident Management System**: Automatically generates incidents for detected attacks and allows analysts to assign, investigate, and close them.
+- **Dataset Management**: Upload, train, and manage historical datasets.
+- **Report Generation**: Export predictions and incident reports to CSV or PDF formats.
 
----
+## 🏗 Architecture
+The system consists of three main pillars:
+1. **Frontend (React + Vite)**: A dynamic, dark-themed SOC UI for monitoring and management.
+2. **Backend (FastAPI)**: A high-performance REST API handling ML training, prediction, live capture, and database management.
+3. **ML Core (Scikit-Learn)**: Processes data, builds models, and scores risk based on confidence and threat category.
 
-# 📌 Table of Contents
+## 🛠 Tech Stack
+- **Frontend**: React 19, Vite, Tailwind CSS, Recharts, jsPDF, Lucide React.
+- **Backend**: Python 3.11, FastAPI, SQLAlchemy, SQLite (default) / PostgreSQL, Pandas, NumPy, Scikit-Learn.
+- **Packet Capture**: Scapy, Npcap (Windows).
 
-- Overview
-- Features
-- Tech Stack
-- Project Architecture
-- Milestone Progress
-- Machine Learning Pipeline
-- Threat Classification
-- Risk Scoring
-- RBAC
-- Dataset
-- Project Structure
-- API Endpoints
-- Installation
-- Running the Project
-- Screenshots
-- Future Scope
-- Limitations
-- Contributors
-
----
-
-# 🚀 Overview
-
-NetShield AI simulates a simplified Security Operations Center (SOC) workflow by combining:
-
-- Machine Learning
-- Network Traffic Analysis
-- Threat Monitoring
-- Dashboard Analytics
-- Alert Generation
-- PostgreSQL Database
-- FastAPI REST APIs
-- React Frontend
-
-The application analyzes uploaded CSV network traffic datasets (CICIDS2017 format) and identifies suspicious network activities using an Isolation Forest anomaly detection model.
-
----
-
-# ✨ Features
-
-## Authentication
-
-- Login system
-- Role-Based Access Control (RBAC)
-
-## Dashboard
-
-- Security overview
-- Threat statistics
-- Alerts summary
-- Prediction analytics
-
-## Dataset Management
-
-- Upload CSV datasets
-- Dataset preview
-- Data validation
-
-## Machine Learning
-
-- Train Isolation Forest model
-- Save trained model
-- Model evaluation
-- Prediction workflow
-
-## Threat Detection
-
-- Anomaly detection
-- Threat classification
-- Risk scoring
-- Severity generation
-
-## Reporting
-
-- Alerts
-- Prediction history
-- Threat reports
-
-## Documentation
-
-- FastAPI Swagger UI
-
----
-
-# 🛠 Tech Stack
-
-## Frontend
-
-- React + Vite
-- Tailwind CSS
-- React Router
-- Axios
-- Recharts
-- lucide-react
-- react-hot-toast
-
----
-
-## Backend
-
-- Python
-- FastAPI
-- SQLAlchemy
-- PostgreSQL
-- Pandas
-- NumPy
-- Scikit-learn
-- Joblib
-- python-dotenv
-
----
-
-## Machine Learning
-
-- Isolation Forest
-
----
-
-# 🏗 Project Architecture
-
-```
-                 React Dashboard
-                        │
-                        │
-                  REST API (FastAPI)
-                        │
-        ┌───────────────┼───────────────┐
-        │               │               │
- Authentication    ML Service     PostgreSQL
-        │               │               │
-        │         Isolation Forest      │
-        │               │               │
-        └────── Upload / Prediction ────┘
+## 📂 Folder Structure
+```text
+NetShieldAI/
+├── backend/                  # FastAPI backend server
+│   ├── app/                  # Application code (routers, services, models, schemas)
+│   ├── predictions/          # Generated prediction CSVs
+│   ├── saved_models/         # Serialized ML models (.joblib)
+│   ├── uploads/              # Uploaded training datasets and PCAP files
+│   └── requirements.txt      # Python dependencies
+├── frontend/                 # React frontend application
+│   ├── src/                  # React components, pages, and contexts
+│   ├── index.html            # Entry HTML
+│   └── package.json          # Node dependencies
+├── ml_core/                  # Core ML scripts and generated assets (e.g., confusion matrix)
+├── sample_data/              # Sample training and prediction CSVs
+└── scripts/                  # Utility scripts for database population
 ```
 
----
+## ⚙️ Installation
 
-# ✅ Milestone Progress
+### Prerequisites
+- **Node.js**: v18 or higher
+- **Python**: 3.10 or higher
+- **Npcap** (Windows only): Required for live packet capture.
 
-## Milestone 1 – Project Initialization & Core Setup
+### 1. Npcap Installation (Windows)
+If you intend to use the Live Packet Capture feature on Windows, you **must** install Npcap.
+1. Download Npcap from [npcap.com](https://npcap.com/).
+2. Run the installer.
+3. **Important**: Check the box that says *"Install Npcap in WinPcap API-compatible Mode"*.
+4. Ensure you run the backend server as an **Administrator** for Scapy to access network interfaces.
 
-Completed:
-
-- Security monitoring workflow
-- System architecture
-- Database schema
-- React frontend
-- FastAPI backend
-- Authentication
-- RBAC
-- Dataset upload
-- Dashboard analytics
-- Model training
-- Prediction workflow
-- Alerts module
-- History tracking
-- Frontend–Backend integration
-
----
-
-## Milestone 2 – Anomaly Detection & Intrusion Prediction
-
-Completed:
-
-- Isolation Forest model
-- Model evaluation
-- Accuracy
-- Precision
-- Recall
-- F1 Score
-- Confusion Matrix
-- Threat classification
-- Risk scoring
-- Severity generation
-- Threat reports
-- PostgreSQL integration
-
----
-
-# 🤖 Machine Learning Pipeline
-
-## Training
-
-```
-Upload CSV
-      │
-      ▼
-Data Cleaning
-      │
-      ▼
-Feature Selection
-      │
-      ▼
-Feature Scaling
-      │
-      ▼
-Isolation Forest Training
-      │
-      ▼
-Save Model
-      │
-      ▼
-Evaluation Metrics
-```
-
----
-
-## Prediction
-
-```
-Prediction CSV
-      │
-      ▼
-Load Trained Model
-      │
-      ▼
-Predict Anomalies
-      │
-      ▼
-Generate Risk Score
-      │
-      ▼
-Assign Severity
-      │
-      ▼
-Threat Classification
-      │
-      ▼
-Store Alerts & History
-```
-
----
-
-# 🎯 Threat Classification
-
-| Condition | Threat |
-|-----------|--------|
-| High Bytes/s + High Packets/s | Possible DDoS |
-| Port 22 | Possible SSH Attack |
-| Port 80 / 443 | Possible Web Attack |
-| Port 53 | Possible DNS Attack |
-| Other Anomaly | Generic Network Anomaly |
-| Normal Record | Normal Traffic |
-
----
-
-# ⚠ Risk Scoring
-
-| Risk Score | Severity |
-|------------|----------|
-| 0–30 | 🟢 Low |
-| 31–60 | 🟡 Medium |
-| 61–80 | 🟠 High |
-| 81–100 | 🔴 Critical |
-
----
-
-# 👥 Role-Based Access Control
-
-## Demo Users
-
-| Role | Username | Password |
-|------|----------|----------|
-| Admin | admin | admin123 |
-| Analyst | analyst | analyst123 |
-| Viewer | viewer | viewer123 |
-
----
-
-## Permissions
-
-| Feature | Admin | Analyst | Viewer |
-|----------|:----:|:-------:|:------:|
-| Dashboard | ✅ | ✅ | ✅ |
-| Upload Dataset | ✅ | ✅ | ❌ |
-| Train Model | ✅ | ✅ | ❌ |
-| Prediction | ✅ | ✅ | ❌ |
-| Alerts | ✅ | ✅ | ✅ |
-| History | ✅ | ✅ | ✅ |
-| Threat Reports | ✅ | ✅ | ✅ |
-
----
-
-# 📂 Supported Dataset
-
-The system currently supports **CICIDS2017-style CSV datasets**.
-
-Example features:
-
-```
-Destination Port
-Flow Duration
-Total Fwd Packets
-Total Backward Packets
-Flow Bytes/s
-Flow Packets/s
-Packet Length Mean
-Average Packet Size
-Label
-```
-
-Labels:
-
-```
-BENIGN
-DDoS
-Bot
-DoS
-PortScan
-SSH
-Web Attack
-```
-
-Any label other than **BENIGN** is treated as malicious traffic.
-
----
-
-# 📁 Project Structure
-
-```
-NetShieldAI
-│
-├── backend
-│   ├── app
-│   │   ├── models
-│   │   ├── routers
-│   │   ├── schemas
-│   │   ├── services
-│   │   ├── database.py
-│   │   └── main.py
-│   │
-│   ├── uploads
-│   ├── predictions
-│   ├── saved_models
-│   ├── .env.example
-│   └── requirements.txt
-│
-├── frontend
-│   ├── src
-│   ├── package.json
-│   ├── vite.config.js
-│   └── tailwind.config.js
-│
-├── sample_data
-├── scripts
-├── README.md
-└── .gitignore
-```
-
----
-
-# 🌐 API Endpoints
-
-| Method | Endpoint | Description |
-|---------|----------|-------------|
-| GET | `/health` | Health Check |
-| POST | `/api/login` | Login |
-| POST | `/api/upload` | Upload Dataset |
-| POST | `/api/train` | Train Model |
-| POST | `/api/predict` | Predict Anomalies |
-| GET | `/api/dashboard` | Dashboard |
-| GET | `/api/alerts` | Alerts |
-| GET | `/api/history` | Prediction History |
-| GET | `/api/reports/latest` | Latest Threat Report |
-
----
-
-# 📖 API Documentation
-
-FastAPI automatically generates API documentation.
-
-```
-http://127.0.0.1:8765/docs
-```
-
----
-
-# 💾 PostgreSQL Setup
-
-Create database:
-
-```powershell
-& "C:\Program Files\PostgreSQL\18\bin\psql.exe" -U postgres -c "CREATE DATABASE netshield_ai;"
-```
-
-Create `.env`
-
-```env
-DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@localhost:5432/netshield_ai
-```
-
----
-
-# ⚙ Backend Setup
-
-```powershell
+### 2. Backend Setup
+Navigate to the backend directory and set up the Python virtual environment:
+```bash
 cd backend
-
 python -m venv .venv
 
-.\.venv\Scripts\activate
+# Activate virtual environment (Windows)
+.venv\Scripts\activate
 
+# Activate virtual environment (Mac/Linux)
+source .venv/bin/activate
+
+# Install dependencies
 pip install -r requirements.txt
-
-uvicorn app.main:app --reload --port 8765
 ```
 
-Backend:
-
-```
-http://127.0.0.1:8765
-```
-
----
-
-# 💻 Frontend Setup
-
-```powershell
+### 3. Frontend Setup
+Navigate to the frontend directory and install dependencies:
+```bash
 cd frontend
-
 npm install
-
-npm run dev
 ```
 
-Frontend:
+## 🚀 How to Run
 
-```
-http://127.0.0.1:5173/login
-```
-
----
-
-# ▶ Running the Project
-
-Open **two terminals**.
-
-### Terminal 1
-
-```powershell
+### Start the Backend Server
+Run the FastAPI server (Ensure you run your terminal as Administrator if using Live Capture):
+```bash
 cd backend
-
-uvicorn app.main:app --reload --port 8765
+# With virtual environment activated
+uvicorn app.main:app --reload --port 8000
 ```
+The backend API will be available at `http://localhost:8000`. You can access the Swagger documentation at `http://localhost:8000/docs`.
 
-### Terminal 2
-
-```powershell
+### Start the Frontend Server
+Run the Vite development server:
+```bash
 cd frontend
-
 npm run dev
 ```
+The frontend will be available at `http://localhost:5173`.
 
----
+## 📡 API Overview
+The backend exposes several REST endpoints:
+- `POST /api/auth/login`: Authenticate users.
+- `GET /api/dashboard`: Get SOC overview metrics.
+- `POST /api/datasets/upload`: Upload training datasets.
+- `POST /api/ml/train`: Train the ML model.
+- `POST /api/predict/upload`: Upload data for batch prediction.
+- `POST /api/live/start`: Start live packet capture.
+- `GET /api/incidents`: Fetch generated incidents.
 
-# 📸 Screenshots
+## 📸 Screenshots
 
-Add screenshots here.
+*(Placeholders for future screenshots)*
 
-```
-Login Page
+1. **Dashboard Overview**  
+   ![Dashboard](https://via.placeholder.com/800x400?text=Dashboard+Screenshot)
+2. **Live Predictions**  
+   ![Live Capture](https://via.placeholder.com/800x400?text=Live+Capture+Screenshot)
+3. **Incident Management**  
+   ![Incidents](https://via.placeholder.com/800x400?text=Incident+Management+Screenshot)
 
-Dashboard
+## 🔮 Future Scope
+- **Deep Learning Integration**: Incorporate LSTM or Autoencoders for sequential anomaly detection.
+- **Distributed Agents**: Deploy lightweight packet capture agents across multiple subnets.
+- **Advanced Reporting**: Scheduled email reports for analysts.
 
-Dataset Upload
+## 📄 License
+This project is for educational and portfolio purposes.
 
-Model Training
-
-Prediction
-
-Threat Report
-
-Alerts
-
-History
-```
-
----
-
-# 🚫 Files Not to Push
-
-```
-backend/.env
-
-backend/.venv/
-
-frontend/node_modules/
-
-backend/uploads/
-
-backend/predictions/
-
-backend/saved_models/
-
-__pycache__/
-
-*.db
-
-Large datasets
-```
-
----
-
-# 📤 Files to Push
-
-```
-backend/app/
-
-frontend/src/
-
-sample_data/
-
-scripts/
-
-README.md
-
-requirements.txt
-
-package.json
-
-package-lock.json
-
-.gitignore
-
-.env.example
-```
-
----
-
-# ⚠ Limitations
-
-- Dataset-based detection only
-- No live packet capture
-- No Wireshark integration
-- No Zeek integration
-- No SIEM integration
-- Local deployment only
-- Simplified authentication
-- CSV-based workflow
-
----
-
-# 🚀 Future Scope
-
-- Live packet capture
-- Deep Learning models
-- XGBoost / Random Forest
-- Password hashing
-- JWT Authentication
-- User management
-- Email alerts
-- SMS alerts
-- Report export (PDF)
-- Alembic database migrations
-- Docker support
-- Cloud deployment
-- SIEM integration
-- Zeek integration
-- Wireshark integration
-
----
-
-# 👨‍💻 Contributors
-
-**Project:** NetShield AI – Network Anomaly Detection & Threat Monitoring System
-
-Developed as a Final Year Cybersecurity & Machine Learning academic project.
-
----
-
-# 📄 License
-
-This project is intended for **educational and research purposes only**.
+## 👨‍💻 Author
+Developed by the NetShield AI Team.

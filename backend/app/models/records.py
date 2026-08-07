@@ -87,3 +87,21 @@ class ThreatReport(Base):
     f1_score: Mapped[float | None] = mapped_column(Float, nullable=True)
     # Full report payload serialised as JSON for easy retrieval.
     report_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class Incident(Base):
+    """Represents a security incident created from an anomaly detection."""
+
+    __tablename__ = "incidents"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    flow_id: Mapped[str] = mapped_column(String(100))
+    threat_category: Mapped[str] = mapped_column(String(100))
+    prediction: Mapped[str] = mapped_column(String(50))
+    severity: Mapped[str] = mapped_column(String(20))
+    risk_score: Mapped[int] = mapped_column(Integer)
+    status: Mapped[str] = mapped_column(String(20), default="Open")
+    priority: Mapped[str] = mapped_column(String(20))
+    assigned_to: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)

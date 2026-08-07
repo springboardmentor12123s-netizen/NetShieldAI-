@@ -1,5 +1,16 @@
-"""Generate small CICIDS-style training and prediction CSVs for a local demo."""
+"""Generate CICIDS-style training and prediction CSVs for a local demo.
 
+By default produces ~1,000,000 total rows (900,000 training + 100,000
+prediction).  Use the ``--training`` and ``--prediction`` CLI flags to
+override the row counts.
+
+Usage
+-----
+    python scripts/generate_sample_data.py                        # 1M rows
+    python scripts/generate_sample_data.py --training 400 --prediction 100  # small demo
+"""
+
+import argparse
 import csv
 import random
 from pathlib import Path
@@ -18,6 +29,9 @@ FIELDS = [
     "Average Packet Size",
     "Label",
 ]
+
+# Anomaly ratio — 10% of the total rows are attack traffic.
+_ANOMALY_RATIO = 0.10
 
 
 def make_row(anomaly: bool) -> dict:
@@ -38,16 +52,59 @@ def make_row(anomaly: bool) -> dict:
 
 def write_csv(name: str, normal: int, anomalies: int) -> None:
     """Write a shuffled CSV with the given normal/anomaly row counts."""
-    rows = [make_row(False) for _ in range(normal)] + [make_row(True) for _ in range(anomalies)]
-    random.shuffle(rows)
+    total = normal + anomalies
+    print(f"  Generating {name} — {total:,} rows ({normal:,} normal, {anomalies:,} anomaly) ...")
+
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    with (OUTPUT_DIR / name).open("w", newline="", encoding="utf-8") as handle:
+    path = OUTPUT_DIR / name
+
+    # Stream rows directly to disk to keep memory usage constant.
+    with path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=FIELDS)
         writer.writeheader()
-        writer.writerows(rows)
+
+        # Build a shuffled index of labels instead of holding all rows in RAM.
+        labels = [False] * normal + [True] * anomalies
+        random.shuffle(labels)
+
+        for is_anomaly in labels:
+            writer.writerow(make_row(is_anomaly))
+
+    size_mb = path.stat().st_size / (1024 * 1024)
+    print(f"  ✓ {name} written ({size_mb:.1f} MB)")
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Generate CICIDS-style sample CSV datasets for NetShield AI.",
+    )
+    parser.add_argument(
+        "--training", type=int, default=900_000,
+        help="Total rows in the training CSV (default: 900,000).",
+    )
+    parser.add_argument(
+        "--prediction", type=int, default=100_000,
+        help="Total rows in the prediction CSV (default: 100,000).",
+    )
+    args = parser.parse_args()
+
+    training_total = args.training
+    prediction_total = args.prediction
+    training_anomalies = int(training_total * _ANOMALY_RATIO)
+    training_normal = training_total - training_anomalies
+    prediction_anomalies = int(prediction_total * _ANOMALY_RATIO)
+    prediction_normal = prediction_total - prediction_anomalies
+
+    print(f"\nNetShield AI — Sample Data Generator")
+    print(f"  Training:   {training_total:>10,} rows")
+    print(f"  Prediction: {prediction_total:>10,} rows")
+    print(f"  Total:      {training_total + prediction_total:>10,} rows\n")
+
+    write_csv("training_sample.csv", normal=training_normal, anomalies=training_anomalies)
+    write_csv("prediction_sample.csv", normal=prediction_normal, anomalies=prediction_anomalies)
+
+    print("\nSample training and prediction files created.")
 
 
 if __name__ == "__main__":
-    write_csv("training_sample.csv", normal=360, anomalies=40)
-    write_csv("prediction_sample.csv", normal=90, anomalies=10)
-    print("Sample training and prediction files created.")
+    main()

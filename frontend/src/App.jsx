@@ -9,10 +9,15 @@ import Predict from "./pages/Predict";
 import ThreatReport from "./pages/ThreatReport";
 import Train from "./pages/Train";
 import Upload from "./pages/Upload";
+import Incidents from "./pages/Incidents";
+
+import { LiveDataProvider } from "./context/LiveDataContext";
 
 function ProtectedLayout() {
   return localStorage.getItem("netshield_auth") === "true" ? (
-    <Layout />
+    <LiveDataProvider>
+      <Layout />
+    </LiveDataProvider>
   ) : (
     <Navigate replace to="/login" />
   );
@@ -65,6 +70,15 @@ export default function App() {
           element={
             <RoleProtectedRoute permission="alerts">
               <Alerts />
+            </RoleProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/incidents"
+          element={
+            <RoleProtectedRoute permission="alerts">
+              <Incidents />
             </RoleProtectedRoute>
           }
         />

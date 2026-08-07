@@ -13,8 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
 from app.database import Base, engine
-from app.routers import auth, datasets, ml, monitoring, reports
-
+from app.routers import auth, datasets, ml, monitoring, reports, live, incidents
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
@@ -47,13 +46,51 @@ app.include_router(datasets.router, prefix="/api")
 app.include_router(ml.router, prefix="/api")
 app.include_router(monitoring.router, prefix="/api")
 app.include_router(reports.router, prefix="/api")
-
+app.include_router(live.router, prefix="/api")
+app.include_router(incidents.router, prefix="/api")
 # Unprefixed aliases preserve the legacy endpoint contract.
 app.include_router(auth.router, include_in_schema=False)
 app.include_router(datasets.router, include_in_schema=False)
 app.include_router(ml.router, include_in_schema=False)
 app.include_router(monitoring.router, include_in_schema=False)
 app.include_router(reports.router, include_in_schema=False)
+app.include_router(live.router, include_in_schema=False)
+app.include_router(incidents.router, include_in_schema=False)
+
+
+@app.on_event("shutdown")
+def shutdown_event():
+    import logging
+    logger = logging.getLogger("netshield.main")
+    logger.info("Initiating graceful shutdown of background services...")
+
+    try:
+        from app.services.capture_service import capture_service
+        capture_service.stop_capture()
+        logger.info("Capture service stopped.")
+    except Exception as e:
+        logger.error(f"Error stopping capture service: {e}")
+
+    try:
+        from app.services.flow_builder import flow_builder
+        flow_builder.stop()
+        logger.info("Flow builder stopped.")
+    except Exception as e:
+        logger.error(f"Error stopping flow builder: {e}")
+
+    try:
+        from app.services.feature_extractor import feature_extractor
+        feature_extractor.stop()
+        logger.info("Feature extractor stopped.")
+    except Exception as e:
+        logger.error(f"Error stopping feature extractor: {e}")
+
+    try:
+        from app.services.live_predictor import live_predictor
+        live_predictor.stop()
+        logger.info("Live predictor stopped.")
+    except Exception as e:
+        logger.error(f"Error stopping live predictor: {e}")
 
 
 @app.get("/")
