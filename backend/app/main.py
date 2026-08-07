@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from database import engine
 import models
 from routers import auth
-from routers import auth, traffic, ai
+from routers import auth, traffic, ai, alerts
 # Initialize the FastAPI app
 app = FastAPI(
     title="NetShield AI",
@@ -13,6 +13,7 @@ app = FastAPI(
 app.include_router(traffic.router, prefix="/api/traffic", tags=["Network Monitoring"])
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(ai.router, prefix="/api/ai", tags=["AI Threat Detection"])
+app.include_router(alerts.router, prefix="/api/alerts", tags=["Alert Management"])
 
 # Create database tables on startup
 models.Base.metadata.create_all(bind=engine)

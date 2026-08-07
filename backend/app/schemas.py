@@ -26,3 +26,23 @@ class UserResponse(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str
+
+    # Schema for data required to create a new Alert
+class AlertCreate(BaseModel):
+    flow_id: str
+    severity: str
+    threat_type: str
+    risk_score: float
+
+# Schema for data returned to the frontend
+class AlertResponse(BaseModel):
+    id: str
+    flow_id: str
+    severity: str
+    threat_type: str
+    risk_score: float
+    status: str
+    created_at: str
+
+    class Config:
+        from_attributes = True

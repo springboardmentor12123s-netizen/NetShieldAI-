@@ -1,8 +1,12 @@
-from sqlalchemy import Column, String, Boolean, ForeignKey
+from sqlalchemy import Column, String, Boolean, ForeignKey, Float, TIMESTAMP
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
+from sqlalchemy.ext.declarative import declarative_base
 import uuid
-from database import Base
+from datetime import datetime
+
+# Create the Base class for our models
+Base = declarative_base()
 
 # Role Model
 class Role(Base):
@@ -28,3 +32,16 @@ class User(Base):
     
     # Relationship: Many Users belong to One Role
     role = relationship("Role", back_populates="users")
+
+# Alert Model (NEW!)
+class Alert(Base):
+    __tablename__ = "alerts"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    flow_id = Column(String, nullable=True) # Reference to the MongoDB flow ID
+    severity = Column(String(10), nullable=False) # 'Critical', 'High', 'Medium', 'Low'
+    threat_type = Column(String(50), nullable=False) # 'DDoS', 'PortScan', 'BruteForce'
+    risk_score = Column(Float, nullable=False) # 0.0 to 1.0 (from the AI engine)
+    status = Column(String(20), default="New") # 'New', 'Investigating', 'Resolved', 'False Positive'
+    assigned_to = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    created_at = Column(TIMESTAMP, default=datetime.utcnow)

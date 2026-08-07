@@ -3,6 +3,9 @@ from sqlalchemy.orm import Session
 from database import SessionLocal
 from mongo_db import flows_collection
 from collections import Counter
+from models import Alert
+from sqlalchemy import func
+
 
 router = APIRouter()
 
@@ -53,4 +56,22 @@ def get_traffic_stats():
         "total_flows": total_flows,
         "protocol_distribution": protocols,
         "label_distribution": labels
+    }
+
+@router.get("/alert-analytics")
+def get_alert_analytics(db: Session = Depends(get_db)):
+    """Fetch analytics data from the alerts table for the dashboard charts."""
+    
+    # Count alerts by severity
+    severity_data = db.query(Alert.severity, func.count(Alert.id)).group_by(Alert.severity).all()
+    severity_dict = {item[0]: item[1] for item in severity_data}
+    
+    # Count alerts by threat type
+    threat_data = db.query(Alert.threat_type, func.count(Alert.id)).group_by(Alert.threat_type).all()
+    threat_dict = {item[0]: item[1] for item in threat_data}
+
+    return {
+        "severity_distribution": severity_dict,
+        "threat_distribution": threat_dict,
+        "total_alerts": db.query(Alert).count()
     }
