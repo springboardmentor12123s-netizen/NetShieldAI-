@@ -1,0 +1,169 @@
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Segoe UI, sans-serif;
+}
+
+body{
+    background:#08111f;
+}
+
+.login-page{
+
+    width:100vw;
+    height:100vh;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    background:linear-gradient(135deg,#08111f,#10284d);
+
+}
+
+.glass{
+
+    width:430px;
+
+    background:rgba(26,40,66,.92);
+
+    border-radius:20px;
+
+    padding:40px;
+
+    box-shadow:0 0 35px rgba(0,255,255,.15);
+
+}
+
+.glass h1{
+
+    text-align:center;
+
+    color:#13d4ff;
+
+    margin-bottom:10px;
+
+    font-size:42px;
+
+}
+
+.glass p{
+
+    text-align:center;
+
+    color:#b8c3d6;
+
+    margin-bottom:30px;
+
+    font-size:18px;
+
+}
+
+.glass label{
+
+    color:white;
+
+    display:block;
+
+    margin-bottom:8px;
+
+    margin-top:15px;
+
+    font-weight:600;
+
+}
+
+.glass input{
+
+    width:100%;
+
+    padding:15px;
+
+    border:none;
+
+    border-radius:10px;
+
+    background:#243d63;
+
+    color:white;
+
+    outline:none;
+
+    font-size:16px;
+
+}
+
+.glass input::placeholder{
+
+    color:#c6d1e0;
+
+}
+
+.role-select{
+
+    width:100%;
+
+    padding:15px;
+
+    border:none;
+
+    border-radius:10px;
+
+    background:#243d63;
+
+    color:white;
+
+    outline:none;
+
+    margin-bottom:25px;
+
+    font-size:16px;
+
+}
+
+.glass button{
+
+    width:100%;
+
+    padding:15px;
+
+    border:none;
+
+    border-radius:10px;
+
+    background:#13bdf5;
+
+    color:white;
+
+    font-size:18px;
+
+    font-weight:bold;
+
+    cursor:pointer;
+
+    transition:.3s;
+
+}
+
+.glass button:hover{
+
+    background:#0ea6d8;
+
+}
+
+.error{
+
+    margin-top:20px;
+
+    background:#912828;
+
+    color:white;
+
+    padding:12px;
+
+    border-radius:8px;
+
+    text-align:center;
+
+}

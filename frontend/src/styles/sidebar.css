@@ -1,0 +1,172 @@
+.sidebar{
+    width:270px;
+    height:100vh;
+    background:#090b10;
+    color:white;
+
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+
+    border-right:1px solid #1f2937;
+    position:sticky;
+    top:0;
+}
+
+.logo-section{
+
+display:flex;
+
+align-items:center;
+
+gap:15px;
+
+padding:22px;
+
+cursor:pointer;
+
+border-bottom:1px solid #1f2937;
+
+transition:.3s;
+
+}
+
+.logo-section:hover{
+
+background:#111827;
+
+}
+
+.logo-icon{
+
+font-size:42px;
+
+color:#00d4ff;
+
+}
+
+.logo-text h3{
+
+margin:0;
+
+font-size:20px;
+
+color:#00d4ff;
+
+}
+
+.logo-text p{
+
+margin-top:6px;
+
+font-size:13px;
+
+color:#8b949e;
+
+}
+
+
+
+
+.menu{
+    display:flex;
+    flex-direction:column;
+    padding:25px 18px;
+    gap:10px;
+}
+
+.menu-item{
+    text-decoration:none;
+    color:#d6dde8;
+
+    display:flex;
+    align-items:center;
+    gap:14px;
+
+    padding:15px 18px;
+
+    border-radius:12px;
+
+    transition:0.25s;
+
+    font-size:17px;
+}
+
+.menu-item:hover{
+
+    background:#111827;
+
+    color:#18d7ff;
+
+    transform:translateX(6px);
+
+}
+
+.menu-item.active{
+
+    background:#122030;
+
+    color:#18d7ff;
+
+    border-left:4px solid #18d7ff;
+
+}
+
+.logout-section{
+
+    padding:20px;
+
+    border-top:1px solid #1f2937;
+
+}
+
+.logout-btn{
+
+    display:block;
+
+    text-decoration:none;
+
+    color:#ff6767;
+
+    padding:15px;
+
+    text-align:center;
+
+    border-radius:12px;
+
+    background:#14161d;
+
+    transition:.25s;
+
+}
+
+.logout-btn:hover{
+
+    background:#241414;
+
+    color:white;
+
+}
+.sidebar{
+
+transition:.3s;
+
+}
+
+.sidebar.collapsed{
+
+width:85px;
+
+}
+
+.sidebar.collapsed .logo-section{
+
+justify-content:center;
+
+}
+
+.sidebar.collapsed .logo-text{
+
+display:none;
+
+}
