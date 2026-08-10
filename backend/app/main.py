@@ -13,6 +13,8 @@ from app.routes.network import router as network_router
 from app.routes.anomaly import router as anomaly_router
 from app.routes.analytics import router as analytics_router
 from app.routes.websocket import router as websocket_router
+from app.routes.report import router as report_router
+from app.routes.email import router as email_router
 
 app = FastAPI(
     title="NetShield AI"
@@ -36,6 +38,8 @@ app.include_router(network_router)
 app.include_router(anomaly_router)
 app.include_router(analytics_router)
 app.include_router(websocket_router)
+app.include_router(report_router)
+app.include_router(email_router)
 
 
 @app.get("/")

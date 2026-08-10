@@ -55,6 +55,8 @@ function DashboardPage() {
 
       console.log("Loading packets...");
       const packetData = await PacketsAPI.list();
+      console.log(packetData);
+      console.log(Array.isArray(packetData));
       console.log("Packets Loaded:", packetData.length);
 
       console.log(packetData);

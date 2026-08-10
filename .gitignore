@@ -1,7 +1,8 @@
-ml/models/model.pkl
 backend/.env
+__pycache__/
+*.pyc
 datasets/
 ml/cleaned_dataset.csv
 ml/prediction_report.csv
-__pycache__/
-*.pyc
+ml/models/model.pkl
+backend/NetShield_Report.pdf

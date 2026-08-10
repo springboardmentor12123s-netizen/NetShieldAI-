@@ -35,53 +35,28 @@ export function TrafficSummary({
   return (
     <Card title="Traffic Summary" icon={<Gauge size={14} />}>
       <div className="kpi">
-        <span className="kpi__label">
-          Packets Captured
-        </span>
-
-        <span className="kpi__value">
-          {packets.length}
-        </span>
+        <span className="kpi__label">Packets Captured</span>
+        <span className="kpi__value">{packets.length}</span>
       </div>
 
       <div className="kpi">
-        <span className="kpi__label">
-          TCP Packets
-        </span>
-
-        <span className="kpi__value">
-          {tcp}
-        </span>
+        <span className="kpi__label">TCP Packets</span>
+        <span className="kpi__value">{tcp}</span>
       </div>
 
       <div className="kpi">
-        <span className="kpi__label">
-          UDP Packets
-        </span>
-
-        <span className="kpi__value">
-          {udp}
-        </span>
+        <span className="kpi__label">UDP Packets</span>
+        <span className="kpi__value">{udp}</span>
       </div>
 
       <div className="kpi">
-        <span className="kpi__label">
-          Other Packets
-        </span>
-
-        <span className="kpi__value">
-          {other}
-        </span>
+        <span className="kpi__label">Other Packets</span>
+        <span className="kpi__value">{other}</span>
       </div>
 
       <div className="kpi">
-        <span className="kpi__label">
-          Average Packet Size
-        </span>
-
-        <span className="kpi__value">
-          {averageSize} B
-        </span>
+        <span className="kpi__label">Average Packet Size</span>
+        <span className="kpi__value">{averageSize} B</span>
       </div>
     </Card>
   );

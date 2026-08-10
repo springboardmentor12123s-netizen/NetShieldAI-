@@ -10,15 +10,30 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/_app'
+import { Route as ChangePasswordRouteImport } from './routes/change-password'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AppIndexRouteImport } from './routes/_app.index'
+import { Route as AppAccountRouteImport } from './routes/_app.account'
 import { Route as AppAiRouteImport } from './routes/_app.ai'
 import { Route as AppAlertsRouteImport } from './routes/_app.alerts'
 import { Route as AppAnalyticsRouteImport } from './routes/_app.analytics'
 import { Route as AppNetworkRouteImport } from './routes/_app.network'
+import { Route as AppUsersRouteImport } from './routes/_app.users'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChangePasswordRoute = ChangePasswordRouteImport.update({
+  id: '/change-password',
+  path: '/change-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -26,9 +41,19 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAccountRoute = AppAccountRouteImport.update({
+  id: '/account',
+  path: '/account',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAiRoute = AppAiRouteImport.update({
@@ -51,52 +76,102 @@ const AppNetworkRoute = AppNetworkRouteImport.update({
   path: '/network',
   getParentRoute: () => AppRoute,
 } as any)
+const AppUsersRoute = AppUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
+  '/change-password': typeof ChangePasswordRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/account': typeof AppAccountRoute
   '/ai': typeof AppAiRoute
   '/alerts': typeof AppAlertsRoute
   '/analytics': typeof AppAnalyticsRoute
   '/network': typeof AppNetworkRoute
+  '/users': typeof AppUsersRoute
 }
 export interface FileRoutesByTo {
+  '/change-password': typeof ChangePasswordRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/account': typeof AppAccountRoute
   '/ai': typeof AppAiRoute
   '/alerts': typeof AppAlertsRoute
   '/analytics': typeof AppAnalyticsRoute
   '/network': typeof AppNetworkRoute
+  '/users': typeof AppUsersRoute
   '/': typeof AppIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_app': typeof AppRouteWithChildren
+  '/change-password': typeof ChangePasswordRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/_app/account': typeof AppAccountRoute
   '/_app/ai': typeof AppAiRoute
   '/_app/alerts': typeof AppAlertsRoute
   '/_app/analytics': typeof AppAnalyticsRoute
   '/_app/network': typeof AppNetworkRoute
+  '/_app/users': typeof AppUsersRoute
   '/_app/': typeof AppIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/ai' | '/alerts' | '/analytics' | '/network'
+  fullPaths:
+    | '/'
+    | '/change-password'
+    | '/forgot-password'
+    | '/login'
+    | '/reset-password'
+    | '/account'
+    | '/ai'
+    | '/alerts'
+    | '/analytics'
+    | '/network'
+    | '/users'
   fileRoutesByTo: FileRoutesByTo
-  to: '/login' | '/ai' | '/alerts' | '/analytics' | '/network' | '/'
+  to:
+    | '/change-password'
+    | '/forgot-password'
+    | '/login'
+    | '/reset-password'
+    | '/account'
+    | '/ai'
+    | '/alerts'
+    | '/analytics'
+    | '/network'
+    | '/users'
+    | '/'
   id:
     | '__root__'
     | '/_app'
+    | '/change-password'
+    | '/forgot-password'
     | '/login'
+    | '/reset-password'
+    | '/_app/account'
     | '/_app/ai'
     | '/_app/alerts'
     | '/_app/analytics'
     | '/_app/network'
+    | '/_app/users'
     | '/_app/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
+  ChangePasswordRoute: typeof ChangePasswordRoute
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -108,6 +183,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/change-password': {
+      id: '/change-password'
+      path: '/change-password'
+      fullPath: '/change-password'
+      preLoaderRoute: typeof ChangePasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -115,11 +204,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_app/': {
       id: '/_app/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/account': {
+      id: '/_app/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AppAccountRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/ai': {
@@ -150,22 +253,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppNetworkRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/users': {
+      id: '/_app/users'
+      path: '/users'
+      fullPath: '/users'
+      preLoaderRoute: typeof AppUsersRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
 interface AppRouteChildren {
+  AppAccountRoute: typeof AppAccountRoute
   AppAiRoute: typeof AppAiRoute
   AppAlertsRoute: typeof AppAlertsRoute
   AppAnalyticsRoute: typeof AppAnalyticsRoute
   AppNetworkRoute: typeof AppNetworkRoute
+  AppUsersRoute: typeof AppUsersRoute
   AppIndexRoute: typeof AppIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAccountRoute: AppAccountRoute,
   AppAiRoute: AppAiRoute,
   AppAlertsRoute: AppAlertsRoute,
   AppAnalyticsRoute: AppAnalyticsRoute,
   AppNetworkRoute: AppNetworkRoute,
+  AppUsersRoute: AppUsersRoute,
   AppIndexRoute: AppIndexRoute,
 }
 
@@ -173,7 +287,10 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
+  ChangePasswordRoute: ChangePasswordRoute,
+  ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

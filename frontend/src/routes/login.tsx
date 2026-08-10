@@ -1,4 +1,4 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { Shield } from "lucide-react";
 import { AuthAPI } from "@/lib/api";
@@ -8,8 +8,14 @@ export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
       { title: "Login" },
-      { name: "description", content: "Network Security Dashboard Login" },
-      { name: "robots", content: "noindex" },
+      {
+        name: "description",
+        content: "Network Security Dashboard Login",
+      },
+      {
+        name: "robots",
+        content: "noindex",
+      },
     ],
   }),
   component: LoginPage,
@@ -31,13 +37,27 @@ function LoginPage() {
     setErr(null);
 
     try {
-      const res = await AuthAPI.login(email, password);
+      const res = await AuthAPI.login(
+        email,
+        password,
+      );
 
       const token = res.access_token ?? "";
 
-      localStorage.setItem("auth_token", token);
+      localStorage.setItem(
+        "auth_token",
+        token,
+      );
 
-      router.navigate({ to: "/" });
+      if (res.first_login) {
+        router.navigate({
+          to: "/change-password",
+        });
+      } else {
+        router.navigate({
+          to: "/",
+        });
+      }
     } catch (e: any) {
       setErr(
         e?.response?.data?.detail ??
@@ -51,10 +71,16 @@ function LoginPage() {
 
   return (
     <div className="login">
-      <form className="login__card" onSubmit={onSubmit}>
+      <form
+        className="login__card"
+        onSubmit={onSubmit}
+      >
         <div className="login__brand">
           <span className="navbar__brand-mark">
-            <Shield size={13} strokeWidth={2.4} />
+            <Shield
+              size={13}
+              strokeWidth={2.4}
+            />
           </span>
 
           <div>
@@ -76,7 +102,9 @@ function LoginPage() {
             type="email"
             required
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) =>
+              setEmail(e.target.value)
+            }
           />
         </div>
 
@@ -88,8 +116,17 @@ function LoginPage() {
             type="password"
             required
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) =>
+              setPassword(e.target.value)
+            }
           />
+
+          <Link
+            className="login__link"
+            to="/forgot-password"
+          >
+            Forgot Password?
+          </Link>
         </div>
 
         {err && (
@@ -103,7 +140,9 @@ function LoginPage() {
           className="btn btn--primary login__btn"
           disabled={busy}
         >
-          {busy ? "Signing In..." : "Sign In"}
+          {busy
+            ? "Signing In..."
+            : "Sign In"}
         </button>
       </form>
     </div>

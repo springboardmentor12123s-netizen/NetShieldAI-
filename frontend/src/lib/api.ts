@@ -40,29 +40,21 @@ export interface Anomaly {
   id: number | string;
 
   anomaly_type?: string;
-
   type?: string;
-
   detection_type?: string;
-
   prediction?: string;
 
   confidence_score?: number;
-
   confidence?: number;
 
   source_ip?: string;
-
   destination_ip?: string;
 
   protocol?: string;
-
   severity?: string;
-
   status?: string;
 
   created_at?: string;
-
   timestamp?: string;
 }
 
@@ -72,6 +64,7 @@ export interface AppUser {
   username?: string;
   role?: string;
   full_name?: string;
+  is_active?: boolean;
 }
 
 export interface AnalyticsData {
@@ -100,7 +93,73 @@ export const AuthAPI = {
     return res.data as {
       access_token?: string;
       token_type?: string;
+      first_login?: boolean;
       user?: AppUser;
+    };
+  },
+
+  async changePassword(
+    oldPassword: string,
+    newPassword: string,
+  ) {
+    const res = await api.post("/change-password", {
+      old_password: oldPassword,
+      new_password: newPassword,
+    });
+
+    if (res.data.access_token) {
+      window.localStorage.setItem(
+        "auth_token",
+        res.data.access_token,
+      );
+    }
+
+    return res.data.user;
+  },
+
+  async profile() {
+    const res = await api.get<AppUser>("/profile");
+
+    return res.data;
+  },
+
+  async updateProfile(data: {
+    full_name: string;
+    email: string;
+  }) {
+    const res = await api.put<{
+      user: AppUser;
+      access_token?: string;
+      token_type?: string;
+    }>(
+      "/profile",
+      data,
+    );
+
+    return res.data;
+  },
+
+  async forgotPassword(email: string) {
+    const res = await api.post("/forgot-password", {
+      email,
+    });
+
+    return res.data as {
+      message?: string;
+    };
+  },
+
+  async resetPassword(
+    token: string,
+    newPassword: string,
+  ) {
+    const res = await api.post("/reset-password", {
+      token,
+      new_password: newPassword,
+    });
+
+    return res.data as {
+      message?: string;
     };
   },
 
@@ -134,15 +193,10 @@ export const AnomaliesAPI = {
 
     return res.data.map((a) => ({
       ...a,
-
       type: a.anomaly_type,
-
       detection_type: a.anomaly_type,
-
       prediction: a.anomaly_type,
-
       confidence: a.confidence_score,
-
       timestamp: a.created_at,
     })) as Anomaly[];
   },
@@ -154,15 +208,66 @@ export const AnomaliesAPI = {
     api.delete(`/anomalies/${id}`).then((r) => r.data),
 };
 
-
 export const AnalyticsAPI = {
   get: () =>
     api.get<AnalyticsData>("/analytics").then((r) => r.data),
+
+  downloadReport: async () => {
+    const response = await api.get("/download-report", {
+      responseType: "blob",
+    });
+
+    let filename = "NetShield_Report.pdf";
+
+    const disposition = response.headers["content-disposition"];
+
+    if (disposition) {
+      const match = disposition.match(/filename="?([^"]+)"?/);
+
+      if (match && match[1]) {
+        filename = match[1];
+      }
+    }
+
+    const blob = new Blob([response.data], {
+      type: "application/pdf",
+    });
+
+    const url = window.URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = filename;
+
+    document.body.appendChild(link);
+    link.click();
+
+    document.body.removeChild(link);
+
+    window.URL.revokeObjectURL(url);
+  },
 };
 
 export const UsersAPI = {
   list: () =>
     api.get<AppUser[]>("/users").then((r) => r.data),
+
+  create: (user: {
+    full_name: string;
+    email: string;
+    role: string;
+  }) =>
+    api.post("/register", user).then((r) => r.data),
+
+  update: (
+    id: number | string,
+    data: Partial<AppUser>,
+  ) =>
+    api.put(`/users/${id}`, data).then((r) => r.data),
+
+  delete: (id: number | string) =>
+    api.delete(`/users/${id}`).then((r) => r.data),
 };
 
 export function getSrc(packet: Packet) {

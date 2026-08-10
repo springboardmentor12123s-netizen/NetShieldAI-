@@ -1,6 +1,7 @@
 import { Link, useRouter } from "@tanstack/react-router";
-import { Shield, LogOut, Activity } from "lucide-react";
+import { LogOut, Activity } from "lucide-react";
 import { AuthAPI } from "@/lib/api";
+import { useEffect, useState } from "react";
 
 const NAV = [
   { to: "/", label: "Dashboard" },
@@ -8,34 +9,63 @@ const NAV = [
   { to: "/alerts", label: "Alerts" },
   { to: "/ai", label: "AI Detection" },
   { to: "/analytics", label: "Analytics" },
+  { to: "/users", label: "Admin Management" },
+  { to: "/account", label: "Account" },
 ] as const;
 
 export function Navbar() {
   const router = useRouter();
+
+  const [role, setRole] = useState("");
+
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const user = await AuthAPI.profile();
+        setRole(user.role ?? "");
+      } catch (error) {
+        console.error("Failed to load user role");
+      }
+    };
+
+    loadUser();
+  }, []);
 
   const onLogout = () => {
     AuthAPI.logout();
     router.navigate({ to: "/login" });
   };
 
+  const visibleNav = NAV.filter((item) => {
+    if (item.to === "/users") {
+      return role === "SUPER_ADMIN";
+    }
+
+    return true;
+  });
+
   return (
     <header className="navbar">
       <div className="navbar__brand">
-        <span className="navbar__brand-mark">
-          <Shield size={13} strokeWidth={2.4} />
+        <span className="navbar__logo">
+          <Activity size={15} />
         </span>
 
         <span>Dashboard</span>
       </div>
 
       <nav className="navbar__nav">
-        {NAV.map((item) => (
+        {visibleNav.map((item) => (
           <Link
             key={item.to}
             to={item.to}
             className="navbar__link"
-            activeProps={{ className: "navbar__link is-active" }}
-            activeOptions={{ exact: item.to === "/" }}
+            activeProps={{
+              className: "navbar__link is-active",
+            }}
+            activeOptions={{
+              exact: item.to === "/",
+            }}
           >
             {item.label}
           </Link>

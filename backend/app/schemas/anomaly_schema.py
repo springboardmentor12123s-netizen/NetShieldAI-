@@ -6,4 +6,6 @@ class AnomalyCreate(BaseModel):
     destination_ip: str
     anomaly_type: str
     confidence_score: float
+    severity: str = "MEDIUM"
+    protocol: str = "UNKNOWN"
     status: str = "Detected"

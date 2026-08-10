@@ -14,8 +14,9 @@ from scapy.all import sniff
 from scapy.layers.inet import IP
 
 from app.database import SessionLocal
-from app.models.anomaly import Anomaly
 from app.models.network_packet import NetworkPacket
+from app.schemas.anomaly_schema import AnomalyCreate
+from app.services.anomaly_service import create_anomaly
 
 from app.packet_capture.flow_builder import (
     update_flow,
@@ -70,8 +71,9 @@ def process_packet(packet):
 
         result = predict_flow(flow)
 
-        anomaly = Anomaly(
+        severity = "HIGH" if result["confidence"] >= 0.90 else "MEDIUM"
 
+        anomaly = AnomalyCreate(
             source_ip=flow.client_ip,
 
             destination_ip=flow.server_ip,
@@ -80,12 +82,15 @@ def process_packet(packet):
 
             confidence_score=result["confidence"],
 
+            severity=severity,
+
+            protocol=flow.protocol,
+
             status="Detected",
 
         )
 
-        db.add(anomaly)
-        db.commit()
+        create_anomaly(db, anomaly)
 
         print()
 
