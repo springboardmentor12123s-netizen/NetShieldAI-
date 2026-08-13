@@ -78,15 +78,31 @@ function Dashboard() {
   const [auditLogs, setAuditLogs] = useState<any[]>([]); 
   const [aiPrediction, setAiPrediction] = useState<any>(null);
   const [history, setHistory] = useState<any[]>([]);
-  const alerts = useMemo(() => generateAlerts(8), []);
+  const [alerts, setAlerts] = useState<any[]>([]);
+  const [analytics, setAnalytics] = useState<any>(null);
   const timeline = useMemo(() => threatTimeline(), []);
   const attacks = useMemo(() => attackTypesData(), []);
   const protocols = useMemo(() => protocolDistribution(), []);
 
   useEffect(() => {
-    axios.get("http://localhost:8000/teams").then((res) => {
-  setTeams(res.data);
-});
+
+    const loadDashboard = () => {
+
+        axios.get("http://localhost:8000/analytics/")
+            .then((res) => {
+                setAnalytics(res.data);
+            })
+            .catch(console.error);
+
+    };
+
+    loadDashboard();
+
+    const interval = setInterval(loadDashboard, 2000);
+
+    
+
+
 
 axios.get("http://localhost:8000/audit-logs").then((res) => {
   setAuditLogs(res.data);
@@ -143,6 +159,13 @@ axios
   .then((res) => {
     setHistory(res.data);
   })
+  .then(() => {
+    return axios.get("http://localhost:8000/alerts/");
+})
+.then((res) => {
+    setAlerts(res.data.alerts);
+})
+
   .catch((err) => {
     console.error(err);
   });
@@ -165,7 +188,12 @@ axios
         return [...t.slice(1), next];
       });
     }, 2500);
-    return () => clearInterval(i);
+
+    return () => {
+        clearInterval(interval);
+        clearInterval(i);
+        };
+    
   }, []);
 
   return (
@@ -188,11 +216,46 @@ axios
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        <StatCard label="Active Devices" value="1,284" delta={2.1} icon={Wifi} tone="info" hint="42 subnets" />
-        <StatCard label="Network Traffic" value={`${(pps / 1000).toFixed(2)} Gbps`} delta={-1.4} icon={Activity} tone="primary" hint={`${pps.toLocaleString()} pkt/s`} />
-        <StatCard label="Detected Threats" value="317" delta={12.6} icon={ShieldAlert} tone="suspicious" hint="last 24h" />
-        <StatCard label="Critical Alerts" value="7" delta={40} icon={AlertTriangle} tone="critical" hint="needs triage" />
-        <StatCard label="Risk Score" value="62 / 100" delta={-3.2} icon={Gauge} tone="warning" hint="Moderate" />
+        <StatCard
+  label="Active Devices"
+  value={analytics?.active_devices ?? 0}
+  delta={2.1}
+  icon={Wifi}
+  tone="info"
+  hint={`${analytics?.interfaces_up ?? 0} interfaces up`}
+/>
+        <StatCard
+  label="Network Traffic"
+  value={`${analytics?.download_speed ?? 0} KB/s`}
+  delta={-1.4}
+  icon={Activity}
+  tone="primary"
+  hint={`↑ ${analytics?.upload_speed ?? 0} KB/s`}
+/>
+        <StatCard
+    label="Detected Threats"
+    value={analytics ? analytics.total_alerts : "0"}
+    delta={0}
+    icon={ShieldAlert}
+    tone="suspicious"
+    hint="Live"
+/>
+        <StatCard
+    label="Critical Alerts"
+    value={analytics ? analytics.critical_alerts : "0"}
+    delta={0}
+    icon={AlertTriangle}
+    tone="critical"
+    hint="Live"
+/>
+        <StatCard
+    label="Risk Score"
+    value={analytics ? `${analytics.average_risk} / 100` : "0 / 100"}
+    delta={0}
+    icon={Gauge}
+    tone="warning"
+    hint="Live"
+/>
       </div>
 
       <div className="glass-card p-5 border border-primary/30">
@@ -259,7 +322,7 @@ axios
             value={aiPrediction.anomaly ? "YES" : "NO"}
             icon={Cpu}
             tone={
-                aiPrediction.Anomaly
+                aiPrediction.anomaly
                 ? "critical"
                 : "safe"
             }
@@ -493,17 +556,17 @@ item.anomaly
                 {alerts.map((a) => (
                   <tr key={a.id} className="border-b border-border/40 last:border-0 hover:bg-accent/30">
                     <td className="py-2.5 pr-4 font-mono text-xs text-muted-foreground">
-                      {new Date(a.time).toISOString().slice(11, 19)}
+                      {a.timestamp}
                     </td>
-                    <td className="py-2.5 pr-4 font-mono text-xs">{a.srcIp}</td>
-                    <td className="py-2.5 pr-4 font-mono text-xs">{a.dstIp}</td>
+                    <td className="py-2.5 pr-4 font-mono text-xs">{a.source_ip}</td>
+                    <td className="py-2.5 pr-4 font-mono text-xs">{a.destination_ip}</td>
                     <td className="py-2.5 pr-4">
                       <span className="rounded border border-border/60 px-1.5 py-0.5 text-[10px] font-mono">
-                        {a.protocol}
+                        N/A
                       </span>
                     </td>
-                    <td className="py-2.5 pr-4">{a.threat}</td>
-                    <td className="py-2.5 pr-4"><SeverityBadge level={a.severity} /></td>
+                    <td className="py-2.5 pr-4">{a.attack}</td>
+                    <td className="py-2.5 pr-4"><SeverityBadge level={a.severity.toLowerCase()} /></td>
                     <td className="py-2.5 pr-2 text-right">
                       <button className="h-7 w-7 rounded-md hover:bg-accent/60 inline-flex items-center justify-center">
                         <MoreHorizontal className="h-4 w-4 text-muted-foreground" />

@@ -6,6 +6,7 @@ from datetime import datetime
 from fastapi import APIRouter
 
 from ml.recommendation import get_recommendation
+from services.alert_engine import AlertEngine
 
 router = APIRouter(prefix="/ai", tags=["AI"])
 
@@ -16,6 +17,16 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 classifier = joblib.load(
     os.path.join(BASE_DIR, "ml/models/threat_classifier.pkl")
 )
+print("\n==============================")
+print("Expected Features")
+print("==============================")
+
+try:
+    print(classifier.feature_names_in_)
+except Exception:
+    print("Model does not expose feature names.")
+
+print("==============================\n")
 
 attack_encoder = joblib.load(
     os.path.join(BASE_DIR, "ml/models/attack_encoder.pkl")
@@ -92,6 +103,8 @@ def predict(sample: dict):
     else:
         severity = "Low"
 
+    recommendation = get_recommendation(threat)
+
     entry = {
         "time": datetime.now().strftime("%H:%M:%S"),
         "threat": threat,
@@ -99,12 +112,26 @@ def predict(sample: dict):
         "risk": risk,
         "severity": severity,
         "anomaly": bool(anomaly == -1),
-        "recommendation": get_recommendation(threat)
+        "recommendation": recommendation
     }
 
     prediction_history.insert(0, entry)
 
     if len(prediction_history) > 20:
         prediction_history.pop()
+
+    # ----------------------------
+    # Create Alert Automatically
+    # ----------------------------
+
+    if risk >= 40:
+
+        AlertEngine.create_alert(
+            attack=threat,
+            confidence=entry["confidence"],
+            risk=entry["risk"],
+            severity=severity,
+            recommendation=recommendation
+        )
 
     return entry

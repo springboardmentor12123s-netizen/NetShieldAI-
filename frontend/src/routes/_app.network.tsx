@@ -311,7 +311,7 @@ loadNetworkStats();
                   <span className="h-2 w-2 rounded-full" style={{ background: PIE_COLORS[i % PIE_COLORS.length] }} />
                   {p.protocol}
                 </span>
-                <span className="text-muted-foreground">{p.count}%</span>
+                <span className="text-muted-foreground">{p.count}</span>
               </div>
             ))}
           </div>

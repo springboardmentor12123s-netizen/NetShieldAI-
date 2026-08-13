@@ -6,6 +6,14 @@ from data.traffic_data import network_stats
 
 router = APIRouter()
 
+from data.live_packets import live_packets
+from data.live_packets import protocol_counter
+from data.live_packets import unique_ips
+
+
+@router.get("/network/packets")
+def packets():
+    return list(live_packets)
 
 @router.get("/network/live")
 def get_live_network():
@@ -43,6 +51,25 @@ def get_interfaces():
         })
 
     return interfaces
+
+@router.get("/network/protocols")
+def protocols():
+
+    return [
+        {
+            "protocol": k,
+            "count": v
+        }
+        for k, v in protocol_counter.items()
+    ]
+
+@router.get("/network/devices")
+def devices():
+
+    return {
+        "devices": len(unique_ips),
+        "ips": list(unique_ips)
+    }
 
 @router.get("/network/connections")
 def get_connections():
