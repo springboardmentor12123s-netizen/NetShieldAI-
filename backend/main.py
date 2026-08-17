@@ -3,7 +3,7 @@ import sys
 import logging
 import secrets
 from typing import List
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from fastapi import FastAPI, Request, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,8 +12,12 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 from bson import ObjectId
 from passlib.context import CryptContext
-from models import Incident, User, AuditLog 
+from models import Incident, User, AuditLog
 
+import smtplib
+import ssl
+from email.message import EmailMessage
+from jose import jwt, JWTError
 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -92,6 +96,10 @@ class LoginRequest(BaseModel):
 class ForgotPasswordRequest(BaseModel):
     email: str
 
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
 class IsolateRequest(BaseModel):
     incident_id: str
     source_ip: str
@@ -152,27 +160,100 @@ def login_user(req: LoginRequest, db: Session = Depends(get_db)):
 
 @app.post("/api/auth/forgot-password")
 def forgot_password(req: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    """Generate a time-limited JWT reset token and email a reset link to the user (if the account exists).
+    Always returns a success message to avoid account enumeration.
+    """
     normalized_email = req.email.strip().lower()
     user = db.execute(
         text("SELECT id, username FROM users WHERE username = :u"),
         {"u": normalized_email}
     ).fetchone()
 
+    # If user exists, create token and attempt to send email.
     if user:
-        db.execute(
-            text("INSERT INTO audit_logs (username, event, severity) VALUES (:u, :e, :s)"),
-            {
-                "u": normalized_email,
-                "e": "Password reset requested",
-                "s": "Info"
-            }
-        )
-        db.commit()
+        SECRET_KEY = os.getenv("SECRET_KEY", "netshield-key")
+        FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+        try:
+            expire = datetime.utcnow() + timedelta(hours=1)
+            token = jwt.encode({"sub": normalized_email, "exp": expire}, SECRET_KEY, algorithm="HS256")
 
-    return {
-        "status": "success",
-        "message": "If an account exists for that email, reset instructions have been sent."
-    }
+            smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
+            smtp_port = int(os.getenv("SMTP_PORT", 587))
+            smtp_email = os.getenv("SMTP_EMAIL")
+            smtp_password = os.getenv("SMTP_APP_PASSWORD")
+
+            reset_link = f"{FRONTEND_URL}/reset-password?token={token}"
+
+            msg = EmailMessage()
+            msg["Subject"] = "NetShield — Password reset instructions"
+            msg["From"] = smtp_email or "no-reply@netshield.local"
+            msg["To"] = normalized_email
+            msg.set_content(f"To reset your NetShield password, visit: {reset_link}\nIf you did not request this, ignore this email.")
+            msg.add_alternative(
+                f"""
+                <html>
+                  <body>
+                    <p>Click the link below to reset your password. This link expires in 1 hour.</p>
+                    <p><a href=\"{reset_link}\">Reset your password</a></p>
+                    <p>If you did not request this change, ignore this email.</p>
+                  </body>
+                </html>
+                """,
+                subtype="html",
+            )
+
+            context = ssl.create_default_context()
+            with smtplib.SMTP(smtp_server, smtp_port) as server:
+                server.starttls(context=context)
+                server.login(smtp_email, smtp_password)
+                server.send_message(msg)
+
+            db.execute(
+                text("INSERT INTO audit_logs (username, event, severity) VALUES (:u, :e, :s)"),
+                {
+                    "u": normalized_email,
+                    "e": "Password reset requested (email sent)",
+                    "s": "Info",
+                },
+            )
+            db.commit()
+        except Exception as e:
+            logging.error(f"Failed to send reset email to {normalized_email}: {e}")
+
+    # Always return this message to avoid revealing whether the email exists.
+    return {"status": "success", "message": "If an account exists for that email, reset instructions have been sent."}
+
+
+@app.post("/api/auth/reset-password")
+def reset_password(req: ResetPasswordRequest, db: Session = Depends(get_db)):
+    """Accepts a token and new_password. Validates the token and updates password if the account exists."""
+    SECRET_KEY = os.getenv("SECRET_KEY", "netshield-key")
+    try:
+        payload = jwt.decode(req.token, SECRET_KEY, algorithms=["HS256"])
+        email = payload.get("sub")
+        if not email:
+            raise HTTPException(status_code=400, detail="Invalid token")
+    except JWTError:
+        raise HTTPException(status_code=400, detail="Invalid or expired token")
+
+    # Update the password if user exists. Still return success if not, to avoid enumeration.
+    user = db.execute(
+        text("SELECT id, username FROM users WHERE username = :u"),
+        {"u": email},
+    ).fetchone()
+
+    if not user:
+        return {"status": "success", "message": "Password has been reset if the account exists."}
+
+    new_hashed = pwd_context.hash(req.new_password)
+    db.execute(text("UPDATE users SET hashed_password = :p WHERE username = :u"), {"p": new_hashed, "u": email})
+    db.execute(
+        text("INSERT INTO audit_logs (username, event, severity) VALUES (:u, :e, :s)"),
+        {"u": email, "e": "Password reset completed", "s": "Info"},
+    )
+    db.commit()
+
+    return {"status": "success", "message": "Password has been reset."}
 
 @app.get("/api/users")
 def get_team_members(db: Session = Depends(get_db)):
