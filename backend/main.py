@@ -19,6 +19,9 @@ import ssl
 from email.message import EmailMessage
 from jose import jwt, JWTError
 
+from models import Base  # Import your SQLAlchemy Base from your models file
+from database import engine  # Import your database engine connected to Supabase
+
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 # --- Path Fix ---
@@ -52,11 +55,18 @@ app.add_middleware(
 # Include external routers
 # app.include_router(auth_router)
 
-# Auto-generate PostgreSQL tables on startup
-Base.metadata.create_all(bind=engine)
-
 # Setup Logging
 logger = logging.getLogger("netshield-threatops")
+
+# Auto-generate PostgreSQL tables on startup
+if not str(engine.url).startswith("sqlite"):
+    try:
+        Base.metadata.create_all(bind=engine)
+        logger.info("Database tables verified successfully.")
+    except Exception as exc:
+        logger.warning("Database tables could not be created at startup: %s", exc)
+else:
+    logger.warning("Skipping table creation because the app is using a fallback SQLite database. Connect to the cloud PostgreSQL URL in .env to enable the real database.")
 
 # Initialize MongoDB connection (with in-memory fallback)
 mongo_db = get_mongo_db()
@@ -74,7 +84,17 @@ IN_MEMORY_ALERTS = []
 # 2. PYDANTIC DATA SCHEMAS
 # ==========================================
 # These models define the exact structure of data expected from the frontend
+@app.on_event("startup")
+def on_startup():
+    if str(engine.url).startswith("sqlite"):
+        print("Skipping database table creation because the app is using the fallback SQLite database.")
+        return
 
+    try:
+        Base.metadata.create_all(bind=engine)
+        print("?? Database tables verified/created successfully in Supabase!")
+    except Exception as exc:
+        print(f"Database startup warning: {exc}")
 
 class IncidentUpdate(BaseModel):
     status: str  # 'Investigating', 'Isolated', 'Resolved'
