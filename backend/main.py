@@ -12,14 +12,14 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 from bson import ObjectId
 from passlib.context import CryptContext
-from models import Incident, User, AuditLog
+# from models import Incident, User, AuditLog
 
 import smtplib
 import ssl
 from email.message import EmailMessage
 from jose import jwt, JWTError
 
-from models import Base  # Import your SQLAlchemy Base from your models file
+# from models import Base  # Import your SQLAlchemy Base from your models file
 from database import engine  # Import your database engine connected to Supabase
 
 
