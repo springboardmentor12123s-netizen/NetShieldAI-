@@ -1,0 +1,24 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: netshield-backend
+    env_file:
+      - backend/.env
+    environment:
+      DATABASE_URL: postgresql://postgres:1234@host.docker.internal:5432/netshield_ai
+    ports:
+      - "8000:8000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: netshield-frontend
+    ports:
+      - "4173:4173"
+    depends_on:
+      - backend

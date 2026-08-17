@@ -1,0 +1,11 @@
+
+backend/.env
+**/__pycache__
+**/*.pyc
+.git
+.gitignore
+datasets/
+frontend/
+backend/NetShield_Report.pdf
+ml/cleaned_dataset.csv
+ml/prediction_report.csv
