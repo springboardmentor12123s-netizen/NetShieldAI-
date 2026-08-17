@@ -1,78 +1,667 @@
+/* =========================================
+   NETSHIELD AI - REPORTS PAGE
+   ========================================= */
+
 .reports-page {
-    padding: 30px;
-    min-height: 100vh;
-    background: #1f2937;
-    color: white;
+  min-height: 100vh;
+  padding: 35px 45px;
+  background: #0f172a;
+  color: #f8fafc;
+  box-sizing: border-box;
 }
 
-.reports-page h1 {
-    margin-bottom: 30px;
+
+/* =========================================
+   HEADER
+   ========================================= */
+
+.reports-header {
+  max-width: 1450px;
+  margin: 0 auto 35px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 30px;
 }
+
+.reports-header h1 {
+  margin: 0;
+  font-size: 38px;
+  font-weight: 750;
+  color: #f8fafc;
+}
+
+.reports-header p {
+  margin: 10px 0 0;
+  color: #94a3b8;
+  font-size: 16px;
+}
+
+
+.report-refresh-btn {
+  border: none;
+  border-radius: 10px;
+
+  padding: 13px 22px;
+
+  background: #2563eb;
+  color: white;
+
+  font-size: 15px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: 0.2s ease;
+}
+
+.report-refresh-btn:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+
+/* =========================================
+   STATISTICS
+   ========================================= */
+
+.report-stats {
+  max-width: 1450px;
+  margin: 0 auto 30px;
+
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+
+.report-stat-card {
+  min-height: 130px;
+
+  padding: 24px;
+
+  border-radius: 16px;
+
+  background: #1e293b;
+
+  border: 1px solid #334155;
+
+  display: flex;
+  align-items: center;
+  gap: 20px;
+
+  box-sizing: border-box;
+}
+
+
+.report-stat-card.total {
+  border-left: 4px solid #38bdf8;
+}
+
+.report-stat-card.benign {
+  border-left: 4px solid #34d399;
+}
+
+.report-stat-card.attacks {
+  border-left: 4px solid #f87171;
+}
+
+.report-stat-card.health {
+  border-left: 4px solid #f59e0b;
+}
+
+
+.report-stat-icon {
+  width: 55px;
+  height: 55px;
+
+  border-radius: 12px;
+
+  background: #26364d;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 26px;
+
+  flex-shrink: 0;
+}
+
+
+.report-stat-card span {
+  display: block;
+
+  margin-bottom: 8px;
+
+  color: #94a3b8;
+
+  font-size: 14px;
+  font-weight: 600;
+}
+
+
+.report-stat-card strong {
+  display: block;
+
+  color: #f8fafc;
+
+  font-size: 28px;
+  font-weight: 750;
+}
+
+
+/* =========================================
+   GENERAL CARD
+   ========================================= */
 
 .report-card {
-    background: #263143;
-    padding: 25px;
-    border-radius: 12px;
-    width: 420px;
-    box-shadow: 0 5px 12px rgba(0,0,0,0.3);
+  max-width: 1450px;
+
+  margin: 0 auto 25px;
+
+  padding: 28px;
+
+  box-sizing: border-box;
+
+  background: #1e293b;
+
+  border: 1px solid #334155;
+
+  border-radius: 16px;
+
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
 }
+
 
 .report-card h2 {
-    margin-bottom: 15px;
+  margin: 0;
+
+  color: #f8fafc;
+
+  font-size: 22px;
 }
 
-.report-card p {
-    margin-bottom: 20px;
-    color: #cbd5e1;
+
+.section-title {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 20px;
+
+  margin-bottom: 25px;
 }
 
-.report-card button {
-    background: #2563eb;
-    color: white;
-    border: none;
-    padding: 12px 22px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 15px;
+
+.section-title p {
+  margin: 7px 0 0;
+
+  color: #64748b;
+
+  font-size: 14px;
 }
 
-.report-card button:hover {
-    background: #1d4ed8;
+
+.alert-count {
+  padding: 7px 12px;
+
+  border-radius: 20px;
+
+  background: #26364d;
+
+  color: #93c5fd;
+
+  font-size: 13px;
+  font-weight: 600;
 }
+
+
+/* =========================================
+   SEVERITY
+   ========================================= */
+
+.severity-grid {
+  display: grid;
+
+  grid-template-columns: repeat(4, 1fr);
+
+  gap: 15px;
+}
+
+
+.severity-item {
+  padding: 18px;
+
+  border-radius: 12px;
+
+  background: #172236;
+
+  display: flex;
+  align-items: center;
+
+  gap: 15px;
+}
+
+
+.severity-item > span {
+  font-size: 25px;
+}
+
+
+.severity-item small {
+  display: block;
+
+  color: #94a3b8;
+
+  margin-bottom: 5px;
+}
+
+
+.severity-item strong {
+  color: #f8fafc;
+
+  font-size: 24px;
+}
+
+
+.severity-item.critical {
+  border-left: 3px solid #ef4444;
+}
+
+.severity-item.high {
+  border-left: 3px solid #f97316;
+}
+
+.severity-item.medium {
+  border-left: 3px solid #eab308;
+}
+
+.severity-item.low {
+  border-left: 3px solid #22c55e;
+}
+
+
+/* =========================================
+   SECURITY STATUS
+   ========================================= */
+
+.security-status {
+  display: flex;
+
+  align-items: center;
+
+  gap: 22px;
+}
+
+
+.security-status-icon {
+  width: 65px;
+  height: 65px;
+
+  border-radius: 14px;
+
+  background: #26364d;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 32px;
+
+  flex-shrink: 0;
+}
+
+
+.security-status h2 {
+  margin-bottom: 7px;
+}
+
+
+.security-status p {
+  margin: 0;
+
+  color: #94a3b8;
+
+  line-height: 1.6;
+}
+
+
+/* =========================================
+   ALERT LIST
+   ========================================= */
+
+.report-alert-list {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 10px;
+}
+
+
+.report-alert-row {
+  min-height: 65px;
+
+  padding: 14px 18px;
+
+  border-radius: 10px;
+
+  background: #172236;
+
+  border: 1px solid #27364d;
+
+  display: grid;
+
+  grid-template-columns: 1fr auto auto;
+
+  align-items: center;
+
+  gap: 20px;
+}
+
+
+.alert-main strong {
+  display: block;
+
+  color: #f8fafc;
+
+  margin-bottom: 5px;
+}
+
+
+.alert-main span {
+  color: #64748b;
+
+  font-size: 13px;
+}
+
+
+.report-severity,
+.report-status {
+  padding: 6px 11px;
+
+  border-radius: 6px;
+
+  font-size: 12px;
+
+  font-weight: 700;
+}
+
+
+.report-severity.critical {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+}
+
+.report-severity.high {
+  background: rgba(249, 115, 22, 0.15);
+  color: #fb923c;
+}
+
+.report-severity.medium {
+  background: rgba(234, 179, 8, 0.15);
+  color: #facc15;
+}
+
+.report-severity.low {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+}
+
+
+.report-status {
+  background: #26364d;
+
+  color: #93c5fd;
+}
+
+
+/* =========================================
+   NO ALERTS
+   ========================================= */
+
+.no-report-alerts {
+  text-align: center;
+
+  padding: 35px 20px;
+}
+
+
+.no-report-alerts > div {
+  font-size: 40px;
+
+  margin-bottom: 10px;
+}
+
+
+.no-report-alerts h3 {
+  margin: 0 0 8px;
+
+  color: #e2e8f0;
+
+  font-size: 20px;
+}
+
+
+.no-report-alerts p {
+  margin: 0;
+
+  color: #64748b;
+}
+
+
+/* =========================================
+   DOWNLOAD GRID
+   ========================================= */
 
 .reports-grid {
-    display: flex;
-    gap: 25px;
-    flex-wrap: wrap;
+  max-width: 1450px;
+
+  margin: 0 auto;
+
+  display: grid;
+
+  grid-template-columns: 1fr 1fr;
+
+  gap: 25px;
 }
 
-.report-card {
-    background: #263143;
-    padding: 25px;
-    border-radius: 12px;
-    width: 350px;
-    box-shadow: 0 5px 15px rgba(0,0,0,.3);
+
+.download-card {
+  display: flex;
+
+  align-items: center;
+
+  gap: 20px;
+
+  margin-bottom: 0;
 }
 
-.report-card h2 {
-    margin-bottom: 15px;
+
+.download-icon {
+  width: 65px;
+  height: 65px;
+
+  border-radius: 14px;
+
+  background: #26364d;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 30px;
+
+  flex-shrink: 0;
 }
 
-.report-card p {
-    margin-bottom: 20px;
-    color: #cbd5e1;
+
+.download-card h2 {
+  margin-bottom: 7px;
 }
 
-.report-card button {
-    background: #2563eb;
-    color: white;
-    border: none;
-    padding: 12px 18px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 15px;
+
+.download-card p {
+  margin: 0 0 18px;
+
+  color: #64748b;
+
+  font-size: 14px;
 }
 
-.report-card button:hover {
-    background: #1d4ed8;
+
+.download-btn {
+  border: none;
+
+  padding: 10px 16px;
+
+  border-radius: 8px;
+
+  background: #2563eb;
+
+  color: white;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: 0.2s ease;
+}
+
+
+.download-btn:hover {
+  background: #1d4ed8;
+}
+
+
+.alert-download {
+  background: #b91c1c;
+}
+
+
+.alert-download:hover {
+  background: #991b1b;
+}
+
+
+/* =========================================
+   LOADING
+   ========================================= */
+
+.reports-loading {
+  min-height: 70vh;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+}
+
+
+.loading-icon {
+  font-size: 50px;
+
+  margin-bottom: 15px;
+}
+
+
+.reports-loading h2 {
+  color: #f8fafc;
+
+  margin: 0 0 8px;
+}
+
+
+.reports-loading p {
+  color: #64748b;
+}
+
+
+/* =========================================
+   FOOTER
+   ========================================= */
+
+.reports-footer {
+  max-width: 1450px;
+
+  margin: 30px auto 0;
+
+  padding: 20px 0;
+
+  border-top: 1px solid #27364d;
+
+  display: flex;
+
+  justify-content: space-between;
+
+  gap: 20px;
+
+  color: #64748b;
+
+  font-size: 12px;
+}
+
+
+/* =========================================
+   RESPONSIVE
+   ========================================= */
+
+@media (max-width: 1100px) {
+
+  .report-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .severity-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+}
+
+
+@media (max-width: 800px) {
+
+  .reports-page {
+    padding: 25px 20px;
+  }
+
+  .reports-header {
+    flex-direction: column;
+
+    align-items: flex-start;
+  }
+
+  .reports-header h1 {
+    font-size: 30px;
+  }
+
+  .report-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .severity-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .reports-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .report-alert-row {
+    grid-template-columns: 1fr;
+
+    gap: 10px;
+  }
+
+  .reports-footer {
+    flex-direction: column;
+  }
+
 }

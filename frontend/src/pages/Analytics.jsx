@@ -1,261 +1,509 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import API from "../services/api";
+
 import AttackTypesChart from "../components/AttackTypesChart";
 import ProtocolPieChart from "../components/ProtocolPieChart";
 import TrafficTrendChart from "../components/TrafficTrendChart";
+
+import "../styles/Analytics.css";
+
 function Analytics() {
   const [attackTypes, setAttackTypes] = useState([]);
   const [protocolData, setProtocolData] = useState([]);
   const [trafficTrend, setTrafficTrend] = useState([]);
   const [topPorts, setTopPorts] = useState([]);
-  const [summary,setSummary]=useState({
-    total_traffic:0,
-    benign_traffic:0,
-    attack_traffic:0,
-    top_attack:"",
-    
+
+  const [summary, setSummary] = useState({
+    total_traffic: 0,
+    benign_traffic: 0,
+    attack_traffic: 0,
+    top_attack: "N/A",
   });
-useEffect(() => {
 
-  const loadAnalytics = () => {
-    fetchSummary();
-    fetchAttackTypes();
-    fetchProtocolDistribution();
-    fetchTopPorts();
-    fetchTrafficTrend();
-  };
+  const [loading, setLoading] = useState(true);
 
-  loadAnalytics();
-
-  const interval = setInterval(loadAnalytics, 10000);
-
-  return () => clearInterval(interval);
-
-}, []);
-
-  const fetchAttackTypes = async () => {
+  const fetchAnalytics = useCallback(async () => {
     try {
-      const response = await API.get("/analytics/attack-types");
-      setAttackTypes(response.data);
+      const [
+        summaryResponse,
+        attackResponse,
+        protocolResponse,
+        portsResponse,
+        trendResponse,
+      ] = await Promise.all([
+        API.get("/analytics/summary"),
+        API.get("/analytics/attack-types"),
+        API.get("/analytics/protocol-distribution"),
+        API.get("/analytics/top-ports"),
+        API.get("/analytics/traffic-trend"),
+      ]);
+
+      // Summary
+      if (summaryResponse.data) {
+        setSummary({
+          total_traffic: Number(
+            summaryResponse.data.total_traffic || 0
+          ),
+          benign_traffic: Number(
+            summaryResponse.data.benign_traffic || 0
+          ),
+          attack_traffic: Number(
+            summaryResponse.data.attack_traffic || 0
+          ),
+          top_attack:
+            summaryResponse.data.top_attack || "N/A",
+        });
+      }
+
+      // Attack types
+      setAttackTypes(
+        Array.isArray(attackResponse.data)
+          ? attackResponse.data
+          : []
+      );
+
+      // Protocols
+      setProtocolData(
+        Array.isArray(protocolResponse.data)
+          ? protocolResponse.data
+          : []
+      );
+
+      // Top ports
+      setTopPorts(
+        Array.isArray(portsResponse.data)
+          ? portsResponse.data
+          : []
+      );
+
+      // Traffic trend
+      setTrafficTrend(
+        Array.isArray(trendResponse.data)
+          ? trendResponse.data
+          : []
+      );
     } catch (error) {
-      console.log(error);
+      console.error("Analytics loading failed:", error);
+    } finally {
+      setLoading(false);
     }
-  };
-  const fetchTopPorts = async () => {
-    try {
-      const response = await API.get("/analytics/top-ports");
-      setTopPorts(response.data);
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  }, []);
 
+  useEffect(() => {
+    fetchAnalytics();
 
+    const interval = setInterval(() => {
+      fetchAnalytics();
+    }, 10000);
 
-const fetchSummary = async () => {
-  try {
-    const response = await API.get("/analytics/summary");
-    setSummary(response.data);
-  } catch (error) {
-    console.log(error);
-  }
-};
-const fetchTrafficTrend = async () => {
-  try {
-    const response = await API.get("/analytics/traffic-trend");
-    setTrafficTrend(response.data);
-  } catch (error) {
-    console.log(error);
-  }
-};
+    return () => clearInterval(interval);
+  }, [fetchAnalytics]);
 
-  const fetchProtocolDistribution = async () => {
-    try {
-      const response = await API.get("/analytics/protocol-distribution");
-      setProtocolData(response.data);
-    } catch (error) {
-      console.log(error);
-    }
+  const formatNumber = (value) => {
+    return Number(value || 0).toLocaleString();
   };
 
+  const attackPercentage =
+    summary.total_traffic > 0
+      ? (
+          (summary.attack_traffic / summary.total_traffic) *
+          100
+        ).toFixed(1)
+      : "0.0";
 
   return (
-    <div
-      style={{
-        padding: "30px",
-        backgroundColor: "#1f2937",
-        minHeight: "100vh",
-        color: "white",
-      }}
-    >
-      <h1 style={{ marginBottom: "30px" }}>
-        📊 Network Traffic Analytics
-      </h1>
-      <div
-  style={{
-    display: "grid",
-    gridTemplateColumns: "repeat(4, 1fr)",
-    gap: "20px",
-    marginBottom: "30px",
-  }}
->
-  <div
-    style={{
-      background: "#263143",
-      padding: "20px",
-      borderRadius: "12px",
-      textAlign: "center",
-    }}
-  >
-    <h3>Total Traffic</h3>
-    <h2>{summary.total_traffic.toLocaleString()}</h2>
-  </div>
+    <div className="analytics-page">
 
-  <div
-    style={{
-      background: "#263143",
-      padding: "20px",
-      borderRadius: "12px",
-      textAlign: "center",
-    }}
-  >
-    <h3>Benign Traffic</h3>
-    <h2>{summary.benign_traffic.toLocaleString()}</h2>
-  </div>
+      {/* =====================================
+          HEADER
+      ====================================== */}
 
-  <div
-    style={{
-      background: "#263143",
-      padding: "20px",
-      borderRadius: "12px",
-      textAlign: "center",
-    }}
-  >
-    <h3>Attack Traffic</h3>
-    <h2>{summary.attack_traffic.toLocaleString()}</h2>
-  </div>
+      <div className="analytics-header">
 
-  <div
-    style={{
-      background: "#263143",
-      padding: "20px",
-      borderRadius: "12px",
-      textAlign: "center",
-    }}
-  >
-    <h3>Top Attack</h3>
-    <h2>{summary.top_attack}</h2>
-  </div>
-</div>
-      {/* Charts Section */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: "20px",
-          marginBottom: "30px",
-        }}
-      >
-        {/* Attack Types */}
-        <div
-          style={{
-            backgroundColor: "#263143",
-            padding: "20px",
-            borderRadius: "12px",
-          }}
-        >
-          <h2 style={{ marginBottom: "20px" }}>
-            Attack Type Distribution
-          </h2>
+        <div>
+          <h1>📊 Network Traffic Analytics</h1>
 
-          <AttackTypesChart data={attackTypes} />
+          <p>
+            Real-time network traffic analysis,
+            threat distribution and security insights
+          </p>
         </div>
 
-        {/* Protocol Distribution */}
-        <div
-          style={{
-            backgroundColor: "#263143",
-            padding: "20px",
-            borderRadius: "12px",
-          }}
-        >
-          <h2 style={{ marginBottom: "20px" }}>
-            Protocol Distribution
-          </h2>
-
-          <ProtocolPieChart data={protocolData} />
+        <div className="analytics-live">
+          <span className="live-dot"></span>
+          LIVE
         </div>
-       
-    <div
-      style={{
-      backgroundColor: "#263143",
-      padding: "20px",
-      borderRadius: "12px",
-      marginTop: "20px",
-      }}
-    >
-    <h2 style={{ marginBottom: "20px" }}>
-    Traffic Trend
-    </h2>
 
-    <TrafficTrendChart data={trafficTrend} />
-    </div>
       </div>
 
-      {/* Statistics Table */}
-      <div
-        style={{
-          backgroundColor: "#263143",
-          padding: "20px",
-          borderRadius: "12px",
-        }}
-      >
-        <h2 style={{ marginBottom: "20px" }}>
-          Attack Statistics
-        </h2>
+      {/* =====================================
+          SUMMARY CARDS
+      ====================================== */}
 
-        <table
-          style={{
-            width: "100%",
-            borderCollapse: "collapse",
-          }}
-        >
-          <thead>
-            <tr
-              style={{
-                backgroundColor: "#374151",
-              }}
-            >
-              <th style={{ padding: "12px" }}>Attack Type</th>
-              <th style={{ padding: "12px" }}>Total Records</th>
-            </tr>
-          </thead>
+      <div className="analytics-summary">
 
-          <tbody>
-            {attackTypes.map((item, index) => (
-              <tr key={index}>
-                <td
-                  style={{
-                    padding: "10px",
-                    borderBottom: "1px solid #4b5563",
-                  }}
-                >
-                  {item.label}
-                </td>
+        {/* TOTAL TRAFFIC */}
 
-                <td
-                  style={{
-                    padding: "10px",
-                    borderBottom: "1px solid #4b5563",
-                  }}
-                >
-                  {item.total.toLocaleString()}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="analytics-card total">
+
+          <div className="analytics-card-icon">
+            📡
+          </div>
+
+          <div>
+            <h3>Total Traffic</h3>
+
+            <strong>
+              {loading
+                ? "..."
+                : formatNumber(summary.total_traffic)}
+            </strong>
+
+            <p>Network records monitored</p>
+          </div>
+
+        </div>
+
+        {/* BENIGN */}
+
+        <div className="analytics-card benign">
+
+          <div className="analytics-card-icon">
+            🟢
+          </div>
+
+          <div>
+            <h3>Benign Traffic</h3>
+
+            <strong>
+              {loading
+                ? "..."
+                : formatNumber(summary.benign_traffic)}
+            </strong>
+
+            <p>Normal network activity</p>
+          </div>
+
+        </div>
+
+        {/* ATTACK */}
+
+        <div className="analytics-card attack">
+
+          <div className="analytics-card-icon">
+            🔴
+          </div>
+
+          <div>
+            <h3>Attack Traffic</h3>
+
+            <strong>
+              {loading
+                ? "..."
+                : formatNumber(summary.attack_traffic)}
+            </strong>
+
+            <p>
+              {attackPercentage}% of total traffic
+            </p>
+          </div>
+
+        </div>
+
+        {/* TOP ATTACK */}
+
+        <div className="analytics-card top-attack">
+
+          <div className="analytics-card-icon">
+            ⚠️
+          </div>
+
+          <div>
+            <h3>Top Attack</h3>
+
+            <strong className="attack-value">
+              {loading
+                ? "..."
+                : summary.top_attack}
+            </strong>
+
+            <p>Most frequently detected threat</p>
+          </div>
+
+        </div>
+
       </div>
+
+      {/* =====================================
+          CHARTS ROW
+      ====================================== */}
+
+      <div className="analytics-chart-grid">
+
+        {/* ATTACK TYPES */}
+
+        <div className="analytics-panel">
+
+          <div className="panel-header">
+
+            <div>
+              <h2>Attack Type Distribution</h2>
+
+              <p>
+                Distribution of detected network threats
+              </p>
+            </div>
+
+            <span className="panel-icon">
+              🛡️
+            </span>
+
+          </div>
+
+          <div className="chart-container">
+            <AttackTypesChart data={attackTypes} />
+          </div>
+
+        </div>
+
+        {/* PROTOCOL DISTRIBUTION */}
+
+        <div className="analytics-panel">
+
+          <div className="panel-header">
+
+            <div>
+              <h2>Protocol Distribution</h2>
+
+              <p>
+                Network traffic by communication protocol
+              </p>
+            </div>
+
+            <span className="panel-icon">
+              🌐
+            </span>
+
+          </div>
+
+          <div className="chart-container">
+            <ProtocolPieChart data={protocolData} />
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* =====================================
+          TRAFFIC TREND
+      ====================================== */}
+
+      <div className="analytics-panel traffic-trend-panel">
+
+        <div className="panel-header">
+
+          <div>
+            <h2>Traffic Trend</h2>
+
+            <p>
+              Network activity over time
+            </p>
+          </div>
+
+          <span className="panel-icon">
+            📈
+          </span>
+
+        </div>
+
+        <div className="trend-chart-container">
+          <TrafficTrendChart data={trafficTrend} />
+        </div>
+
+      </div>
+
+      {/* =====================================
+          ATTACK STATISTICS + TOP PORTS
+      ====================================== */}
+
+      <div className="analytics-bottom-grid">
+
+        {/* ATTACK STATISTICS */}
+
+        <div className="analytics-panel">
+
+          <div className="panel-header">
+
+            <div>
+              <h2>Attack Statistics</h2>
+
+              <p>
+                Detected attack types and record counts
+              </p>
+            </div>
+
+            <span className="panel-icon">
+              🚨
+            </span>
+
+          </div>
+
+          <div className="analytics-table-wrapper">
+
+            <table className="analytics-table">
+
+              <thead>
+                <tr>
+                  <th>Attack Type</th>
+                  <th>Total Records</th>
+                </tr>
+              </thead>
+
+              <tbody>
+
+                {attackTypes.length > 0 ? (
+
+                  attackTypes.map((item, index) => (
+
+                    <tr key={index}>
+
+                      <td>
+                        <span className="attack-type-name">
+                          {item.label || "Unknown"}
+                        </span>
+                      </td>
+
+                      <td>
+                        <strong>
+                          {formatNumber(item.total)}
+                        </strong>
+                      </td>
+
+                    </tr>
+
+                  ))
+
+                ) : (
+
+                  <tr>
+                    <td
+                      colSpan="2"
+                      className="empty-cell"
+                    >
+                      No attack statistics available
+                    </td>
+                  </tr>
+
+                )}
+
+              </tbody>
+
+            </table>
+
+          </div>
+
+        </div>
+
+        {/* TOP PORTS */}
+
+        <div className="analytics-panel">
+
+          <div className="panel-header">
+
+            <div>
+              <h2>Top Network Ports</h2>
+
+              <p>
+                Most active destination ports
+              </p>
+            </div>
+
+            <span className="panel-icon">
+              🔌
+            </span>
+
+          </div>
+
+          <div className="analytics-table-wrapper">
+
+            <table className="analytics-table">
+
+              <thead>
+                <tr>
+                  <th>Port</th>
+                  <th>Traffic</th>
+                </tr>
+              </thead>
+
+              <tbody>
+
+                {topPorts.length > 0 ? (
+
+                  topPorts.map((item, index) => (
+
+                    <tr key={index}>
+
+                      <td>
+                        <span className="port-badge">
+                          {item.port ??
+                            item.destination_port ??
+                            "-"}
+                        </span>
+                      </td>
+
+                      <td>
+                        <strong>
+                          {formatNumber(
+                            item.total ??
+                            item.count ??
+                            item.traffic
+                          )}
+                        </strong>
+                      </td>
+
+                    </tr>
+
+                  ))
+
+                ) : (
+
+                  <tr>
+                    <td
+                      colSpan="2"
+                      className="empty-cell"
+                    >
+                      No port statistics available
+                    </td>
+                  </tr>
+
+                )}
+
+              </tbody>
+
+            </table>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* =====================================
+          FOOTER
+      ====================================== */}
+
+      <div className="analytics-footer">
+
+        <span>
+          🟢 Live analytics enabled
+        </span>
+
+        <span>
+          Auto-refresh every 10 seconds
+        </span>
+
+      </div>
+
     </div>
   );
 }

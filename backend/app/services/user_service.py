@@ -4,13 +4,11 @@ from app.auth.password import hash_password
 
 
 def register_user(db: Session, user_data):
-    # Check username
     existing_user = db.query(User).filter(User.username == user_data.username).first()
 
     if existing_user:
         return None
 
-    # Check email
     existing_email = db.query(User).filter(User.email == user_data.email).first()
 
     if existing_email:

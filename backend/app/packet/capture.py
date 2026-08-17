@@ -5,24 +5,24 @@ from app.packet.live_predictor import (
     create_alert
 )
 
+
 def process_packet(packet):
 
-    result = predict_live_packet(packet)
+    try:
 
-    if result:
+        result = predict_live_packet(packet)
 
-        create_alert(result)
-        print("\n--- LIVE PREDICTION ---")
+        if result:
 
-        print(
-            "Attack:",
-            result["prediction"]
-        )
+            create_alert(result)
 
-        print(
-            "Confidence:",
-            result["confidence"]
-        )
+            print("\n--- LIVE PREDICTION ---")
+            print("Attack:", result["prediction"])
+            print("Confidence:", result["confidence"])
+
+    except Exception as e:
+
+        print("Packet processing error:", e)
 
 
 def start_capture():

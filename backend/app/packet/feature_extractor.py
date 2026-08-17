@@ -34,6 +34,7 @@ def extract_features(packet):
     if duration == 0:
         duration = 0.001
 
+    
 
     features = {
 
@@ -62,5 +63,22 @@ def extract_features(packet):
             flow["fwd_packets"] / duration
     }
 
+    
+
+    features["source_ip"] = src
+
+    features["destination_ip"] = dst
+
+    if packet.haslayer("TCP"):
+        features["protocol"] = "TCP"
+
+    elif packet.haslayer("UDP"):
+        features["protocol"] = "UDP"
+
+    elif packet.haslayer("ICMP"):
+        features["protocol"] = "ICMP"
+
+    else:
+        features["protocol"] = "OTHER"
 
     return features

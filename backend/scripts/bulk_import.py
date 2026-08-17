@@ -37,10 +37,8 @@ for file in csv_files:
 
         print("Rows:", len(df))
 
-        # Remove extra spaces from column names
         df.columns = df.columns.str.strip()
 
-        # Required columns (without Protocol)
         required_columns = [
             "Destination Port",
             "Flow Duration",
@@ -55,7 +53,6 @@ for file in csv_files:
 
         df = df[required_columns]
 
-        # Rename columns
         df.columns = [
             "destination_port",
             "flow_duration",
@@ -68,10 +65,8 @@ for file in csv_files:
             "label",
         ]
 
-        # Add protocol column
         df["protocol"] = "Unknown"
 
-        # Reorder columns to match PostgreSQL table
         df = df[
             [
                 "destination_port",

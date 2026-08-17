@@ -15,10 +15,6 @@ AI_DIR = os.path.join(BASE_DIR, "..", "ai")
 model = joblib.load(os.path.join(AI_DIR, "model.pkl"))
 encoder = joblib.load(os.path.join(AI_DIR, "label_encoder.pkl"))
 
-# ----------------------------
-# Threat Levels
-# ----------------------------
-
 THREAT_LEVEL = {
     "BENIGN": "LOW",
     "Bot": "MEDIUM",
@@ -37,11 +33,6 @@ THREAT_LEVEL = {
     "Web Attack – XSS": "HIGH"
 }
 
-
-# ----------------------------
-# Risk Scores
-# ----------------------------
-
 RISK_SCORE = {
     "BENIGN": 0,
     "Bot": 40,
@@ -59,7 +50,6 @@ RISK_SCORE = {
     "Web Attack – Sql Injection": 100,
     "Web Attack – XSS": 70
 }
-
 
 @router.get("/{traffic_id}")
 def predict_attack(

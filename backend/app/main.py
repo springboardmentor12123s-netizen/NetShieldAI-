@@ -16,6 +16,7 @@ from app.routers import reports
 from app.services.packet_capture import run_packet_capture
 
 from app.routers import prediction
+from app.routers import model_performance
 
 
 Base.metadata.create_all(bind=engine)
@@ -92,6 +93,11 @@ app.include_router(
     prediction.router,
     prefix="/predict",
     tags=["Prediction"]
+)
+app.include_router(
+    model_performance.router,
+    prefix="/model",
+    tags=["AI Model"]
 )
 
 @app.on_event("startup")

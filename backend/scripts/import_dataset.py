@@ -13,10 +13,8 @@ df = pd.read_csv(
 
 print("Original rows:", len(df))
 
-# Remove extra spaces
 df.columns = df.columns.str.strip()
 
-# Keep only required columns
 df = df[
     [
         "Destination Port",
@@ -31,7 +29,6 @@ df = df[
     ]
 ]
 
-# Rename columns
 df.columns = [
     "destination_port",
     "flow_duration",
@@ -45,7 +42,6 @@ df.columns = [
 ]
 
 df["protocol"] = "Unknown"
-# Reorder columns to match PostgreSQL table
 df = df[
     [
         "destination_port",

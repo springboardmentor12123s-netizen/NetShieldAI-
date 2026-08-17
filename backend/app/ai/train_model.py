@@ -93,9 +93,6 @@ valid_classes = counts[counts >= 10].index
 
 df = df[df["Label"].isin(valid_classes)]
 
-# ==========================================================
-# FEATURES USED FOR TRAINING
-# ==========================================================
 
 FEATURES = [
     "Destination Port",

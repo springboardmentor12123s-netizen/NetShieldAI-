@@ -7,14 +7,10 @@ from app.services.dataset_service import dataset_summary
 
 router = APIRouter()
 
-
-# Existing summary endpoint
 @router.get("/summary")
 def get_summary():
     return dataset_summary()
 
-
-# New endpoint for attack distribution
 @router.get("/attack-distribution")
 def attack_distribution(db: Session = Depends(get_db)):
 

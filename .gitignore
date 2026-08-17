@@ -28,4 +28,8 @@ datasets/
 __pycache__/
 *.pyc
 
-backend/app/ai/dataset.pkl
+backend/app/ai/dataset.pkl__pycache__/ 
+*.pyc 
+__pycache__/ 
+*.pyc 
+dataset.pkl 

@@ -1,109 +1,123 @@
 import "../styles/Dashboard.css";
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import API from "../services/api";
 import TrafficPieChart from "../components/TrafficPieChart";
 import AttackChart from "../components/AttackChart";
 import { toast } from "react-toastify";
-import { useRef } from "react";
+
 function Dashboard() {
   const navigate = useNavigate();
+
   const lastAlertId = useRef(null);
+
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState("");
+
   const [livePredictions, setLivePredictions] = useState([]);
   const [liveAlerts, setLiveAlerts] = useState([]);
+  const [modelPerformance, setModelPerformance] = useState(null);
+
   const [liveStats, setLiveStats] = useState({
-  totalPackets: 0,
-  benign: 0,
-  attacks: 0,
-  critical: 0
-});
+    totalPackets: 0,
+    benign: 0,
+    attacks: 0,
+    critical: 0,
+  });
+
   useEffect(() => {
     loadDashboard();
 
     const interval = setInterval(() => {
       loadDashboard();
-    }, 30000);
+    }, 5000);
 
     return () => clearInterval(interval);
   }, []);
 
   const loadDashboard = async () => {
-    setLoading(true);
+    try {
+      const [, alerts] = await Promise.all([
+        fetchLivePredictions(),
+        fetchLiveAlerts(),
+        fetchModelPerformance(),
+      ]);
 
-    await Promise.all([
-      fetchLivePredictions(),
-      fetchLiveAlerts(),
-    ]);
-    await checkForNewAlerts();
+      checkForNewAlert(alerts);
 
-    setLastUpdated(new Date().toLocaleString());
-
-    setLoading(false);
+      setLastUpdated(new Date().toLocaleString());
+    } catch (error) {
+      console.error("Dashboard refresh failed:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
+  const fetchLivePredictions = async () => {
+    try {
+      const response = await API.get("/traffic/predictions");
 
-const fetchLivePredictions = async () => {
+      const data = Array.isArray(response.data)
+        ? response.data
+        : [];
 
-  try {
+      calculateLiveStats(data);
 
-    const response = await API.get("/traffic/predictions");
+      setLivePredictions(data);
+    } catch (error) {
+      console.error("Failed to load live predictions:", error);
+    }
+  };
 
+  // =========================================================
+  // CALCULATE LIVE STATISTICS
+  // =========================================================
 
-    calculateLiveStats(response.data);
+  const calculateLiveStats = (data) => {
+    const benign = data.filter(
+      (packet) => packet.prediction === "BENIGN"
+    ).length;
 
-    setLivePredictions(response.data);
+    const attacks = data.length - benign;
 
-  } catch (error) {
-    console.log(error);
-  }
+    const critical = data.filter(
+      (packet) => packet.severity === "CRITICAL"
+    ).length;
 
-};
- const calculateLiveStats = (data) => {
+    setLiveStats({
+      totalPackets: data.length,
+      benign,
+      attacks,
+      critical,
+    });
+  };
 
-  const benign = data.filter(
-    p => p.prediction === "BENIGN"
-  ).length;
+  const fetchLiveAlerts = async () => {
+    try {
+      const response = await API.get("/alerts/");
 
-  const attacks = data.length - benign;
+      const data = Array.isArray(response.data)
+        ? response.data
+        : [];
 
-  const critical = data.filter(
-    p => p.severity === "CRITICAL"
-  ).length;
+      setLiveAlerts(data);
 
+      return data;
+    } catch (error) {
+      console.error("Failed to load alerts:", error);
 
-  
+      return [];
+    }
+  };
 
-  setLiveStats({
-    totalPackets: data.length,
-    benign,
-    attacks,
-    critical
-  });
+  const checkForNewAlert = (alerts) => {
+    if (!alerts || alerts.length === 0) {
+      return;
+    }
 
-};
-
-const fetchLiveAlerts = async () => {
-  try {
-    const response = await API.get("/alerts/");
-
-    setLiveAlerts(response.data);
-
-  } catch (error) {
-    console.log(error);
-  }
-};
-const checkForNewAlerts = async () => {
-  try {
-    const response = await API.get("/alerts/");
-
-    if (response.data.length === 0) return;
-
-    const latestAlert = response.data[0];
+    const latestAlert = alerts[0];
 
     if (lastAlertId.current !== latestAlert.id) {
-
       lastAlertId.current = latestAlert.id;
 
       toast.error(
@@ -113,12 +127,20 @@ const checkForNewAlerts = async () => {
         }
       );
     }
+  };
 
-  } catch (error) {
-    console.log(error);
-  }
-};
-  
+  const fetchModelPerformance = async () => {
+    try {
+      const response = await API.get("/model/performance");
+
+      setModelPerformance(response.data);
+    } catch (error) {
+      console.error(
+        "Failed to load model performance:",
+        error
+      );
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -136,7 +158,9 @@ const checkForNewAlerts = async () => {
   return (
     <div className="dashboard">
 
-      {/* Sidebar */}
+      {/* =====================================================
+          SIDEBAR
+      ===================================================== */}
 
       <div className="sidebar">
 
@@ -162,7 +186,6 @@ const checkForNewAlerts = async () => {
             Reports
           </li>
 
-
           <li onClick={() => navigate("/settings")}>
             Settings
           </li>
@@ -178,9 +201,15 @@ const checkForNewAlerts = async () => {
 
       </div>
 
-      {/* Main Content */}
+      {/* =====================================================
+          MAIN CONTENT
+      ===================================================== */}
 
       <div className="main-content">
+
+        {/* ===================================================
+            HEADER
+        =================================================== */}
 
         <div className="dashboard-header">
 
@@ -188,7 +217,9 @@ const checkForNewAlerts = async () => {
 
           <div className="dashboard-info">
 
-            <span>🟢 System Online</span>
+            <span>
+              🟢 System Online
+            </span>
 
             <span>
               Last Updated: {lastUpdated}
@@ -198,7 +229,9 @@ const checkForNewAlerts = async () => {
 
         </div>
 
-        {/* Summary Cards */}
+        {/* ===================================================
+            SUMMARY CARDS
+        =================================================== */}
 
         <div className="cards">
 
@@ -221,11 +254,12 @@ const checkForNewAlerts = async () => {
             <h3>Critical</h3>
             <p>{liveStats.critical}</p>
           </div>
-          
 
         </div>
 
-        {/* Charts */}
+        {/* ===================================================
+            CHARTS
+        =================================================== */}
 
         <div className="chart-section">
 
@@ -243,13 +277,22 @@ const checkForNewAlerts = async () => {
           <AttackChart />
 
         </div>
-        <div className="alerts" style={{ marginTop: "30px" }}>
+
+        {/* ===================================================
+            LIVE AI PREDICTIONS
+        =================================================== */}
+
+        <div
+          className="alerts"
+          style={{ marginTop: "30px" }}
+        >
 
           <h2>🌐 Live AI Predictions</h2>
 
           <table>
 
             <thead>
+
               <tr>
                 <th>#</th>
                 <th>Source IP</th>
@@ -258,103 +301,443 @@ const checkForNewAlerts = async () => {
                 <th>Prediction</th>
                 <th>Severity</th>
                 <th>Status</th>
-             </tr>
+              </tr>
+
             </thead>
 
-          <tbody>
+            <tbody>
 
-            {livePredictions.length > 0 ? (
+              {livePredictions.length > 0 ? (
 
-                livePredictions.map((packet, index) => (
+                livePredictions
+                  .slice(0, 10)
+                  .map((packet, index) => (
 
-                  <tr key={index}>
+                    <tr
+                      key={
+                        packet.traffic_id ||
+                        `${packet.source_ip}-${packet.destination_ip}-${index}`
+                      }
+                    >
 
-                    <td>{index + 1}</td>
+                      <td>{index + 1}</td>
 
-                    <td>{packet.source_ip}</td>
+                      <td>
+                        {packet.source_ip}
+                      </td>
 
-                    <td>{packet.destination_ip}</td>
+                      <td>
+                        {packet.destination_ip}
+                      </td>
 
-                    <td>{packet.protocol}</td>
+                      <td>
+                        {packet.protocol}
+                      </td>
 
-                    <td>{packet.prediction}</td>
+                      <td>
+                        {packet.prediction}
+                      </td>
 
-                    <td>{packet.severity}</td>
+                      <td>
+                        {packet.severity}
+                      </td>
 
-                    <td>{packet.status}</td>
+                      <td>
+                        {packet.status}
+                      </td>
 
-                  </tr>
+                    </tr>
 
-              ))
+                  ))
 
-            ) : (
+              ) : (
 
-               <tr>
+                <tr>
+
                   <td colSpan="7">
-                   No live traffic detected.
+                    No live traffic detected.
                   </td>
+
                 </tr>
 
-            )}
+              )}
 
-          </tbody>
+            </tbody>
 
-         </table>
+          </table>
 
         </div>
-        <div className="alerts" style={{ marginTop: "30px" }}>
 
-  <h2>🚨 Live Alerts</h2>
+        {/* ===================================================
+            LIVE ALERTS
+        =================================================== */}
 
-  <table>
+        <div
+          className="alerts"
+          style={{ marginTop: "30px" }}
+        >
 
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>Attack</th>
-        <th>Severity</th>
-        <th>Status</th>
-      </tr>
-    </thead>
+          <h2>🚨 Live Alerts</h2>
 
-    <tbody>
+          <table>
 
-      {liveAlerts.length > 0 ? (
+            <thead>
 
-        liveAlerts.map((alert, index) => (
+              <tr>
+                <th>#</th>
+                <th>Attack</th>
+                <th>Severity</th>
+                <th>Status</th>
+              </tr>
 
-          <tr key={alert.id}>
+            </thead>
 
-            <td>{index + 1}</td>
+            <tbody>
 
-            <td>{alert.attack_type}</td>
+              {liveAlerts.length > 0 ? (
 
-            <td>{alert.severity}</td>
+                liveAlerts
+                  .slice(0, 5)
+                  .map((alert, index) => (
 
-            <td>{alert.status}</td>
+                    <tr
+                      key={
+                        alert.id ||
+                        `${alert.attack_type}-${index}`
+                      }
+                    >
 
-          </tr>
+                      <td>{index + 1}</td>
 
-        ))
+                      <td>
+                        {alert.attack_type}
+                      </td>
 
-      ) : (
+                      <td>
+                        {alert.severity}
+                      </td>
 
-        <tr>
-          <td colSpan="4">
-            No Active Alerts
-          </td>
-        </tr>
+                      <td>
+                        {alert.status}
+                      </td>
 
-      )}
+                    </tr>
 
-    </tbody>
+                  ))
 
-  </table>
+              ) : (
 
-</div>
+                <tr>
 
-        
-              {/* System Health */}
+                  <td colSpan="4">
+                    No Active Alerts
+                  </td>
+
+                </tr>
+
+              )}
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+        {/* ===================================================
+            AI MODEL PERFORMANCE
+        =================================================== */}
+
+        <div className="ai-performance">
+
+          <h2>🤖 AI Model Performance</h2>
+
+          {modelPerformance && (
+
+            <>
+
+              {/* MODEL INFORMATION */}
+
+              <div className="model-info">
+
+                <p>
+
+                  <strong>Model:</strong>{" "}
+
+                  {modelPerformance.model.name}
+
+                </p>
+
+                <p>
+
+                  <strong>
+                    Validation Samples:
+                  </strong>{" "}
+
+                  {modelPerformance.model.validation_samples
+                    .toLocaleString()}
+
+                </p>
+
+              </div>
+
+              {/* OVERALL METRICS */}
+
+              <div className="performance-grid">
+
+                <div className="performance-card">
+
+                  <h4>Accuracy</h4>
+
+                  <p>
+                    {
+                      modelPerformance
+                        .overall_metrics
+                        .accuracy
+                    }%
+                  </p>
+
+                </div>
+
+                <div className="performance-card">
+
+                  <h4>Precision</h4>
+
+                  <p>
+                    {
+                      modelPerformance
+                        .overall_metrics
+                        .weighted_precision
+                    }%
+                  </p>
+
+                </div>
+
+                <div className="performance-card">
+
+                  <h4>Recall</h4>
+
+                  <p>
+                    {
+                      modelPerformance
+                        .overall_metrics
+                        .weighted_recall
+                    }%
+                  </p>
+
+                </div>
+
+                <div className="performance-card">
+
+                  <h4>F1 Score</h4>
+
+                  <p>
+                    {
+                      modelPerformance
+                        .overall_metrics
+                        .weighted_f1
+                    }%
+                  </p>
+
+                </div>
+
+              </div>
+
+              {/* MACRO METRICS */}
+
+              <div className="macro-metrics">
+
+                <h3>Macro Performance</h3>
+
+                <div className="performance-grid">
+
+                  <div className="performance-card">
+
+                    <h4>Macro Precision</h4>
+
+                    <p>
+                      {
+                        modelPerformance
+                          .macro_metrics
+                          .macro_precision
+                      }%
+                    </p>
+
+                  </div>
+
+                  <div className="performance-card">
+
+                    <h4>Macro Recall</h4>
+
+                    <p>
+                      {
+                        modelPerformance
+                          .macro_metrics
+                          .macro_recall
+                      }%
+                    </p>
+
+                  </div>
+
+                  <div className="performance-card">
+
+                    <h4>Macro F1</h4>
+
+                    <p>
+                      {
+                        modelPerformance
+                          .macro_metrics
+                          .macro_f1
+                      }%
+                    </p>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+              {/* RUNTIME PERFORMANCE */}
+
+              <div className="runtime-performance">
+
+                <h3>
+                  ⚡ Runtime Performance
+                </h3>
+
+                <div className="performance-grid">
+
+                  <div className="performance-card">
+
+                    <h4>Confidence</h4>
+
+                    <p>
+                      {
+                        modelPerformance
+                          .performance
+                          .average_confidence
+                      }%
+                    </p>
+
+                  </div>
+
+                  <div className="performance-card">
+
+                    <h4>
+                      Predictions / Second
+                    </h4>
+
+                    <p>
+
+                      {Math.round(
+                        modelPerformance
+                          .performance
+                          .predictions_per_second
+                      ).toLocaleString()}
+
+                    </p>
+
+                  </div>
+
+                  <div className="performance-card">
+
+                    <h4>
+                      Prediction Time
+                    </h4>
+
+                    <p>
+
+                      {
+                        modelPerformance
+                          .performance
+                          .average_prediction_time_ms
+                      }{" "}
+                      ms
+
+                    </p>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+              {/* ATTACK CLASS PERFORMANCE */}
+
+              <div className="class-performance">
+
+                <h3>
+                  📊 Attack Class Performance
+                </h3>
+
+                <table>
+
+                  <thead>
+
+                    <tr>
+                      <th>Attack Type</th>
+                      <th>Precision</th>
+                      <th>Recall</th>
+                      <th>F1 Score</th>
+                    </tr>
+
+                  </thead>
+
+                  <tbody>
+
+                    {Array.isArray(
+                      modelPerformance.class_performance
+                    ) &&
+
+                      modelPerformance.class_performance.map(
+                        (item, index) => (
+
+                          <tr key={index}>
+
+                            <td>
+                              {item.attack_type}
+                            </td>
+
+                            <td>
+                              {(
+                                item.precision * 100
+                              ).toFixed(2)}
+                              %
+                            </td>
+
+                            <td>
+                              {(
+                                item.recall * 100
+                              ).toFixed(2)}
+                              %
+                            </td>
+
+                            <td>
+                              {(
+                                item.f1_score * 100
+                              ).toFixed(2)}
+                              %
+                            </td>
+
+                          </tr>
+
+                        )
+                      )}
+
+                  </tbody>
+
+                </table>
+
+              </div>
+
+            </>
+
+          )}
+
+        </div>
+
+        {/* ===================================================
+            SYSTEM HEALTH
+        =================================================== */}
 
         <div className="system-health">
 
@@ -363,47 +746,64 @@ const checkForNewAlerts = async () => {
           <div className="health-grid">
 
             <div className="health-card">
+
               <span className="health-dot green"></span>
 
               <div>
+
                 <h4>Backend API</h4>
+
                 <p>Online</p>
+
               </div>
+
             </div>
 
             <div className="health-card">
+
               <span className="health-dot green"></span>
 
               <div>
+
                 <h4>PostgreSQL</h4>
+
                 <p>Connected</p>
+
               </div>
+
             </div>
 
             <div className="health-card">
+
               <span className="health-dot green"></span>
 
               <div>
+
                 <h4>Packet Capture</h4>
+
                 <p>Live Monitoring</p>
+
               </div>
+
             </div>
 
             <div className="health-card">
-               <span className="health-dot green"></span>
 
-                <div>
-                    <h4>AI Engine</h4>
-                    <p>Model Loaded</p>
-                </div>
-             </div>
+              <span className="health-dot green"></span>
 
-       </div>
-      </div>
+              <div>
 
-       
+                <h4>AI Engine</h4>
 
-        
+                <p>Model Loaded</p>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
 
       </div>
 

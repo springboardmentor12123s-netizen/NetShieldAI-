@@ -3,7 +3,6 @@ from threading import Thread, Lock
 from datetime import datetime
 from app.services.flow_builder import update_flow
 
-# Store latest packets
 live_packets = []
 
 packet_lock = Lock()

@@ -354,3 +354,96 @@ border-bottom:1px solid #334155;
     font-size:28px;
     font-weight:bold;
 }
+/* =========================================
+   AI MODEL PERFORMANCE
+========================================= */
+
+.ai-performance {
+  margin-top: 30px;
+  padding: 25px;
+  background: #1e293b;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.ai-performance h2 {
+  margin-bottom: 20px;
+}
+
+.model-info {
+  display: flex;
+  gap: 40px;
+  margin-bottom: 20px;
+}
+
+.performance-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.performance-card {
+  padding: 18px;
+  border-radius: 10px;
+  background: #1e293b;
+  text-align: center;
+}
+
+.performance-card h4 {
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.performance-card p {
+  margin: 0;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.macro-metrics,
+.runtime-performance,
+.class-performance {
+  margin-top: 25px;
+}
+
+.class-performance {
+  overflow-x: auto;
+}
+
+.class-performance table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.class-performance th,
+.class-performance td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #1e293b;
+}
+
+.class-performance th {
+  background: #1e293b;
+}
+
+@media (max-width: 900px) {
+
+  .performance-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+}
+
+@media (max-width: 600px) {
+
+  .performance-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .model-info {
+    flex-direction: column;
+    gap: 5px;
+  }
+
+}   

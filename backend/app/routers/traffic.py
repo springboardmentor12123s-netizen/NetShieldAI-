@@ -8,8 +8,6 @@ from app.services.flow_builder import get_flows
 from app.services.prediction_service import predict_live_traffic
 router = APIRouter()
 
-
-# -------------------- Traffic API --------------------
 @router.get("/")
 def get_traffic(
     search: str = Query(default=""),
