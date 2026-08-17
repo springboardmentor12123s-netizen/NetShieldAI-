@@ -139,21 +139,21 @@ export default function UserManagementDashboard() {
               </button>
             </div>
             
-            <div className="overflow-x-auto">
+            {/* Responsive users table: table for large screens, stacked cards for small screens */}
+            <div className="hidden lg:block overflow-x-auto">
               <table className="min-w-full text-left text-sm">
                 <thead className="bg-gray-700 text-gray-300">
                   <tr>
                     <th className="p-3 rounded-tl-lg">Name</th>
                     <th className="p-3">Email</th>
                     <th className="p-3">Role (RBAC)</th>
-                    <th className="p-3">Status</th>
                     <th className="p-3 rounded-tr-lg">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-700">
                   {teamMembers.length === 0 ? (
                     <tr>
-                      <td colSpan="5" className="p-4 text-center text-gray-500">No users found in database.</td>
+                      <td colSpan="4" className="p-4 text-center text-gray-500">No users found in database.</td>
                     </tr>
                   ) : (
                     teamMembers.map((member) => (
@@ -169,31 +169,74 @@ export default function UserManagementDashboard() {
                             {member.role}
                           </span>
                         </td>
-                        <td className="p-3">
-                          <span className={`flex items-center space-x-2 ${member.status === 'Active' ? 'text-green-400' : 'text-gray-500'}`}>
-                            <div className={`w-2 h-2 rounded-full ${member.status === 'Active' ? 'bg-green-400' : 'bg-gray-500'}`}></div>
-                            <span>{member.status}</span>
-                          </span>
-                        </td>
-                        <td className="p-3 flex gap-4">
-                          <span 
-                            className="text-blue-400 cursor-pointer hover:text-blue-300 transition-colors"
-                            onClick={() => openEditModal(member)}
-                          >
-                            Edit
-                          </span>
-                          <span 
-                            className="text-red-500 cursor-pointer hover:text-red-400 transition-colors"
-                            onClick={() => handleDeleteUser(member.id, member.name)}
-                          >
-                            Delete
-                          </span>
-                        </td>
+                        <td className="p-3 text-right w-36">
+                                                  <div className="inline-flex items-center gap-2 flex-wrap justify-end">
+                            <button
+                              onClick={() => openEditModal(member)}
+                                                      className="px-2 py-1 text-xs bg-gray-700 hover:bg-gray-600 text-white rounded-md border border-gray-600"
+                                                      aria-label={`Edit ${member.name}`}
+                                                    >
+                                                      Edit
+                                                    </button>
+
+                                                    <button
+                                                      onClick={() => handleDeleteUser(member.id, member.name)}
+                                                      className="px-2 py-1 text-xs bg-red-600 hover:bg-red-500 text-white rounded-md border border-red-600"
+                                                      aria-label={`Delete ${member.name}`}
+                                                    >
+                                                      Delete
+                                                    </button>
+                                                  </div>
+                                                </td>
                       </tr>
                     ))
                   )}
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile-friendly stacked view */}
+            <div className="lg:hidden space-y-4">
+              {teamMembers.length === 0 ? (
+                <div className="p-4 bg-gray-800 rounded-md border border-gray-700 text-center text-gray-500">No users found in database.</div>
+              ) : (
+                teamMembers.map((member) => (
+                  <div key={member.id} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-semibold truncate">{member.name}</h3>
+                        </div>
+                        <p className="text-xs text-gray-400 truncate">{member.email}</p>
+
+                        <div className="mt-3">
+                          <span className={`inline-block px-2.5 py-1 rounded text-xs font-semibold border
+                            ${member.role === 'Admin' || member.role === 'Administrator' ? 'bg-purple-900/40 text-purple-300 border-purple-800' : 
+                              member.role === 'Security Analyst' ? 'bg-blue-900/40 text-blue-300 border-blue-800' : 
+                              member.role === 'Enterprise' ? 'bg-green-900/40 text-green-300 border-green-800' : 
+                              'bg-gray-700 text-gray-300 border-gray-600'}`}>{member.role}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col items-end gap-2">
+                        <button
+                          onClick={() => openEditModal(member)}
+                          className="w-28 text-sm px-3 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-md border border-gray-600"
+                        >
+                          Edit
+                        </button>
+
+                        <button
+                          onClick={() => handleDeleteUser(member.id, member.name)}
+                          className="w-28 text-sm px-3 py-2 bg-red-600 hover:bg-red-500 text-white rounded-md border border-red-600"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
