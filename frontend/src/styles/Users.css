@@ -1,0 +1,643 @@
+/* =====================================================
+   NETSHIELD AI
+   USERS PAGE
+   Health Validation Pastel Style
+===================================================== */
+
+
+/* =========================
+   PAGE HEADER
+========================= */
+
+.users-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    margin-bottom: 24px;
+}
+
+.users-header h2 {
+    margin: 0;
+
+    color: #183153;
+
+    font-size: 28px;
+
+    font-weight: 700;
+}
+
+.users-header p {
+    margin: 7px 0 0;
+
+    color: #7b8799;
+
+    font-size: 14px;
+}
+
+
+/* =========================
+   STATISTICS
+========================= */
+
+.users-stats {
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, 1fr);
+
+    gap: 18px;
+
+    margin-bottom: 28px;
+}
+
+
+/* =========================
+   STAT CARD
+========================= */
+
+.user-stat-card {
+    min-height: 115px;
+
+    padding: 22px;
+
+    border-radius: 18px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 17px;
+
+    box-sizing: border-box;
+
+    border: 1px solid;
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+
+.user-stat-card:hover {
+    transform: translateY(-3px);
+
+    box-shadow:
+        0 10px 25px rgba(60, 70, 120, 0.10);
+}
+
+
+/* =========================
+   STAT ICON
+========================= */
+
+.stat-icon {
+    width: 52px;
+    height: 52px;
+
+    border-radius: 15px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    font-size: 25px;
+
+    flex-shrink: 0;
+}
+
+
+/* =========================
+   TOTAL USERS
+========================= */
+
+.total-users {
+    background: #eef2ff;
+
+    border-color: #dce3ff;
+
+    border-bottom: 4px solid #6475ed;
+}
+
+.total-users .stat-icon {
+    background: #dfe5ff;
+}
+
+.total-users p {
+    color: #5867d8;
+}
+
+.total-users h3 {
+    color: #4655cc;
+}
+
+
+/* =========================
+   ADMINS
+========================= */
+
+.admin-users {
+    background: #fff1f1;
+
+    border-color: #ffe0e0;
+
+    border-bottom: 4px solid #f07878;
+}
+
+.admin-users .stat-icon {
+    background: #ffe0e0;
+}
+
+.admin-users p {
+    color: #df5c65;
+}
+
+.admin-users h3 {
+    color: #cf4051;
+}
+
+
+/* =========================
+   ANALYSTS
+========================= */
+
+.analyst-users {
+    background: #f0edff;
+
+    border-color: #e2dcff;
+
+    border-bottom: 4px solid #8b70e8;
+}
+
+.analyst-users .stat-icon {
+    background: #e3ddff;
+}
+
+.analyst-users p {
+    color: #795ed3;
+}
+
+.analyst-users h3 {
+    color: #674bc6;
+}
+
+
+/* =========================
+   ASSIGNED USERS
+========================= */
+
+.assigned-users {
+    background: #eafbf3;
+
+    border-color: #d4f3e3;
+
+    border-bottom: 4px solid #48c798;
+}
+
+.assigned-users .stat-icon {
+    background: #d4f5e4;
+}
+
+.assigned-users p {
+    color: #24966e;
+}
+
+.assigned-users h3 {
+    color: #16865f;
+}
+
+
+/* =========================
+   STAT TEXT
+========================= */
+
+.user-stat-card p {
+    margin: 0 0 5px;
+
+    font-size: 14px;
+
+    font-weight: 600;
+}
+
+
+.user-stat-card h3 {
+    margin: 0;
+
+    font-size: 31px;
+
+    font-weight: 700;
+}
+
+
+/* =========================
+   USERS PANEL
+========================= */
+
+.users-panel {
+    background: white;
+
+    border-radius: 20px;
+
+    overflow: hidden;
+
+    border: 1px solid #edf0f6;
+
+    box-shadow:
+        0 7px 25px rgba(60, 70, 120, 0.07);
+}
+
+
+/* =========================
+   PANEL HEADER
+========================= */
+
+.users-panel-header {
+    padding: 23px 25px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    border-bottom: 1px solid #edf0f6;
+}
+
+
+.users-panel-header h3 {
+    margin: 0;
+
+    color: #183153;
+
+    font-size: 20px;
+}
+
+
+.users-panel-header p {
+    margin: 6px 0 0;
+
+    color: #8792a5;
+
+    font-size: 13px;
+}
+
+
+.users-count {
+    padding: 9px 15px;
+
+    border-radius: 12px;
+
+    background: #eef1ff;
+
+    color: #5b61d9;
+
+    font-size: 13px;
+
+    font-weight: 700;
+}
+
+
+/* =========================
+   TABLE WRAPPER
+========================= */
+
+.users-table-wrapper {
+    width: 100%;
+
+    overflow-x: auto;
+}
+
+
+/* =========================
+   TABLE
+========================= */
+
+.users-table {
+    width: 100%;
+
+    border-collapse: collapse;
+
+    min-width: 750px;
+}
+
+
+/* =========================
+   TABLE HEADER
+========================= */
+
+.users-table thead {
+    background: linear-gradient(
+        135deg,
+        #6c63e8,
+        #7656d9
+    );
+}
+
+
+.users-table th {
+    padding: 15px 20px;
+
+    color: white;
+
+    font-size: 13px;
+
+    font-weight: 700;
+
+    text-align: left;
+
+    white-space: nowrap;
+}
+
+
+.users-table th:nth-child(3),
+.users-table th:nth-child(4) {
+    text-align: center;
+}
+
+
+/* =========================
+   TABLE ROW
+========================= */
+
+.users-table tbody tr {
+    border-bottom: 1px solid #edf0f6;
+
+    transition:
+        background 0.2s ease;
+}
+
+
+.users-table tbody tr:hover {
+    background: #fafbff;
+}
+
+
+.users-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+
+/* =========================
+   TABLE CELLS
+========================= */
+
+.users-table td {
+    padding: 16px 20px;
+
+    color: #334765;
+
+    font-size: 14px;
+
+    vertical-align: middle;
+}
+
+
+.users-table td:nth-child(3),
+.users-table td:nth-child(4) {
+    text-align: center;
+}
+
+
+/* =========================
+   USER INFO
+========================= */
+
+.user-info {
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+}
+
+
+.user-avatar {
+    width: 42px;
+    height: 42px;
+
+    border-radius: 13px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    background: #e9e5ff;
+
+    color: #6957cf;
+
+    font-size: 17px;
+
+    font-weight: 700;
+}
+
+
+.user-name {
+    color: #203555;
+
+    font-weight: 700;
+
+    font-size: 14px;
+}
+
+
+.user-id {
+    margin-top: 3px;
+
+    color: #9aa5b5;
+
+    font-size: 11px;
+}
+
+
+/* =========================
+   EMAIL
+========================= */
+
+.user-email {
+    color: #607089;
+
+    font-size: 13px;
+}
+
+
+/* =========================
+   ROLE BADGES
+========================= */
+
+.user-role {
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 5px;
+
+    padding: 7px 12px;
+
+    border-radius: 11px;
+
+    font-size: 12px;
+
+    font-weight: 700;
+}
+
+
+/* Admin */
+
+.admin-role {
+    background: #fff0f1;
+
+    color: #d95362;
+
+    border: 1px solid #ffd9dd;
+}
+
+
+/* Security Analyst */
+
+.analyst-role {
+    background: #eeeaff;
+
+    color: #735bd0;
+
+    border: 1px solid #ded6ff;
+}
+
+
+/* Other */
+
+.default-role {
+    background: #eef3ff;
+
+    color: #5472cf;
+
+    border: 1px solid #dce5ff;
+}
+
+
+/* =========================
+   TEAM BADGE
+========================= */
+
+.team-badge {
+    display: inline-flex;
+
+    align-items: center;
+
+    padding: 7px 12px;
+
+    border-radius: 11px;
+
+    background: #eaf8ff;
+
+    color: #3280ad;
+
+    border: 1px solid #d7effb;
+
+    font-size: 12px;
+
+    font-weight: 600;
+}
+
+
+/* =========================
+   NO TEAM
+========================= */
+
+.no-team {
+    display: inline-block;
+
+    padding: 7px 12px;
+
+    border-radius: 11px;
+
+    background: #f5f6f8;
+
+    color: #929bab;
+
+    font-size: 12px;
+
+    font-weight: 600;
+}
+
+
+/* =========================
+   EMPTY STATE
+========================= */
+
+.no-users {
+    text-align: center;
+
+    padding: 65px 20px;
+}
+
+
+.no-users-icon {
+    width: 70px;
+    height: 70px;
+
+    margin: 0 auto 15px;
+
+    border-radius: 20px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    background: #eef1ff;
+
+    font-size: 32px;
+}
+
+
+.no-users h3 {
+    margin: 0;
+
+    color: #354968;
+
+    font-size: 18px;
+}
+
+
+.no-users p {
+    color: #929daf;
+
+    font-size: 13px;
+}
+
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 1100px) {
+
+    .users-stats {
+        grid-template-columns:
+            repeat(2, 1fr);
+    }
+
+}
+
+
+@media (max-width: 650px) {
+
+    .users-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .users-header h2 {
+        font-size: 23px;
+    }
+
+    .users-panel-header {
+        align-items: flex-start;
+
+        gap: 15px;
+
+        flex-direction: column;
+    }
+
+}

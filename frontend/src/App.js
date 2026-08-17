@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-
+import HealthValidation from "./pages/HealthValidation";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Users from "./pages/Users";
@@ -11,7 +11,7 @@ import Alerts from "./pages/Alerts";
 import NotFound from "./pages/NotFound";
 import ThreatReport from "./pages/ThreatReport";
 import ProtectedRoute from "./components/ProtectedRoute";
-
+import AuditLogs from "./pages/AuditLogs";
 function App() {
 
   return (
@@ -82,6 +82,19 @@ function App() {
             </ProtectedRoute>
           }
         />
+        {/* Health Validation */}
+<Route
+  path="/health-validation"
+  element={
+    <ProtectedRoute>
+      <HealthValidation />
+    </ProtectedRoute>
+  }
+/>
+<Route
+        path="/audit"
+        element={<AuditLogs />}
+    />
 
         {/* Alerts */}
         <Route

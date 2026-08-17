@@ -1,0 +1,645 @@
+/* =====================================================
+   NETSHIELD AI
+   ANALYTICS PAGE
+   Pastel Health Validation Style
+===================================================== */
+
+
+/* =========================
+   LOADING
+========================= */
+
+.analytics-loading {
+    min-height: 100vh;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    background: #f7f8ff;
+
+    color: #6c63e8;
+
+    font-size: 20px;
+
+    font-weight: 600;
+}
+
+
+/* =========================
+   HEADER
+========================= */
+
+.analytics-header {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    margin-bottom: 25px;
+}
+
+
+.analytics-header h1 {
+    margin: 0;
+
+    font-size: 29px;
+
+    color: #183153;
+}
+
+
+.analytics-header p {
+    margin: 7px 0 0;
+
+    color: #7d899d;
+
+    font-size: 14px;
+}
+
+
+/* =========================
+   LIVE BADGE
+========================= */
+
+.analytics-live {
+    display: flex;
+
+    align-items: center;
+
+    gap: 7px;
+
+    padding: 10px 15px;
+
+    border-radius: 12px;
+
+    background: #eafbf3;
+
+    color: #159570;
+
+    font-size: 11px;
+
+    font-weight: 700;
+}
+
+
+.analytics-live span {
+    width: 8px;
+    height: 8px;
+
+    border-radius: 50%;
+
+    background: #20b486;
+
+    animation: analyticsPulse 1.5s infinite;
+}
+
+
+@keyframes analyticsPulse {
+
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.35;
+    }
+
+    100% {
+        opacity: 1;
+    }
+
+}
+
+
+/* =========================
+   STATISTICS
+========================= */
+
+.analytics-stats {
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, 1fr);
+
+    gap: 18px;
+
+    margin-bottom: 25px;
+}
+
+
+.analytics-stat {
+    min-height: 110px;
+
+    padding: 20px;
+
+    border-radius: 18px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 15px;
+
+    border: 1px solid;
+
+    transition: 0.2s ease;
+}
+
+
+.analytics-stat:hover {
+    transform: translateY(-3px);
+
+    box-shadow:
+        0 10px 24px rgba(
+            60,
+            70,
+            120,
+            0.10
+        );
+}
+
+
+/* =========================
+   ICON
+========================= */
+
+.analytics-icon {
+    width: 52px;
+    height: 52px;
+
+    border-radius: 15px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    font-size: 24px;
+}
+
+
+/* =========================
+   CARD COLORS
+========================= */
+
+.analytics-stat.total {
+    background: #eef2ff;
+    border-color: #dce4ff;
+}
+
+.analytics-stat.total .analytics-icon {
+    background: #dfe6ff;
+}
+
+.analytics-stat.total p,
+.analytics-stat.total h3 {
+    color: #5365d5;
+}
+
+
+.analytics-stat.protocol {
+    background: #eaf8ff;
+    border-color: #d6eef9;
+}
+
+.analytics-stat.protocol .analytics-icon {
+    background: #d9f1fc;
+}
+
+.analytics-stat.protocol p,
+.analytics-stat.protocol h3 {
+    color: #3982a8;
+}
+
+
+.analytics-stat.attacks {
+    background: #fff0f2;
+    border-color: #ffdce1;
+}
+
+.analytics-stat.attacks .analytics-icon {
+    background: #ffe0e4;
+}
+
+.analytics-stat.attacks p,
+.analytics-stat.attacks h3 {
+    color: #d65365;
+}
+
+
+.analytics-stat.monitoring {
+    background: #eafbf3;
+    border-color: #d4f2e2;
+}
+
+.analytics-stat.monitoring .analytics-icon {
+    background: #d5f5e5;
+}
+
+.analytics-stat.monitoring p,
+.analytics-stat.monitoring h3 {
+    color: #19936b;
+}
+
+
+/* =========================
+   STAT TEXT
+========================= */
+
+.analytics-stat p {
+    margin: 0 0 5px;
+
+    font-size: 13px;
+
+    font-weight: 600;
+}
+
+
+.analytics-stat h3 {
+    margin: 0;
+
+    font-size: 28px;
+
+    font-weight: 700;
+}
+
+
+/* =========================
+   CHART SECTION
+========================= */
+
+.analytics-chart-section {
+    background: white;
+
+    border-radius: 20px;
+
+    padding: 23px;
+
+    margin-bottom: 25px;
+
+    border: 1px solid #edf0f6;
+
+    box-shadow:
+        0 7px 22px rgba(
+            60,
+            70,
+            120,
+            0.06
+        );
+}
+
+
+.section-title h2 {
+    margin: 0;
+
+    color: #183153;
+
+    font-size: 20px;
+}
+
+
+.section-title p {
+    margin: 6px 0 20px;
+
+    color: #8994a7;
+
+    font-size: 13px;
+}
+
+
+.live-charts-container {
+    width: 100%;
+}
+
+
+/* =========================
+   PANELS
+========================= */
+
+.analytics-panel {
+    background: white;
+
+    border-radius: 20px;
+
+    margin-bottom: 25px;
+
+    border: 1px solid #edf0f6;
+
+    overflow: hidden;
+
+    box-shadow:
+        0 7px 25px rgba(
+            60,
+            70,
+            120,
+            0.07
+        );
+}
+
+
+/* =========================
+   PANEL HEADER
+========================= */
+
+.analytics-panel-header {
+    padding: 23px 25px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    border-bottom: 1px solid #edf0f6;
+}
+
+
+.analytics-panel-header h2 {
+    margin: 0;
+
+    color: #183153;
+
+    font-size: 20px;
+}
+
+
+.analytics-panel-header p {
+    margin: 6px 0 0;
+
+    color: #8994a7;
+
+    font-size: 13px;
+}
+
+
+.record-badge {
+    padding: 9px 14px;
+
+    border-radius: 11px;
+
+    background: #eef1ff;
+
+    color: #5b61d9;
+
+    font-size: 12px;
+
+    font-weight: 700;
+}
+
+
+/* =========================
+   PROTOCOL TABLE
+========================= */
+
+.protocol-table-wrapper {
+    width: 100%;
+
+    overflow-x: auto;
+}
+
+
+.protocol-table {
+    width: 100%;
+
+    border-collapse: collapse;
+}
+
+
+.protocol-table thead {
+    background:
+        linear-gradient(
+            135deg,
+            #6c63e8,
+            #7656d9
+        );
+}
+
+
+.protocol-table th {
+    padding: 14px 20px;
+
+    color: white;
+
+    font-size: 12px;
+
+    text-align: left;
+}
+
+
+.protocol-table tbody tr {
+    border-bottom: 1px solid #edf0f5;
+
+    transition: background 0.2s ease;
+}
+
+
+.protocol-table tbody tr:hover {
+    background: #fafbff;
+}
+
+
+.protocol-table td {
+    padding: 16px 20px;
+
+    color: #52647d;
+
+    font-size: 13px;
+}
+
+
+/* =========================
+   PROTOCOL NAME
+========================= */
+
+.protocol-name {
+    display: flex;
+
+    align-items: center;
+
+    gap: 9px;
+
+    font-weight: 600;
+
+    color: #344a68;
+}
+
+
+.protocol-dot {
+    width: 9px;
+    height: 9px;
+
+    border-radius: 50%;
+
+    background: #7c6ce8;
+}
+
+
+/* =========================
+   PACKET NUMBER
+========================= */
+
+.packet-number {
+    color: #5365d5;
+
+    font-size: 15px;
+}
+
+
+/* =========================
+   SHARE
+========================= */
+
+.share-container {
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+}
+
+
+.share-bar {
+    width: 130px;
+
+    height: 7px;
+
+    border-radius: 10px;
+
+    background: #edf0f6;
+
+    overflow: hidden;
+}
+
+
+.share-fill {
+    height: 100%;
+
+    border-radius: 10px;
+
+    background: #8b78e6;
+}
+
+
+.share-container span {
+    color: #78859a;
+
+    font-size: 12px;
+
+    font-weight: 600;
+}
+
+
+/* =========================
+   ATTACK STATUS
+========================= */
+
+.attack-status {
+    padding: 9px 13px;
+
+    border-radius: 11px;
+
+    background: #fff0f2;
+
+    color: #d65365;
+
+    font-size: 11px;
+
+    font-weight: 700;
+}
+
+
+/* =========================
+   ATTACK CHART
+========================= */
+
+.attack-chart {
+    width: 100%;
+
+    height: 350px;
+
+    padding: 20px;
+
+    box-sizing: border-box;
+}
+
+
+/* =========================
+   EMPTY
+========================= */
+
+.analytics-empty {
+    text-align: center;
+
+    padding: 55px 20px;
+
+    color: #8b96a8;
+}
+
+
+.analytics-empty:first-letter {
+    font-size: 30px;
+}
+
+
+.analytics-empty h3 {
+    color: #354968;
+
+    margin: 12px 0 5px;
+}
+
+
+.analytics-empty p {
+    margin: 0;
+
+    font-size: 13px;
+}
+
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 1100px) {
+
+    .analytics-stats {
+        grid-template-columns:
+            repeat(2, 1fr);
+    }
+
+}
+
+
+@media (max-width: 650px) {
+
+    .analytics-header {
+        align-items: flex-start;
+
+        flex-direction: column;
+
+        gap: 15px;
+    }
+
+    .analytics-header h1 {
+        font-size: 23px;
+    }
+
+    .analytics-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .analytics-panel-header {
+        align-items: flex-start;
+
+        flex-direction: column;
+
+        gap: 15px;
+    }
+
+    .share-bar {
+        width: 80px;
+    }
+
+}

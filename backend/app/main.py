@@ -1,9 +1,9 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import ai
 from app.database.database import engine, Base
 from app.database import models
-
+from fastapi import Request
 from app.routers import auth
 from app.routers import users
 from app.routers import teams
@@ -50,3 +50,29 @@ def root():
 @app.get("/health")
 def health():
     return {"status": "Server is running"}
+
+@app.post("/security-test")
+async def security_test(request: Request):
+    body = await request.json()
+
+    return {
+        "status": "received",
+        "input": body.get("input", "")
+    }
+@app.get("/benign-test")
+def benign_test():
+
+    return {
+        "status": "ok",
+        "message": "Benign test traffic"
+    }
+
+
+@app.post("/brute-test")
+def brute_test(data: dict):
+
+    return {
+        "status": "received",
+        "message": "Brute-force validation request",
+        "data": data
+    }

@@ -1,0 +1,547 @@
+/* =========================================================
+   NETSHIELD AI - SECURITY ALERTS
+   ========================================================= */
+
+.alerts-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.alerts-header h1 {
+    margin: 0;
+    color: #17305c;
+    font-size: 30px;
+    font-weight: 700;
+}
+
+.alerts-header p {
+    margin-top: 8px;
+    color: #71809c;
+    font-size: 15px;
+}
+
+
+/* =========================================================
+   LIVE STATUS
+   ========================================================= */
+
+.live-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #e9fff4;
+    color: #159b65;
+    padding: 10px 16px;
+    border-radius: 30px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.live-dot {
+    width: 9px;
+    height: 9px;
+    background: #18c878;
+    border-radius: 50%;
+    animation: livePulse 1.5s infinite;
+}
+
+@keyframes livePulse {
+
+    0% {
+        box-shadow: 0 0 0 0 rgba(24, 200, 120, 0.5);
+    }
+
+    70% {
+        box-shadow: 0 0 0 8px rgba(24, 200, 120, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(24, 200, 120, 0);
+    }
+
+}
+
+
+/* =========================================================
+   SUMMARY CARDS
+   ========================================================= */
+
+.alert-summary {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+    margin-bottom: 28px;
+}
+
+.alert-stat {
+    background: white;
+    border-radius: 18px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 8px 25px rgba(60, 80, 140, 0.09);
+    transition: 0.25s ease;
+}
+
+.alert-stat:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px rgba(60, 80, 140, 0.14);
+}
+
+.alert-stat-icon {
+    width: 55px;
+    height: 55px;
+    border-radius: 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 27px;
+}
+
+.alert-stat span {
+    display: block;
+    color: #71809c;
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+.alert-stat strong {
+    display: block;
+    font-size: 31px;
+}
+
+
+/* Total */
+
+.alert-stat.total {
+    border-bottom: 4px solid #3b82f6;
+}
+
+.alert-stat.total .alert-stat-icon {
+    background: #e8f1ff;
+}
+
+.alert-stat.total strong {
+    color: #3b82f6;
+}
+
+
+/* Open */
+
+.alert-stat.open {
+    border-bottom: 4px solid #f59e0b;
+}
+
+.alert-stat.open .alert-stat-icon {
+    background: #fff5dc;
+}
+
+.alert-stat.open strong {
+    color: #f59e0b;
+}
+
+
+/* Danger */
+
+.alert-stat.danger {
+    border-bottom: 4px solid #ef4444;
+}
+
+.alert-stat.danger .alert-stat-icon {
+    background: #ffe8e8;
+}
+
+.alert-stat.danger strong {
+    color: #ef4444;
+}
+
+
+/* Resolved */
+
+.alert-stat.resolved {
+    border-bottom: 4px solid #10b981;
+}
+
+.alert-stat.resolved .alert-stat-icon {
+    background: #e4faef;
+}
+
+.alert-stat.resolved strong {
+    color: #10b981;
+}
+
+
+/* =========================================================
+   ALERT PANEL
+   ========================================================= */
+
+.alerts-panel {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 8px 28px rgba(60, 80, 140, 0.09);
+    overflow: hidden;
+}
+
+.alerts-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 23px 25px;
+    border-bottom: 1px solid #edf0f6;
+}
+
+.alerts-panel-header h2 {
+    margin: 0;
+    color: #17305c;
+    font-size: 21px;
+}
+
+.alerts-panel-header p {
+    margin: 6px 0 0;
+    color: #7b879e;
+    font-size: 14px;
+}
+
+.refresh-badge {
+    background: #eef4ff;
+    color: #4f46e5;
+    padding: 8px 13px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+
+/* =========================================================
+   TABLE
+   ========================================================= */
+
+.alerts-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.alerts-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.alerts-table thead {
+    background: #f7f9fc;
+}
+
+.alerts-table th {
+    padding: 15px 14px;
+    text-align: left;
+    color: #687791;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    white-space: nowrap;
+}
+
+.alerts-table td {
+    padding: 17px 14px;
+    border-top: 1px solid #f0f2f7;
+    color: #35435e;
+    font-size: 13px;
+}
+
+.alert-row {
+    transition: 0.2s ease;
+}
+
+.alert-row:hover {
+    background: #fafcff;
+}
+
+
+/* =========================================================
+   TIME
+   ========================================================= */
+
+.time-cell {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: #6f7c94;
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   THREAT
+   ========================================================= */
+
+.threat-cell {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    min-width: 210px;
+}
+
+.threat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.threat-icon.critical {
+    background: #ffe4e4;
+}
+
+.threat-icon.high {
+    background: #fff0e4;
+}
+
+.threat-icon.medium {
+    background: #fff7dd;
+}
+
+.threat-icon.low {
+    background: #e5faef;
+}
+
+.threat-cell strong {
+    display: block;
+    color: #243657;
+    font-size: 13px;
+}
+
+.threat-cell small {
+    display: block;
+    margin-top: 4px;
+    color: #8a96aa;
+    font-size: 11px;
+}
+
+
+/* =========================================================
+   IP
+   ========================================================= */
+
+.ip-address {
+    background: #f5f7fb;
+    padding: 6px 9px;
+    border-radius: 7px;
+    color: #52617c;
+    font-family: monospace;
+    font-size: 12px;
+}
+
+
+/* =========================================================
+   PROTOCOL
+   ========================================================= */
+
+.protocol-badge {
+    background: #eef4ff;
+    color: #4169c9;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+
+/* =========================================================
+   RISK BADGES
+   ========================================================= */
+
+.risk-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 7px 11px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.risk-badge.critical {
+    background: #ffe1e1;
+    color: #dc2626;
+}
+
+.risk-badge.high {
+    background: #ffeadc;
+    color: #ea580c;
+}
+
+.risk-badge.medium {
+    background: #fff3cf;
+    color: #d97706;
+}
+
+.risk-badge.low {
+    background: #dcf8e9;
+    color: #159b65;
+}
+
+
+/* =========================================================
+   STATUS
+   ========================================================= */
+
+.status-badge {
+    display: inline-block;
+    padding: 7px 11px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.status-badge.open {
+    background: #ffe5e5;
+    color: #dc3545;
+}
+
+.status-badge.resolved {
+    background: #def8e9;
+    color: #159b65;
+}
+
+
+/* =========================================================
+   RESOLVE BUTTON
+   ========================================================= */
+
+.resolve-button {
+    border: none;
+    background: #10b981;
+    color: white;
+    padding: 8px 13px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.resolve-button:hover {
+    background: #059669;
+    transform: translateY(-1px);
+}
+
+.resolved-text {
+    color: #10b981;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+
+/* =========================================================
+   NO ALERTS
+   ========================================================= */
+
+.no-alerts {
+    text-align: center;
+    padding: 65px 20px;
+}
+
+.no-alert-icon {
+    width: 75px;
+    height: 75px;
+    margin: auto;
+    border-radius: 50%;
+    background: #e6faf0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 35px;
+}
+
+.no-alerts h3 {
+    margin: 18px 0 5px;
+    color: #263a5c;
+}
+
+.no-alerts p {
+    color: #8390a7;
+    font-size: 14px;
+}
+
+
+/* =========================================================
+   SECURITY RECOMMENDATION
+   ========================================================= */
+
+.security-recommendation {
+    margin-top: 25px;
+    background: linear-gradient(
+        135deg,
+        #eef7ff,
+        #f6f1ff
+    );
+    border-radius: 17px;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    border: 1px solid #e3e8f7;
+}
+
+.recommendation-icon {
+    width: 48px;
+    height: 48px;
+    background: white;
+    border-radius: 13px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 24px;
+}
+
+.security-recommendation h3 {
+    margin: 0 0 5px;
+    color: #273b60;
+    font-size: 15px;
+}
+
+.security-recommendation p {
+    margin: 0;
+    color: #71809a;
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1100px) {
+
+    .alert-summary {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+}
+
+
+@media (max-width: 700px) {
+
+    .alerts-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .alert-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .alerts-panel-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+}

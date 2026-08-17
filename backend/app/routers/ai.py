@@ -65,7 +65,18 @@ def model_metrics():
 
     metrics = joblib.load("app/ai/model_metrics.pkl")
 
-    return metrics
+    return {
+        "accuracy": metrics.get("accuracy", 0),
+        "precision_macro": metrics.get("precision_macro", 0),
+        "recall_macro": metrics.get("recall_macro", 0),
+        "f1_macro": metrics.get("f1_macro", 0),
+        "roc_auc": metrics.get("roc_auc"),
+        "confusion_matrix": metrics.get("confusion_matrix", []),
+        "classification_report": metrics.get(
+            "classification_report",
+            {}
+        )
+    }
 
 
 # ---------------------------------------------

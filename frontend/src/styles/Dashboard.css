@@ -1,73 +1,530 @@
-body{
-    margin:0;
-    background:#EEF2FF;
-    font-family:Segoe UI,Arial,sans-serif;
+/* =========================================================
+   NETSHIELD AI - DASHBOARD
+   Health Validation inspired colorful UI
+========================================================= */
+
+.dashboard {
+    display: flex;
+    min-height: 100vh;
+    background: #f5f7ff;
+    color: #172554;
 }
 
-.dashboard{
-    display:flex;
-    min-height:100vh;
+/* =========================================================
+   MAIN CONTENT
+========================================================= */
+
+.content {
+    flex: 1;
+    padding: 32px 38px 60px;
+    overflow-x: hidden;
+    background:
+        radial-gradient(circle at 85% 5%, rgba(124, 58, 237, 0.08), transparent 25%),
+        #f5f7ff;
 }
 
-.content{
-    flex:1;
-    padding:35px;
+/* =========================================================
+   GENERAL HEADINGS
+========================================================= */
+
+.content h2 {
+    color: #172554;
 }
 
-.profile-card{
-    background:white;
-    padding:25px;
-    border-radius:16px;
-    margin-bottom:30px;
-    box-shadow:0 4px 12px rgba(0,0,0,.1);
+.live-section-heading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 42px 0 18px;
 }
 
-.cards{
-    display:flex;
-    flex-wrap:wrap;
-    gap:25px;
+.live-section-heading span {
+    font-size: 25px;
 }
 
-.card{
-    width:220px;
-    border-radius:15px;
-    padding:20px;
-    color:white;
-    box-shadow:0 5px 12px rgba(0,0,0,.15);
-    transition:.3s;
+.live-section-heading h2 {
+    margin: 0;
+    color: #6236e8;
+    font-size: 27px;
+    font-weight: 750;
 }
 
-.card:hover{
-    transform:translateY(-6px);
+.analytics-heading {
+    margin-top: 42px;
 }
 
-.card:nth-child(1){
-    background:#2563EB;
+/* =========================================================
+   PROFILE CARD
+========================================================= */
+
+.profile-card {
+    background: white;
+    border-radius: 22px;
+    padding: 30px 36px;
+    margin: 28px 0 36px;
+    box-shadow: 0 10px 30px rgba(79, 70, 229, 0.08);
+    border: 1px solid rgba(99, 102, 241, 0.06);
 }
 
-.card:nth-child(2){
-    background:#10B981;
+.profile-card h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: #172554;
+    font-size: 28px;
 }
 
-.card:nth-child(3){
-    background:#F59E0B;
+.profile-card p {
+    margin: 12px 0;
+    color: #475569;
+    font-size: 16px;
 }
 
-.card:nth-child(4){
-    background:#EF4444;
+.profile-card strong {
+    color: #172554;
 }
 
-.card:nth-child(5){
-    background:#7C3AED;
+/* =========================================================
+   LIVE THREAT DETECTION
+========================================================= */
+
+.content > div[style*="background"] {
+    background: white !important;
+    border-radius: 22px !important;
+    border: 1px solid #eef2ff;
+    box-shadow: 0 10px 30px rgba(79, 70, 229, 0.08) !important;
 }
 
-.card h3{
-    margin:0;
-    font-size:18px;
+/* =========================================================
+   STAT CARD COMPONENT
+========================================================= */
+
+.stat-card {
+    width: auto;
+    min-height: 135px;
+    flex: 1;
+    background: white;
+    border-radius: 18px;
+    padding: 22px 24px;
+    border: 1px solid #eef2ff;
+    border-bottom: 4px solid var(--card-border);
+    box-shadow: 0 8px 24px rgba(79, 70, 229, 0.09);
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    transition: all 0.25s ease;
 }
 
-.card p{
-    margin-top:15px;
-    font-size:32px;
-    font-weight:bold;
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 14px 30px rgba(79, 70, 229, 0.14);
+}
+
+.stat-icon {
+    width: 56px;
+    height: 56px;
+    min-width: 56px;
+    border-radius: 17px;
+    background: var(--card-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 25px;
+}
+
+.stat-content {
+    min-width: 0;
+}
+
+.stat-title {
+    margin: 0 0 8px;
+    color: #64748b;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.stat-value {
+    margin: 0;
+    color: var(--card-color);
+    font-size: 36px;
+    line-height: 1;
+    font-weight: 750;
+}
+
+/* =========================================================
+   ANALYTICS CARD AREA
+========================================================= */
+
+.cards {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
+    width: 100%;
+}
+
+/* =========================================================
+   LIVE DASHBOARD
+========================================================= */
+
+.live-dashboard {
+    width: 100%;
+}
+
+/* =========================================================
+   ATTACK CLASSIFICATION
+========================================================= */
+
+.classification-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
+    width: 100%;
+}
+
+.classification-card {
+    min-height: 145px;
+    background: white;
+    border-radius: 20px;
+    padding: 22px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    box-sizing: border-box;
+    box-shadow: 0 8px 25px rgba(79, 70, 229, 0.08);
+    border-bottom: 4px solid;
+    transition: 0.25s ease;
+}
+
+.classification-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 14px 30px rgba(79, 70, 229, 0.13);
+}
+
+.classification-icon {
+    width: 58px;
+    height: 58px;
+    min-width: 58px;
+    border-radius: 17px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 27px;
+}
+
+.classification-card p {
+    margin: 0 0 8px;
+    color: #64748b;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.classification-card h3 {
+    margin: 0 0 7px;
+    font-size: 34px;
+    line-height: 1;
+}
+
+.classification-card span {
+    color: #94a3b8;
+    font-size: 12px;
+}
+
+/* Benign */
+
+.benign-card {
+    border-color: #10b981;
+}
+
+.benign-card .classification-icon {
+    background: #d1fae5;
+}
+
+.benign-card h3 {
+    color: #10b981;
+}
+
+/* XSS */
+
+.xss-card {
+    border-color: #8b5cf6;
+}
+
+.xss-card .classification-icon {
+    background: #ede9fe;
+}
+
+.xss-card h3 {
+    color: #8b5cf6;
+}
+
+/* SQL */
+
+.sql-card {
+    border-color: #f59e0b;
+}
+
+.sql-card .classification-icon {
+    background: #fef3c7;
+}
+
+.sql-card h3 {
+    color: #f59e0b;
+}
+
+/* Brute Force */
+
+.brute-card {
+    border-color: #ec4899;
+}
+
+.brute-card .classification-icon {
+    background: #fce7f3;
+}
+
+.brute-card h3 {
+    color: #ec4899;
+}
+
+/* =========================================================
+   LIVE NETWORK ANALYTICS
+========================================================= */
+
+.analytics-grid-new {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
+    width: 100%;
+}
+
+.analytics-card-new {
+    min-height: 135px;
+    background: white;
+    border-radius: 19px;
+    padding: 22px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 8px 25px rgba(79, 70, 229, 0.08);
+    border-bottom: 4px solid;
+    transition: 0.25s ease;
+}
+
+.analytics-card-new:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 14px 30px rgba(79, 70, 229, 0.13);
+}
+
+.analytics-card-new > span {
+    width: 52px;
+    height: 52px;
+    min-width: 52px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 23px;
+}
+
+.analytics-card-new p {
+    margin: 0 0 8px;
+    color: #64748b;
+    font-size: 14px;
+}
+
+.analytics-card-new h3 {
+    margin: 0;
+    font-size: 32px;
+    line-height: 1;
+}
+
+/* Cyan */
+
+.analytics-card-new.cyan {
+    border-color: #06b6d4;
+}
+
+.analytics-card-new.cyan > span {
+    background: #cffafe;
+}
+
+.analytics-card-new.cyan h3 {
+    color: #06b6d4;
+}
+
+/* Green */
+
+.analytics-card-new.green {
+    border-color: #10b981;
+}
+
+.analytics-card-new.green > span {
+    background: #d1fae5;
+}
+
+.analytics-card-new.green h3 {
+    color: #10b981;
+}
+
+/* Red */
+
+.analytics-card-new.red {
+    border-color: #ef4444;
+}
+
+.analytics-card-new.red > span {
+    background: #fee2e2;
+}
+
+.analytics-card-new.red h3 {
+    color: #ef4444;
+}
+
+/* Blue */
+
+.analytics-card-new.blue {
+    border-color: #3b82f6;
+}
+
+.analytics-card-new.blue > span {
+    background: #dbeafe;
+}
+
+.analytics-card-new.blue h3 {
+    color: #3b82f6;
+}
+
+/* Purple */
+
+.analytics-card-new.purple {
+    border-color: #8b5cf6;
+}
+
+.analytics-card-new.purple > span {
+    background: #ede9fe;
+}
+
+.analytics-card-new.purple h3 {
+    color: #8b5cf6;
+}
+
+/* Orange */
+
+.analytics-card-new.orange {
+    border-color: #f59e0b;
+}
+
+.analytics-card-new.orange > span {
+    background: #fef3c7;
+}
+
+.analytics-card-new.orange h3 {
+    color: #f59e0b;
+}
+
+/* Pink */
+
+.analytics-card-new.pink {
+    border-color: #ec4899;
+}
+
+.analytics-card-new.pink > span {
+    background: #fce7f3;
+}
+
+.analytics-card-new.pink h3 {
+    color: #ec4899;
+}
+
+/* =========================================================
+   CHARTS
+========================================================= */
+
+.charts-grid-new {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+    width: 100%;
+    margin-top: 28px;
+}
+
+.chart-card-new {
+    background: white;
+    border-radius: 22px;
+    padding: 24px 24px 18px;
+    min-width: 0;
+    box-shadow: 0 8px 25px rgba(79, 70, 229, 0.08);
+    border: 1px solid #eef2ff;
+    box-sizing: border-box;
+}
+
+.chart-card-new h3 {
+    margin: 0 0 18px;
+    color: #172554;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+/* Prevent chart from becoming enormous */
+
+.chart-card-new .recharts-responsive-container {
+    width: 100% !important;
+    height: 300px !important;
+}
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+table {
+    border-radius: 18px;
+}
+
+thead tr {
+    background: linear-gradient(
+        135deg,
+        #6366f1,
+        #7c3aed
+    ) !important;
+}
+
+tbody tr {
+    transition: background 0.2s ease;
+}
+
+tbody tr:hover {
+    background: #f8f7ff;
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 1200px) {
+
+    .cards,
+    .analytics-grid-new,
+    .classification-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .charts-grid-new {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 800px) {
+
+    .content {
+        padding: 22px;
+    }
+
+    .cards,
+    .analytics-grid-new,
+    .classification-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .profile-card {
+        padding: 24px;
+    }
 }

@@ -17,3 +17,19 @@ node_modules/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Generated / local datasets
+backend/data/
+backend/attack_validation/
+backend/CIC-IDS2017/
+backend/datasets/
+
+# Backup / temporary files
+*_backup.py
+*_copy.txt
+
+# React build
+frontend/build/
+
+# Logs
+*.log
