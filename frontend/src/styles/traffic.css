@@ -1,0 +1,204 @@
+.traffic-page {
+    padding: 8px 4px 40px;
+}
+
+.traffic-header {
+    background: #152b4b;
+    border-radius: 16px;
+    padding: 24px 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.traffic-header h1 {
+    color: #00d9ff;
+    margin: 0;
+    font-size: 30px;
+}
+
+.traffic-header p {
+    color: #8b9bb5;
+    margin: 8px 0 0;
+    font-size: 15px;
+}
+
+.live-status {
+    background: #123f43;
+    color: #25d366;
+    padding: 12px 20px;
+    border-radius: 30px;
+    font-weight: 600;
+}
+
+.live-status span {
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    background: #25d366;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+.traffic-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    margin-bottom: 24px;
+}
+
+.traffic-card {
+    background: #111a2b;
+    border: 1px solid #263650;
+    border-radius: 14px;
+    padding: 22px;
+    min-height: 120px;
+    transition: 0.2s;
+}
+
+.traffic-card:hover {
+    border-color: #00d9ff;
+    transform: translateY(-2px);
+}
+
+.traffic-card-title {
+    color: #8ea5c7;
+    font-size: 14px;
+    margin-bottom: 15px;
+}
+
+.traffic-card-value {
+    color: white;
+    font-size: 27px;
+    font-weight: 700;
+}
+
+.traffic-card-value span {
+    color: #8ea5c7;
+    font-size: 14px;
+    font-weight: 400;
+}
+
+.traffic-card-label {
+    color: #687a96;
+    font-size: 12px;
+    margin-top: 8px;
+}
+
+.threat-panel {
+    background: #111a2b;
+    border: 1px solid #263650;
+    border-radius: 16px;
+    padding: 24px;
+}
+
+.threat-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #263650;
+    padding-bottom: 18px;
+}
+
+.threat-heading h2 {
+    color: #00d9ff;
+    margin: 0;
+    font-size: 21px;
+}
+
+.threat-heading p {
+    color: #8b9bb5;
+    margin: 7px 0 0;
+    font-size: 14px;
+}
+
+.monitoring-badge {
+    color: #25d366;
+    font-weight: 600;
+    background: #123f2c;
+    padding: 9px 15px;
+    border-radius: 20px;
+}
+
+.threat-content {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    padding-top: 24px;
+}
+
+.threat-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.threat-label {
+    color: #7f91ac;
+    font-size: 13px;
+}
+
+.threat-value {
+    color: #25d366;
+    font-size: 20px;
+}
+
+.risk-value {
+    color: #25d366;
+    font-size: 20px;
+}
+
+.confidence-value {
+    color: #00d9ff;
+    font-size: 20px;
+}
+
+.time-value {
+    color: white;
+    font-size: 20px;
+}
+
+.traffic-error {
+    background: #4b2020;
+    color: #ff8080;
+    padding: 15px 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.traffic-loading {
+    color: #8b9bb5;
+    padding: 30px;
+    text-align: center;
+}
+
+@media (max-width: 1000px) {
+
+    .traffic-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .threat-content {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+}
+
+@media (max-width: 650px) {
+
+    .traffic-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 18px;
+    }
+
+    .traffic-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .threat-content {
+        grid-template-columns: 1fr;
+    }
+
+}

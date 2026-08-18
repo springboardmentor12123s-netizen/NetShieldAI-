@@ -1,82 +1,161 @@
+/* =========================================
+   NETSHIELD AI - SETTINGS PAGE
+========================================= */
+
 .settings-page {
-    padding: 22px 24px 40px;
+    padding: 26px 30px 40px;
+    color: #ffffff;
+    max-width: 1500px;
+    margin: 0 auto;
+    box-sizing: border-box;
 }
 
+
+/* =========================================
+   PAGE HEADER
+========================================= */
+
 .settings-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    background: linear-gradient(
+        135deg,
+        #142849,
+        #101e37
+    );
 
-    background: #142744;
+    border: 1px solid rgba(70, 120, 180, 0.18);
 
-    border-radius: 14px;
+    border-radius: 15px;
 
     padding: 24px 28px;
 
-    margin-bottom: 20px;
+    margin-bottom: 24px;
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    box-shadow:
+        0 10px 30px rgba(0, 0, 0, 0.18);
 }
 
 .settings-header h1 {
     margin: 0;
 
-    color: #00d4ff;
+    color: #00d9ff;
 
-    font-size: 30px;
+    font-size: 28px;
+
+    font-weight: 700;
 }
 
 .settings-header p {
-    color: #9eabc2;
-
     margin: 8px 0 0;
+
+    color: #8fa6c7;
+
+    font-size: 14px;
 }
 
+
+/* SYSTEM ONLINE */
+
 .system-online {
-    background: rgba(34, 197, 94, .15);
+    display: flex;
 
-    color: #22c55e;
+    align-items: center;
 
-    padding: 11px 18px;
+    gap: 8px;
 
-    border-radius: 22px;
+    background: rgba(34, 197, 94, 0.14);
+
+    border: 1px solid rgba(34, 197, 94, 0.18);
+
+    color: #35df7b;
+
+    padding: 10px 17px;
+
+    border-radius: 24px;
+
+    font-size: 13px;
 
     font-weight: 600;
+
+    white-space: nowrap;
 }
 
 .system-online span {
-    margin-right: 7px;
+    margin: 0;
 }
+
+
+/* =========================================
+   SAVED MESSAGE
+========================================= */
 
 .settings-saved {
-    background: rgba(34, 197, 94, .12);
+    background: rgba(34, 197, 94, 0.08);
 
-    border: 1px solid rgba(34, 197, 94, .3);
+    border: 1px solid rgba(34, 197, 94, 0.25);
 
-    color: #22c55e;
+    color: #35df7b;
 
-    padding: 13px 18px;
+    padding: 13px 17px;
 
-    border-radius: 9px;
+    border-radius: 10px;
 
-    margin-bottom: 18px;
+    margin-bottom: 20px;
+
+    font-size: 13px;
 }
+
+
+/* =========================================
+   SETTINGS GRID
+========================================= */
 
 .settings-grid {
     display: grid;
 
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
 
-    gap: 20px;
+    gap: 22px;
+
+    align-items: start;
 }
+
+
+/* =========================================
+   SETTINGS CARD
+========================================= */
 
 .settings-card {
     background: #111827;
 
     border: 1px solid #202b3d;
 
-    border-radius: 14px;
+    border-radius: 15px;
 
     padding: 24px;
+
+    box-sizing: border-box;
+
+    transition:
+        border-color 0.2s ease,
+        transform 0.2s ease;
 }
+
+.settings-card:hover {
+    border-color: rgba(0, 217, 255, 0.18);
+
+    transform: translateY(-1px);
+}
+
+
+/* =========================================
+   CARD TITLE
+========================================= */
 
 .settings-title {
     display: flex;
@@ -85,17 +164,24 @@
 
     gap: 14px;
 
-    margin-bottom: 20px;
+    margin-bottom: 10px;
 
     padding-bottom: 18px;
 
-    border-bottom: 1px solid #202b3d;
+    border-bottom: 1px solid rgba(
+        255,
+        255,
+        255,
+        0.06
+    );
 }
 
 .settings-icon {
-    width: 45px;
+    width: 44px;
 
-    height: 45px;
+    height: 44px;
+
+    min-width: 44px;
 
     display: flex;
 
@@ -103,45 +189,63 @@
 
     justify-content: center;
 
-    background: rgba(0, 212, 255, .1);
+    background: rgba(0, 212, 255, 0.10);
 
-    border-radius: 10px;
+    border-radius: 11px;
 
-    font-size: 22px;
+    font-size: 21px;
 }
 
 .settings-title h2 {
-    color: white;
-
     margin: 0;
 
+    color: #ffffff;
+
     font-size: 18px;
+
+    font-weight: 650;
 }
 
 .settings-title p {
-    color: #8f9bb3;
-
     margin: 5px 0 0;
+
+    color: #8190a8;
 
     font-size: 12px;
 }
 
+
+/* =========================================
+   SETTING ROW
+========================================= */
+
 .setting-row {
+    min-height: 68px;
+
     display: flex;
 
     align-items: center;
 
     justify-content: space-between;
 
-    gap: 20px;
+    gap: 25px;
 
-    padding: 17px 0;
+    padding: 15px 0;
 
-    border-bottom: 1px solid rgba(255,255,255,.05);
+    box-sizing: border-box;
+
+    border-bottom: 1px solid rgba(
+        255,
+        255,
+        255,
+        0.055
+    );
 }
 
 .setting-row:last-child {
     border-bottom: none;
+
+    padding-bottom: 4px;
 }
 
 .setting-row > div:first-child {
@@ -150,63 +254,113 @@
     flex-direction: column;
 
     gap: 5px;
+
+    min-width: 0;
 }
 
 .setting-row strong {
-    color: white;
+    color: #f5f7fb;
 
     font-size: 14px;
+
+    font-weight: 600;
 }
 
 .setting-row span {
     color: #7f8ba3;
 
     font-size: 11px;
+
+    line-height: 1.4;
 }
 
+
+/* =========================================
+   STATUS
+========================================= */
+
 .status-active {
-    color: #22c55e;
+    color: #29df70;
 
     font-size: 11px;
 
-    font-weight: bold;
+    font-weight: 700;
 
     white-space: nowrap;
 }
+
+
+/* =========================================
+   MODEL NAME
+========================================= */
 
 .model-name {
-    color: #00d4ff !important;
+    color: #00d9ff !important;
+
+    font-size: 13px !important;
 
     white-space: nowrap;
 }
 
+
+/* =========================================
+   SELECT
+========================================= */
+
 .setting-row select {
+    min-width: 110px;
+
     background: #172133;
 
     border: 1px solid #344157;
 
-    color: white;
+    color: #ffffff;
 
     padding: 9px 12px;
 
-    border-radius: 7px;
+    border-radius: 8px;
 
     outline: none;
+
+    font-size: 13px;
+
+    cursor: pointer;
+}
+
+.setting-row select:hover {
+    border-color: rgba(
+        0,
+        217,
+        255,
+        0.45
+    );
 }
 
 .setting-row select:focus {
-    border-color: #00d4ff;
+    border-color: #00d9ff;
+
+    box-shadow:
+        0 0 0 2px rgba(
+            0,
+            217,
+            255,
+            0.08
+        );
 }
 
 
-/* TOGGLE */
+/* =========================================
+   TOGGLE SWITCH
+========================================= */
 
 .switch {
     position: relative;
 
-    width: 45px;
+    width: 46px;
 
-    height: 24px;
+    height: 25px;
+
+    min-width: 46px;
 
     flex-shrink: 0;
 }
@@ -222,15 +376,15 @@
 .slider {
     position: absolute;
 
-    cursor: pointer;
-
     inset: 0;
+
+    cursor: pointer;
 
     background: #334155;
 
     border-radius: 20px;
 
-    transition: .25s;
+    transition: 0.25s;
 }
 
 .slider:before {
@@ -238,23 +392,23 @@
 
     position: absolute;
 
-    width: 18px;
+    width: 19px;
 
-    height: 18px;
+    height: 19px;
 
     left: 3px;
 
     top: 3px;
 
-    background: white;
+    background: #ffffff;
 
     border-radius: 50%;
 
-    transition: .25s;
+    transition: 0.25s;
 }
 
 .switch input:checked + .slider {
-    background: #00d4ff;
+    background: #00c9ee;
 }
 
 .switch input:checked + .slider:before {
@@ -262,26 +416,40 @@
 }
 
 
-/* SYSTEM */
+/* =========================================
+   SYSTEM INFORMATION
+========================================= */
 
 .system-card {
-    grid-column: span 2;
+    grid-column: 1 / -1;
 }
 
 .system-info {
     display: grid;
 
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
 
-    gap: 15px;
+    gap: 12px;
 }
 
 .system-info div {
     background: #172133;
 
-    border-radius: 9px;
+    border: 1px solid rgba(
+        255,
+        255,
+        255,
+        0.035
+    );
 
-    padding: 15px;
+    border-radius: 10px;
+
+    padding: 14px 16px;
+
+    min-height: 62px;
+
+    box-sizing: border-box;
 }
 
 .system-info span {
@@ -291,21 +459,25 @@
 
     font-size: 11px;
 
-    margin-bottom: 6px;
+    margin-bottom: 7px;
 }
 
 .system-info strong {
-    color: white;
+    color: #f2f5fa;
 
     font-size: 13px;
+
+    font-weight: 600;
 }
 
 .green-text {
-    color: #22c55e !important;
+    color: #29df70 !important;
 }
 
 
-/* FOOTER */
+/* =========================================
+   FOOTER
+========================================= */
 
 .settings-footer {
     display: flex;
@@ -316,7 +488,7 @@
 
     margin-top: 20px;
 
-    padding: 18px 5px;
+    padding: 8px 2px;
 
     color: #68758b;
 
@@ -330,41 +502,59 @@
 
     color: #06121d;
 
-    padding: 11px 20px;
+    padding: 12px 20px;
 
-    border-radius: 8px;
+    border-radius: 9px;
 
-    font-weight: bold;
+    font-weight: 700;
 
     cursor: pointer;
+
+    transition:
+        transform 0.2s ease,
+        opacity 0.2s ease;
 }
 
 .settings-footer button:hover {
-    opacity: .85;
+    opacity: 0.9;
+
+    transform: translateY(-1px);
 }
 
 
-@media (max-width: 900px) {
+/* =========================================
+   TABLET
+========================================= */
+
+@media (max-width: 1000px) {
+
+    .settings-page {
+        padding: 22px;
+    }
 
     .settings-grid {
         grid-template-columns: 1fr;
     }
 
     .system-card {
-        grid-column: span 1;
+        grid-column: auto;
     }
 
     .system-info {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
     }
-
 }
 
 
-@media (max-width: 600px) {
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 650px) {
 
     .settings-page {
-        padding: 15px;
+        padding: 16px;
     }
 
     .settings-header {
@@ -372,6 +562,24 @@
 
         align-items: flex-start;
 
+        gap: 18px;
+
+        padding: 20px;
+    }
+
+    .settings-header h1 {
+        font-size: 24px;
+    }
+
+    .system-online {
+        align-self: flex-start;
+    }
+
+    .settings-card {
+        padding: 20px;
+    }
+
+    .setting-row {
         gap: 15px;
     }
 
@@ -382,13 +590,12 @@
     .settings-footer {
         flex-direction: column;
 
-        gap: 15px;
-
         align-items: stretch;
+
+        gap: 14px;
     }
 
     .settings-footer button {
         width: 100%;
     }
-
 }
