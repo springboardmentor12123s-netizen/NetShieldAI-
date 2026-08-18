@@ -20,7 +20,7 @@ from email.message import EmailMessage
 from jose import jwt, JWTError
 
 # from models import Base  # Import your SQLAlchemy Base from your models file
-from database import engine  # Import your database engine connected to Supabase
+from database.postgres import engine 
 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
