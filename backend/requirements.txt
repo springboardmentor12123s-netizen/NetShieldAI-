@@ -1,18 +1,31 @@
-fastapi
-starlette
-pydantic
-sqlalchemy
-pymongo
-motor
-passlib
-bcrypt
-python-jose
-python-multipart
-scikit-learn==1.5.2
-pandas==2.2.3
-numpy==1.26.4
-joblib==1.4.2
-scapy==2.6.1
-requests==2.32.3
-psycopg2-binary
-uvicorn
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Hardcode and install all required system and python dependencies at once
+RUN pip install --no-cache-dir \
+    fastapi \
+    starlette \
+    pydantic \
+    sqlalchemy \
+    pymongo \
+    motor \
+    passlib \
+    bcrypt \
+    python-jose \
+    python-multipart \
+    python-dotenv \
+    scikit-learn==1.5.2 \
+    pandas==2.2.3 \
+    numpy==1.26.4 \
+    joblib==1.4.2 \
+    scapy==2.6.1 \
+    requests==2.32.3 \
+    psycopg2-binary \
+    uvicorn
+
+# Copy your backend code into the container
+COPY . .
+
+# Run the app
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "10000"]
