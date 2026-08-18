@@ -8,7 +8,7 @@ from passlib.context import CryptContext
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from database import get_db
+from .database.postgres import get_db
 
 # 1. Security Configuration
 SECRET_KEY = "netshield-key"  
