@@ -738,6 +738,100 @@ def attack_trends():
 
     return list(attack_history)
 
+# ============================================================
+# INTRUSION FORECAST
+# ============================================================
+
+@router.get("/intrusion-forecast")
+def intrusion_forecast():
+
+    history = list(attack_history)
+
+    # Not enough live data
+    if len(history) < 4:
+        return {
+            "status": "insufficient_data",
+            "message": "Collect more live traffic before generating a forecast.",
+            "samples": len(history),
+            "forecast": "Unknown",
+            "trend": "Unknown",
+            "confidence": 0
+        }
+
+    # Use the latest half and previous half
+    midpoint = len(history) // 2
+
+    previous_period = history[:midpoint]
+    recent_period = history[midpoint:]
+
+    previous_attacks = sum(
+        item.get("attacks", 0)
+        for item in previous_period
+    )
+
+    recent_attacks = sum(
+        item.get("attacks", 0)
+        for item in recent_period
+    )
+
+    previous_rate = (
+        previous_attacks / len(previous_period)
+    ) * 100
+
+    recent_rate = (
+        recent_attacks / len(recent_period)
+    ) * 100
+
+    # Determine attack trend
+    difference = recent_rate - previous_rate
+
+    if difference > 20:
+        trend = "Increasing"
+        forecast = "High"
+        confidence = min(95, round(70 + difference / 2, 2))
+
+    elif difference > 5:
+        trend = "Slightly Increasing"
+        forecast = "Medium"
+        confidence = min(90, round(65 + difference, 2))
+
+    elif difference < -20:
+        trend = "Decreasing"
+        forecast = "Low"
+        confidence = min(95, round(70 + abs(difference) / 2, 2))
+
+    elif difference < -5:
+        trend = "Slightly Decreasing"
+        forecast = "Low"
+        confidence = min(90, round(65 + abs(difference), 2))
+
+    else:
+        trend = "Stable"
+
+        if recent_rate >= 50:
+            forecast = "High"
+        elif recent_rate >= 20:
+            forecast = "Medium"
+        else:
+            forecast = "Low"
+
+        confidence = 70
+
+    return {
+        "status": "success",
+        "samples": len(history),
+        "previous_period_attacks": previous_attacks,
+        "recent_period_attacks": recent_attacks,
+        "previous_attack_rate": round(previous_rate, 2),
+        "recent_attack_rate": round(recent_rate, 2),
+        "trend": trend,
+        "forecast": forecast,
+        "confidence": confidence,
+        "message": (
+            f"Intrusion activity is {trend.lower()}. "
+            f"Forecasted threat level: {forecast}."
+        )
+    }
 
 # ============================================================
 # THREAT REPORT
