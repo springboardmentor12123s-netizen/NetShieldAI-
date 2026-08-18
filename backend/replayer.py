@@ -9,7 +9,7 @@ import random
 print("🚀 Initializing NetShield Omni-Replayer...")
 
 API_URL = "http://127.0.0.1:8000/api/live-traffic"
-BATCH_SIZE = 5
+BATCH_SIZE = 50
 
 # 1. Load the Omni-Model
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -81,4 +81,4 @@ for index, row in dataset.iterrows():
             print(f"❌ Connection to Backend lost: {e}")
         
         packet_batch.clear()
-        time.sleep(0.5) # Half-second delay so the dashboard animates smoothly
+        time.sleep(0.05) # Half-second delay so the dashboard animates smoothly

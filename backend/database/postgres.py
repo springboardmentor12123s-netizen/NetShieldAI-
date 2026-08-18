@@ -57,6 +57,7 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
+    role = Column(String, nullable=False, default="Security Analyst")
 
 
 class AuditLog(Base):

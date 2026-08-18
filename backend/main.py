@@ -47,6 +47,8 @@ app = FastAPI(
 def startup_db_client():
     # This automatically creates tables in your Neon database if they don't exist yet
     Base.metadata.create_all(bind=engine)
+    with engine.begin() as conn:
+        conn.execute(text("ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS role VARCHAR DEFAULT 'Security Analyst'"))
 # Configure CORS for Frontend Access
 app.add_middleware(
     CORSMiddleware,
@@ -165,9 +167,10 @@ def signup_user(user: UserCreate, db: Session = Depends(get_db)):
         # Safely truncate password to 72 bytes to prevent hashing errors
         safe_password = user.password[:72]
 
+        role_name = (user.role or "Security Analyst").strip() or "Security Analyst"
         db.execute(
-            text("INSERT INTO users (email, hashed_password, is_active) VALUES (:e, :p, :a)"),
-            {"e": normalized_email, "p": pwd_context.hash(safe_password), "a": True}
+            text("INSERT INTO users (email, hashed_password, is_active, role) VALUES (:e, :p, :a, :r)"),
+            {"e": normalized_email, "p": pwd_context.hash(safe_password), "a": True, "r": role_name}
         )
         db.commit()
         return {"status": "success", "message": f"User {normalized_email} created."}
@@ -180,7 +183,7 @@ def login_user(req: LoginRequest, db: Session = Depends(get_db)):
     """Authenticates a user and writes to the audit log."""
     normalized_email = req.username.strip().lower()
     user = db.execute(
-        text("SELECT id, email, hashed_password, is_active FROM users WHERE email = :e"),
+        text("SELECT id, email, hashed_password, is_active, role FROM users WHERE email = :e"),
         {"e": normalized_email}
     ).fetchone()
 
@@ -202,7 +205,8 @@ def login_user(req: LoginRequest, db: Session = Depends(get_db)):
         {"u": user[1], "e": "User login successful", "s": "Info"}
     )
     db.commit()
-    return {"status": "success", "message": "Login successful", "username": user[1], "role": "Security Analyst"}
+    role_name = user[4] if len(user) > 4 and user[4] else "Security Analyst"
+    return {"status": "success", "message": "Login successful", "username": user[1], "role": role_name}
 
 @app.post("/api/auth/forgot-password")
 def forgot_password(req: ForgotPasswordRequest, db: Session = Depends(get_db)):
