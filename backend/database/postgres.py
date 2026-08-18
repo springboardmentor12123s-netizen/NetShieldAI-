@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, DateTime, Integer, String, create_engine, text
+from sqlalchemy import Boolean, Column, DateTime, Integer, String, create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy.sql import func
 from dotenv import load_dotenv
@@ -6,11 +6,10 @@ import os
 
 load_dotenv()
 
-
 def _normalize_database_url(raw_url: str) -> str:
     candidate = (raw_url or "").strip()
     if not candidate:
-        raise ValueError("POSTGRES_URL is required and must point to the Supabase PostgreSQL database.")
+        raise ValueError("DATABASE_URL is missing. Please provide your Neon Database URL.")
 
     if "://" not in candidate:
         candidate = f"postgresql+psycopg2://{candidate}"
@@ -22,23 +21,28 @@ def _normalize_database_url(raw_url: str) -> str:
 
     if "@" not in candidate:
         raise ValueError(
-            "POSTGRES_URL must be a full PostgreSQL URL like "
+            "DATABASE_URL must be a full PostgreSQL URL like "
             "postgresql+psycopg2://user:password@host:5432/dbname"
         )
 
-    if "supabase" in candidate.lower() and "sslmode=" not in candidate:
+    # Neon always requires sslmode=require
+    if "sslmode=" not in candidate:
         separator = "&" if "?" in candidate else "?"
         candidate = f"{candidate}{separator}sslmode=require"
 
     return candidate
 
 
-# BYPASS ENVIRONMENT VARIABLES ENTIRELY
-RAW_DATABASE_URL = os.getenv("POSTGRES_URL")
+# BYPASS ENVIRONMENT VARIABLES ENTIRELY FOR RENDER
+RAW_DATABASE_URL = "postgresql://neondb_owner:npg_U5vDnfVTGs9z@ep-noisy-cloud-ay8rjeip-pooler.c-5.us-east-2.aws.neon.tech/neondb?sslmode=require"
+
 normalized_url = _normalize_database_url(RAW_DATABASE_URL)
-engine_kwargs = {"pool_pre_ping": True}
-if "supabase" in normalized_url.lower():
-    engine_kwargs["connect_args"] = {"sslmode": "require"}
+
+# Enforce secure connection args for Neon
+engine_kwargs = {
+    "pool_pre_ping": True,
+    "connect_args": {"sslmode": "require"}
+}
 
 engine = create_engine(normalized_url, **engine_kwargs)
 
