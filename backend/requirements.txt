@@ -5,7 +5,7 @@ sqlalchemy
 pymongo
 motor
 passlib
-bcrypt
+bcrypt==4.3.0   
 python-jose
 python-multipart
 python-dotenv
