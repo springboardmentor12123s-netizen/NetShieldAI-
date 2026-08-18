@@ -66,13 +66,26 @@ export default function VisualizationDashboard() {
           
         setTopIps(sortedIps.length > 0 ? sortedIps : [{ ip: "System Secure", count: 0 }]);
 
-        // 3. Threat Distribution
-        const attackTypes = ["DDoS Hulk", "SQL Injection", "Port Scan", "XSS Payload"];
-        const distribution = attackTypes.map((type, i) => ({
-          type,
-          percentage: liveAlerts.length > 0 ? Math.floor(Math.random() * 30) + 15 : 0
-        }));
-        setThreatDistribution(distribution);
+        // 3. Threat Distribution based on real backend alert labels
+        const threatTypeCounts: Record<string, number> = {};
+        liveAlerts.forEach((alert: any) => {
+          const label = alert.incident || alert.title || alert.category || "Unclassified Threat";
+          const normalized = label
+            .toString()
+            .replace(/(Detected\s+)/i, "")
+            .trim();
+          threatTypeCounts[normalized] = (threatTypeCounts[normalized] || 0) + 1;
+        });
+
+        const distribution = Object.entries(threatTypeCounts)
+          .map(([type, count]) => ({
+            type,
+            percentage: liveAlerts.length > 0 ? Math.round((count / liveAlerts.length) * 100) : 0,
+          }))
+          .sort((a, b) => b.percentage - a.percentage)
+          .slice(0, 4);
+
+        setThreatDistribution(distribution.length > 0 ? distribution : [{ type: "No Threats Detected", percentage: 100 }]);
 
       } catch (error) {
         console.error("Failed to load telemetry:", error);

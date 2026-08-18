@@ -1,4 +1,4 @@
-from sqlalchemy import Column, DateTime, Integer, String, create_engine, text
+from sqlalchemy import Boolean, Column, DateTime, Integer, String, create_engine, text
 from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy.sql import func
 from dotenv import load_dotenv
@@ -10,7 +10,7 @@ load_dotenv()
 def _normalize_database_url(raw_url: str) -> str:
     candidate = (raw_url or "").strip()
     if not candidate:
-        candidate = "postgresql+psycopg2://postgres:postgres@localhost:5432/netshield_users"
+        raise ValueError("POSTGRES_URL is required and must point to the Supabase PostgreSQL database.")
 
     if "://" not in candidate:
         candidate = f"postgresql+psycopg2://{candidate}"
@@ -20,7 +20,7 @@ def _normalize_database_url(raw_url: str) -> str:
     elif candidate.startswith("postgresql://"):
         candidate = candidate.replace("postgresql://", "postgresql+psycopg2://", 1)
 
-    if "@" not in candidate and not candidate.startswith("sqlite"):
+    if "@" not in candidate:
         raise ValueError(
             "POSTGRES_URL must be a full PostgreSQL URL like "
             "postgresql+psycopg2://user:password@host:5432/dbname"
@@ -33,22 +33,14 @@ def _normalize_database_url(raw_url: str) -> str:
     return candidate
 
 
-SQLALCHEMY_DATABASE_URL = os.getenv(
-    "POSTGRES_URL",
-    "postgresql+psycopg2://postgres:postgres@localhost:5432/netshield_users",
-)
+# BYPASS ENVIRONMENT VARIABLES ENTIRELY
+RAW_DATABASE_URL = os.getenv("POSTGRES_URL")
+normalized_url = _normalize_database_url(RAW_DATABASE_URL)
+engine_kwargs = {"pool_pre_ping": True}
+if "supabase" in normalized_url.lower():
+    engine_kwargs["connect_args"] = {"sslmode": "require"}
 
-try:
-    normalized_url = _normalize_database_url(SQLALCHEMY_DATABASE_URL)
-    engine = create_engine(normalized_url, pool_pre_ping=True)
-    with engine.connect() as connection:
-        connection.execute(text("SELECT 1"))
-except Exception as exc:
-    print(
-        "Warning: PostgreSQL connection failed. Using a fallback in-memory SQLite database for startup. "
-        f"Details: {exc}"
-    )
-    engine = create_engine("sqlite:///:memory:", connect_args={"check_same_thread": False})
+engine = create_engine(normalized_url, **engine_kwargs)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
@@ -58,9 +50,9 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, unique=True, index=True)
-    hashed_password = Column(String)
-    role = Column(String, default="Security Analyst")
+    email = Column(String, unique=True, index=True, nullable=False)
+    hashed_password = Column(String, nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False)
 
 
 class AuditLog(Base):

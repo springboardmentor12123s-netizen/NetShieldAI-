@@ -153,7 +153,7 @@ export default function UserManagementDashboard() {
                 <tbody className="divide-y divide-gray-700">
                   {teamMembers.length === 0 ? (
                     <tr>
-                      <td colSpan="4" className="p-4 text-center text-gray-500">No users found in database.</td>
+                      <td colSpan={4} className="p-4 text-center text-gray-500">No users found in database.</td>
                     </tr>
                   ) : (
                     teamMembers.map((member) => (

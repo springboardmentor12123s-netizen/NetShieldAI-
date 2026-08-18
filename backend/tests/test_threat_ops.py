@@ -30,3 +30,13 @@ def test_dashboard_snapshot_groups_threats():
     assert snapshot["threat_breakdown"]["DDoS"] == 1
     assert snapshot["threat_breakdown"]["PortScan"] == 1
     assert snapshot["critical_alerts"] >= 1
+
+
+def test_user_model_matches_supabase_schema():
+    from database.postgres import User
+
+    columns = set(User.__table__.columns.keys())
+
+    assert "email" in columns
+    assert "is_active" in columns
+    assert "username" not in columns

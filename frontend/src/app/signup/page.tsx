@@ -4,6 +4,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { getApiBaseUrl } from "../../lib/api";
 
 export default function SignupPage() {
   const [formData, setFormData] = useState({
@@ -15,7 +16,7 @@ export default function SignupPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const router = useRouter();
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  const apiBaseUrl = getApiBaseUrl();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -32,10 +33,9 @@ export default function SignupPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        // FastApi expects JSON for this endpoint, unlike the OAuth2 form data for login
         body: JSON.stringify({
-          email: formData.email,
-          full_name: formData.fullName,
+          email: formData.email.trim().toLowerCase(),
+          full_name: formData.fullName.trim(),
           password: formData.password,
           role: formData.role,
         }),

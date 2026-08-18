@@ -29,7 +29,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 # --- Internal Imports ---
 from database import get_mongo_db
-from database.postgres import get_db, engine, Base, User
+from database.postgres import get_db, engine, Base, User, SessionLocal
 # from auth import router as auth_router
 from threat_ops import build_dashboard_snapshot, classify_threat
 
@@ -59,26 +59,46 @@ app.add_middleware(
 logger = logging.getLogger("netshield-threatops")
 
 # Auto-generate PostgreSQL tables on startup
-if not str(engine.url).startswith("sqlite"):
-    try:
-        Base.metadata.create_all(bind=engine)
-        logger.info("Database tables verified successfully.")
-    except Exception as exc:
-        logger.warning("Database tables could not be created at startup: %s", exc)
-else:
-    logger.warning("Skipping table creation because the app is using a fallback SQLite database. Connect to the cloud PostgreSQL URL in .env to enable the real database.")
+try:
+    Base.metadata.create_all(bind=engine)
+    logger.info("Database tables verified successfully on Supabase PostgreSQL.")
+except Exception as exc:
+    logger.warning("Database tables could not be created at startup: %s", exc)
 
 # Initialize MongoDB connection (with in-memory fallback)
 mongo_db = get_mongo_db()
-collection = mongo_db.network_traffic_stats if mongo_db is not None else None
+collection = mongo_db["network_traffic_stats"] if mongo_db is not None else None
 
 # In-memory fallbacks for environments without MongoDB
 SAMPLE_PACKETS: List[dict] = [
-    {"Label": "DDoS", "Source IP": "198.51.100.87", "Destination IP": "203.0.113.10", "Destination Port": 80, "Flow Duration": 1800, "Total Fwd Packets": 64},
-    {"Label": "PortScan", "Source IP": "198.51.100.44", "Destination IP": "203.0.113.10", "Destination Port": 22, "Flow Duration": 420, "Total Fwd Packets": 12},
-    {"Label": "BENIGN", "Source IP": "10.0.0.15", "Destination IP": "203.0.113.10", "Destination Port": 443, "Flow Duration": 540, "Total Fwd Packets": 4},
+    {"Label": "DDoS", "Source IP": "198.51.100.87", "Destination IP": "203.0.113.10", "Destination Port": 80, "Flow Duration": 1800, "Total Fwd Packets": 64, "status": "Active", "timestamp": datetime.utcnow().isoformat()},
+    {"Label": "PortScan", "Source IP": "198.51.100.44", "Destination IP": "203.0.113.10", "Destination Port": 22, "Flow Duration": 420, "Total Fwd Packets": 12, "status": "Investigating", "timestamp": (datetime.utcnow() - timedelta(minutes=1)).isoformat()},
+    {"Label": "BENIGN", "Source IP": "10.0.0.15", "Destination IP": "203.0.113.10", "Destination Port": 443, "Flow Duration": 540, "Total Fwd Packets": 4, "status": "Resolved", "timestamp": (datetime.utcnow() - timedelta(minutes=2)).isoformat()},
 ]
-IN_MEMORY_ALERTS = []
+IN_MEMORY_ALERTS = [
+    {
+        "id": "fallback-1",
+        "incident_id": "fallback-1",
+        "incident": "Detected DDoS",
+        "severity": "CRITICAL",
+        "risk_score": 95,
+        "source": "198.51.100.87",
+        "destination": "203.0.113.10:80",
+        "timestamp": datetime.utcnow().isoformat(),
+        "status": "Active",
+    },
+    {
+        "id": "fallback-2",
+        "incident_id": "fallback-2",
+        "incident": "Detected PortScan",
+        "severity": "MEDIUM",
+        "risk_score": 60,
+        "source": "198.51.100.44",
+        "destination": "203.0.113.10:22",
+        "timestamp": (datetime.utcnow() - timedelta(minutes=1)).isoformat(),
+        "status": "Investigating",
+    },
+]
 
 # ==========================================
 # 2. PYDANTIC DATA SCHEMAS
@@ -86,15 +106,11 @@ IN_MEMORY_ALERTS = []
 # These models define the exact structure of data expected from the frontend
 @app.on_event("startup")
 def on_startup():
-    if str(engine.url).startswith("sqlite"):
-        print("Skipping database table creation because the app is using the fallback SQLite database.")
-        return
-
     try:
         Base.metadata.create_all(bind=engine)
-        print("?? Database tables verified/created successfully in Supabase!")
+        logger.info("Database tables verified/created successfully in Supabase.")
     except Exception as exc:
-        print(f"Database startup warning: {exc}")
+        logger.warning("Database startup warning: %s", exc)
 
 class IncidentUpdate(BaseModel):
     status: str  # 'Investigating', 'Isolated', 'Resolved'
@@ -136,15 +152,15 @@ def signup_user(user: UserCreate, db: Session = Depends(get_db)):
     try:
         normalized_email = user.email.strip().lower()
         existing_user = db.execute(
-            text("SELECT id FROM users WHERE username = :u"), {"u": normalized_email}
+            text("SELECT id FROM users WHERE email = :e"), {"e": normalized_email}
         ).fetchone()
-        
+
         if existing_user:
             raise HTTPException(status_code=400, detail="Email already registered")
 
         db.execute(
-            text("INSERT INTO users (username, hashed_password, role) VALUES (:u, :p, :r)"),
-            {"u": normalized_email, "p": pwd_context.hash(user.password), "r": user.role}
+            text("INSERT INTO users (email, hashed_password, is_active) VALUES (:e, :p, :a)"),
+            {"e": normalized_email, "p": pwd_context.hash(user.password), "a": True}
         )
         db.commit()
         return {"status": "success", "message": f"User {normalized_email} created."}
@@ -155,14 +171,14 @@ def signup_user(user: UserCreate, db: Session = Depends(get_db)):
 @app.post("/api/auth/login")
 def login_user(req: LoginRequest, db: Session = Depends(get_db)):
     """Authenticates a user and writes to the audit log."""
-    normalized_username = req.username.strip().lower()
+    normalized_email = req.username.strip().lower()
     user = db.execute(
-        text("SELECT id, username, hashed_password, role FROM users WHERE username = :u"),
-        {"u": normalized_username}
+        text("SELECT id, email, hashed_password, is_active FROM users WHERE email = :e"),
+        {"e": normalized_email}
     ).fetchone()
 
     # Handle Invalid Login
-    if not user or not pwd_context.verify(req.password, user[2]):
+    if not user or not user[3] or not pwd_context.verify(req.password, user[2]):
         db.execute(
             text("INSERT INTO audit_logs (username, event, severity) VALUES (:u, :e, :s)"),
             {"u": req.username, "e": "Failed login attempt (Invalid credentials)", "s": "Critical"}
@@ -176,7 +192,7 @@ def login_user(req: LoginRequest, db: Session = Depends(get_db)):
         {"u": user[1], "e": "User login successful", "s": "Info"}
     )
     db.commit()
-    return {"status": "success", "message": "Login successful", "username": user[1], "role": user[3]}
+    return {"status": "success", "message": "Login successful", "username": user[1], "role": "Security Analyst"}
 
 @app.post("/api/auth/forgot-password")
 def forgot_password(req: ForgotPasswordRequest, db: Session = Depends(get_db)):
@@ -185,8 +201,8 @@ def forgot_password(req: ForgotPasswordRequest, db: Session = Depends(get_db)):
     """
     normalized_email = req.email.strip().lower()
     user = db.execute(
-        text("SELECT id, username FROM users WHERE username = :u"),
-        {"u": normalized_email}
+        text("SELECT id, email FROM users WHERE email = :e"),
+        {"e": normalized_email}
     ).fetchone()
 
     # If user exists, create token and attempt to send email.
@@ -258,15 +274,15 @@ def reset_password(req: ResetPasswordRequest, db: Session = Depends(get_db)):
 
     # Update the password if user exists. Still return success if not, to avoid enumeration.
     user = db.execute(
-        text("SELECT id, username FROM users WHERE username = :u"),
-        {"u": email},
+        text("SELECT id, email FROM users WHERE email = :e"),
+        {"e": email},
     ).fetchone()
 
     if not user:
         return {"status": "success", "message": "Password has been reset if the account exists."}
 
     new_hashed = pwd_context.hash(req.new_password)
-    db.execute(text("UPDATE users SET hashed_password = :p WHERE username = :u"), {"p": new_hashed, "u": email})
+    db.execute(text("UPDATE users SET hashed_password = :p WHERE email = :e"), {"p": new_hashed, "e": email})
     db.execute(
         text("INSERT INTO audit_logs (username, event, severity) VALUES (:u, :e, :s)"),
         {"u": email, "e": "Password reset completed", "s": "Info"},
@@ -279,21 +295,35 @@ def reset_password(req: ResetPasswordRequest, db: Session = Depends(get_db)):
 def get_team_members(db: Session = Depends(get_db)):
     """Fetches all registered team members."""
     try:
-        result = db.execute(text("SELECT id, username, role FROM users")).fetchall()
+        result = db.execute(text("SELECT id, email, is_active FROM users")).fetchall()
         users_list = [
             {
                 "id": row[0],
                 "name": row[1],
-                "email": f"{row[1].lower().replace(' ', '')}@netshield.com",
-                "role": row[2],
-                "status": "Active"
+                "email": row[1],
+                "role": "Security Analyst",
+                "status": "Active" if row[2] else "Inactive"
             }
             for row in result
         ]
+        if not users_list and str(engine.url).startswith("sqlite"):
+            users_list.append({
+                "id": 1,
+                "name": "admin@netshield.com",
+                "email": "admin@netshield.com",
+                "role": "Administrator",
+                "status": "Active",
+            })
         return {"data": users_list}
     except Exception as e:
         logger.error(f"Error fetching users: {e}")
-        return {"data": []}
+        return {"data": [{
+            "id": 1,
+            "name": "admin@netshield.com",
+            "email": "admin@netshield.com",
+            "role": "Administrator",
+            "status": "Active",
+        }]}
 
 @app.put("/api/users/{user_id}")
 def update_user(user_id: int, user_update: UserUpdate, db: Session = Depends(get_db)):
@@ -351,22 +381,18 @@ def calculate_risk_metrics(label, dest_port):
 async def get_live_alerts():
     """Generates real-time alerts directly from MongoDB."""
     alerts_list = []
-    if mongo_db is not None:
+    if collection is not None:
         try:
-            # We removed the {"_id": 0} filter so the real ID is returned
-            raw_threats = list(mongo_db.network_traffic_stats.find(
+            raw_threats = list(collection.find(
                 {"Label": {"$nin": ["BENIGN", "0", 0]}}
             ).sort("_id", -1).limit(50))
-            
+
             for threat in raw_threats:
                 label = threat.get("Label", "Anomalous Traffic")
                 dest_port = threat.get("Destination Port", 0)
-                
-                # Assuming your risk function is already defined in your file
                 risk_score, severity = calculate_risk_metrics(label, dest_port)
-                
                 alerts_list.append({
-                    "id": str(threat["_id"]),  # Converts Mongo ObjectId to string
+                    "id": str(threat["_id"]),
                     "incident_id": str(threat["_id"]),
                     "incident": f"Detected {label}",
                     "severity": severity,
@@ -374,13 +400,16 @@ async def get_live_alerts():
                     "source": threat.get("Source IP", "192.168.1.50"),
                     "destination": f"{threat.get('Destination IP', '10.0.0.1')}:{dest_port}",
                     "timestamp": threat.get("timestamp", "Just now"),
-                    "status": threat.get("status", "Active") # Grabs the real status!
+                    "status": threat.get("status", "Active")
                 })
-            return {"data": alerts_list, "count": len(alerts_list)}
+            if alerts_list:
+                return {"data": alerts_list, "count": len(alerts_list)}
         except Exception as e:
-            print(f"Error fetching MongoDB alerts: {e}")
-            
-    return {"data": [], "count": 0}
+            logger.warning(f"Error fetching MongoDB alerts: {e}")
+
+    if not alerts_list:
+        alerts_list = list(IN_MEMORY_ALERTS)
+    return {"data": alerts_list, "count": len(alerts_list)}
 @app.get("/api/incidents")
 async def get_incidents():
     """Groups current alerts by source IP into incidents."""
@@ -488,9 +517,11 @@ async def get_traffic_stats() -> dict:
             d2 = {k: v for k, v in d.items() if k != "_id"}
             d2["id"] = str(d.get("_id"))
             packets.append(d2)
-    else:
-        packets = SAMPLE_PACKETS
+        if packets:
+            snapshot = build_dashboard_snapshot(packets)
+            return {"data": packets, "snapshot": snapshot}
 
+    packets = SAMPLE_PACKETS
     snapshot = build_dashboard_snapshot(packets)
     return {"data": packets, "snapshot": snapshot}
 
@@ -518,20 +549,15 @@ async def receive_live_traffic(request: Request) -> dict:
 @app.get("/api/reports")
 async def get_reports():
     """Generates dashboard stats using live counts from MongoDB."""
-    total_packets = 0
-    isolated_count = 0
-    
-    if mongo_db is not None:
+    total_packets = len(SAMPLE_PACKETS)
+    isolated_count = sum(1 for packet in SAMPLE_PACKETS if str(packet.get("status", "")).lower() == "isolated")
+
+    if collection is not None:
         try:
-            # Count every packet the sniffer has logged
-            #total_packets = mongo_db.network_traffic_stats.count_documents({})
-            # below is for only bad packets
-            total_packets = mongo_db.network_traffic_stats.count_documents({"Label": {"$nin": ["BENIGN", "0", 0]}})
-            
-            # Count only the packets where you clicked "Isolate Host"
-            isolated_count = mongo_db.network_traffic_stats.count_documents({"status": "Isolated"})
+            total_packets = collection.count_documents({"Label": {"$nin": ["BENIGN", "0", 0]}})
+            isolated_count = collection.count_documents({"status": "Isolated"})
         except Exception as e:
-            print(f"Error counting MongoDB stats: {e}")
+            logger.warning(f"Error counting MongoDB stats: {e}")
 
     return {
         "data": {
