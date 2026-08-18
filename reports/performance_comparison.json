@@ -1,0 +1,54 @@
+{
+    "timestamp": "2026-08-14T16:16:30.000000+00:00",
+    "summary": "Optimized predictor by reusing intermediate IsolationForest scores and RandomForest predicted probas, and cached preprocessor feature names. ML single predictions show 2.43x speedup, and traffic ingestion shows 2.73x speedup.",
+    "metrics": {
+        "single_prediction_avg_ms": {
+            "before": 125.91,
+            "after": 51.84,
+            "change_pct": -58.83,
+            "status": "IMPROVED"
+        },
+        "batch_prediction_50_avg_ms": {
+            "before": "N/A (Not Measured)",
+            "after": 53.12,
+            "change_pct": "N/A",
+            "status": "NEW_METRIC"
+        },
+        "batch_predictions_throughput_pred_sec": {
+            "before": "N/A",
+            "after": 941.35,
+            "change_pct": "N/A",
+            "status": "NEW_METRIC"
+        },
+        "traffic_ingestion_50_avg_ms": {
+            "before": 163.27,
+            "after": 59.76,
+            "change_pct": -63.39,
+            "status": "IMPROVED"
+        },
+        "api_traffic_predict_avg_ms": {
+            "before": 129.75,
+            "after": 56.31,
+            "change_pct": -56.6,
+            "status": "IMPROVED"
+        },
+        "api_traffic_status_avg_ms": {
+            "before": 9.50,
+            "after": 9.47,
+            "change_pct": -0.32,
+            "status": "STABLE"
+        },
+        "api_traffic_evaluation_avg_ms": {
+            "before": 10.16,
+            "after": 9.41,
+            "change_pct": -7.38,
+            "status": "IMPROVED"
+        },
+        "api_traffic_confusion_matrix_avg_ms": {
+            "before": 12.11,
+            "after": 10.97,
+            "change_pct": -9.41,
+            "status": "IMPROVED"
+        }
+    }
+}

@@ -1,0 +1,38 @@
+{
+    "timestamp": "2026-08-14T16:15:36.851979+00:00",
+    "single_prediction": {
+        "average_latency_ms": 51.83991733336976,
+        "min_latency_ms": 41.58739998820238,
+        "max_latency_ms": 191.4184000052046
+    },
+    "batch_prediction": {
+        "batch_size": 50,
+        "average_latency_ms": 53.11548800076707,
+        "throughput_predictions_per_second": 941.3450178463563
+    },
+    "traffic_ingestion": {
+        "average_latency_ms": 59.76266666645339
+    },
+    "api": {
+        "/traffic/ml/status": {
+            "average_latency_ms": 9.472206000355072,
+            "min_latency_ms": 6.999300007009879,
+            "max_latency_ms": 21.263200003886595
+        },
+        "/traffic/ml/evaluation": {
+            "average_latency_ms": 9.40969599847449,
+            "min_latency_ms": 7.704200004809536,
+            "max_latency_ms": 14.780899990000762
+        },
+        "/traffic/ml/confusion-matrix": {
+            "average_latency_ms": 10.972899998887442,
+            "min_latency_ms": 8.812100000795908,
+            "max_latency_ms": 13.710100000025705
+        },
+        "/traffic/ml/predict": {
+            "average_latency_ms": 56.31233000138309,
+            "min_latency_ms": 50.48600000736769,
+            "max_latency_ms": 96.7497999954503
+        }
+    }
+}

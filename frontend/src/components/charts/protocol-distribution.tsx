@@ -11,8 +11,8 @@ interface ProtocolData {
     count: number;
 }
 
-export function ProtocolDistributionChart({ data }: { data: ProtocolData[] }) {
-    const chartData = {
+export const ProtocolDistributionChart = React.memo(function ProtocolDistributionChart({ data }: { data: ProtocolData[] }) {
+    const chartData = React.useMemo(() => ({
         labels: data.map((d) => d.protocol),
         datasets: [
             {
@@ -34,9 +34,9 @@ export function ProtocolDistributionChart({ data }: { data: ProtocolData[] }) {
                 borderWidth: 1.5,
             },
         ],
-    };
+    }), [data]);
 
-    const options = {
+    const options = React.useMemo(() => ({
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
@@ -61,7 +61,7 @@ export function ProtocolDistributionChart({ data }: { data: ProtocolData[] }) {
             },
         },
         cutout: "70%",
-    };
+    }), []);
 
     return (
         <div className="relative h-64 w-full">
@@ -74,5 +74,5 @@ export function ProtocolDistributionChart({ data }: { data: ProtocolData[] }) {
             )}
         </div>
     );
-}
+});
 export default ProtocolDistributionChart;

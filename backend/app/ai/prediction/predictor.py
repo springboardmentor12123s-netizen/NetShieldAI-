@@ -2,7 +2,7 @@
 
 import os
 import joblib
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 
 class ThreatPredictor:
@@ -78,23 +78,32 @@ class ThreatPredictor:
                 }
 
         try:
+            import numpy as np
             # Transform to standard model shape array [1, n_features]
             # The preprocessor.transform() handles dict → CIC-IDS feature mapping
             X = self.preprocessor.transform([log_dict])
 
-            # 1. IsolationForest Anomaly detection
-            outlier_pred = self.detector.predict(X)[0]
-            is_anomaly = True if outlier_pred == -1 else False
+            # 1. IsolationForest Anomaly detection (runs decision_function once)
+            scores = self.detector.decision_function(X)
+            is_anomaly = True if scores[0] < 0 else False
+            
+            raw_anomaly = -scores[0]
+            anomaly_score = float(1.0 / (1.0 + np.exp(-10.0 * raw_anomaly)))
 
-            # Anomaly intensity score
-            anomaly_score = float(self.detector.compute_anomaly_intensity(X)[0])
-
-            # 2. RandomForest Classifier
-            class_idx = self.classifier.predict(X)[0]
+            # 2. RandomForest Classifier (runs predict_proba once)
+            proba = self.classifier.predict_proba(X)
+            classes = list(self.classifier.model.classes_)
+            
+            max_proba_idx = np.argmax(proba, axis=1)[0]
+            class_idx = classes[max_proba_idx]
             predicted_label = self.classifier.get_label_name(class_idx)
 
             # Continuous risk score [0..1]
-            risk_score = float(self.classifier.get_risk_score(X)[0])
+            if 0 in classes:
+                normal_idx = classes.index(0)
+                risk_score = float(1.0 - proba[0, normal_idx])
+            else:
+                risk_score = 1.0
 
             return {
                 "is_anomaly": is_anomaly,
@@ -104,10 +113,75 @@ class ThreatPredictor:
             }
 
         except Exception as e:
-            print(f"Inference error on log prediction: {e}")
+            print(f"Error in model prediction: {e}")
             return {
                 "is_anomaly": False,
                 "anomaly_score": 0.0,
-                "predicted_label": "Normal (Error Fallback)",
+                "predicted_label": f"Normal (Error Fallback: {e})",
                 "risk_score": 0.0
             }
+
+    def predict_batch(self, logs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Runs preprocessor, IsolationForest, and RandomForest inference on a batch of packets.
+
+        Leverages numpy scaling and scikit-learn batch predictions to avoid loop overhead.
+        """
+        if not logs:
+            return []
+
+        if not self.is_loaded:
+            # Check if models were since trained and can be loaded now
+            if not self.load_models():
+                # Default benign fallback
+                return [{
+                    "is_anomaly": False,
+                    "anomaly_score": 0.0,
+                    "predicted_label": "Normal",
+                    "risk_score": 0.0
+                } for _ in logs]
+
+        try:
+            import numpy as np
+            # Batch transformation list[dict] -> Scaled feature matrix [N, n_features]
+            X = self.preprocessor.transform(logs)
+
+            # 1. IsolationForest Anomaly detection (runs decision_function once)
+            scores = self.detector.decision_function(X)
+            outlier_preds = np.ones(scores.shape[0], dtype=int)
+            outlier_preds[scores < 0] = -1
+            
+            raw_anomalies = -scores
+            anomaly_scores = 1.0 / (1.0 + np.exp(-10.0 * raw_anomalies))
+
+            # 2. RandomForest Classifier (runs predict_proba once)
+            proba = self.classifier.predict_proba(X)
+            classes = list(self.classifier.model.classes_)
+            
+            max_proba_idxs = np.argmax(proba, axis=1)
+            class_idxs = [classes[idx] for idx in max_proba_idxs]
+
+            if 0 in classes:
+                normal_idx = classes.index(0)
+                risk_scores = 1.0 - proba[:, normal_idx]
+            else:
+                risk_scores = np.ones(X.shape[0])
+
+            results = []
+            for i in range(len(logs)):
+                is_anomaly = True if outlier_preds[i] == -1 else False
+                predicted_label = self.classifier.get_label_name(class_idxs[i])
+                results.append({
+                    "is_anomaly": is_anomaly,
+                    "anomaly_score": float(anomaly_scores[i]),
+                    "predicted_label": predicted_label,
+                    "risk_score": float(risk_scores[i])
+                })
+            return results
+        except Exception as e:
+            print(f"Error in batch model prediction: {e}")
+            return [{
+                "is_anomaly": False,
+                "anomaly_score": 0.0,
+                "predicted_label": f"Normal (Error Fallback: {e})",
+                "risk_score": 0.0
+            } for _ in logs]

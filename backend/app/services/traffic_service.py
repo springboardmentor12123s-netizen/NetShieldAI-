@@ -45,8 +45,10 @@ class TrafficService:
         alerts_to_insert = []
         redis_payloads = []
 
-        for packet in packets:
-            pred = predictor.predict_log(packet)
+        preds = predictor.predict_batch(packets)
+
+        for i, packet in enumerate(packets):
+            pred = preds[i]
             packet["metadata"] = packet.get("metadata") or {}
             packet["metadata"].update({
                 "is_anomaly": pred["is_anomaly"],

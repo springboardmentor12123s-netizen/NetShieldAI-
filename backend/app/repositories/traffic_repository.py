@@ -195,6 +195,14 @@ class TrafficRepository:
         for packet in packets:
             if "timestamp" not in packet:
                 packet["timestamp"] = datetime.now(timezone.utc)
+            elif isinstance(packet["timestamp"], str):
+                try:
+                    ts_str = packet["timestamp"]
+                    if ts_str.endswith("Z"):
+                        ts_str = ts_str[:-1] + "+00:00"
+                    packet["timestamp"] = datetime.fromisoformat(ts_str)
+                except Exception:
+                    packet["timestamp"] = datetime.now(timezone.utc)
         result = await self.collection.insert_many(packets)
         return len(result.inserted_ids)
 

@@ -100,7 +100,10 @@ async def seed_roles_and_admin():
                 session.add(rp)
 
         # 5. Create Root Admin User
-        admin_email = "admin@netshield.io"
+        import os
+        admin_email = os.getenv("ADMIN_EMAIL", "admin@netshield.io")
+        admin_password = os.getenv("ADMIN_PASSWORD", "Admin@123")
+        
         stmt = select(User).where(User.email == admin_email)
         res = await session.execute(stmt)
         admin_user = res.scalar_one_or_none()
@@ -108,13 +111,14 @@ async def seed_roles_and_admin():
             admin_user = User(
                 email=admin_email,
                 full_name="NetShield Administrator",
-                hashed_password=hash_password("AdminPassword123!"),
+                hashed_password=hash_password(admin_password),
                 role_id=admin_role.id,
                 is_active=True,
                 is_locked=False,
+                is_deleted=False,
             )
             session.add(admin_user)
-            print("OK: Root administrator account created: admin@netshield.io / AdminPassword123!")
+            print(f"OK: Root administrator account created: {admin_email}")
         else:
             print("INFO: Administrator account already exists.")
 

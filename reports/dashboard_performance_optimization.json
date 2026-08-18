@@ -1,0 +1,45 @@
+{
+    "timestamp": "2026-08-14T16:24:40.979875+00:00",
+    "dashboard": {
+        "initial_load_sequential_ms": 189.18,
+        "initial_load_parallel_ms": 51.23,
+        "api_request_count": 5,
+        "duplicate_api_requests": 0
+    },
+    "endpoints": {
+        "/traffic/stats": {
+            "average_latency_ms": 51.23,
+            "min_latency_ms": 16.6,
+            "max_latency_ms": 313.16,
+            "size_bytes": 250
+        },
+        "/traffic/analytics": {
+            "average_latency_ms": 35.02,
+            "min_latency_ms": 22.95,
+            "max_latency_ms": 48.74,
+            "size_bytes": 217
+        },
+        "/traffic/ml/status": {
+            "average_latency_ms": 43.99,
+            "min_latency_ms": 34.01,
+            "max_latency_ms": 74.15,
+            "size_bytes": 234
+        },
+        "/traffic/ml/evaluation": {
+            "average_latency_ms": 26.89,
+            "min_latency_ms": 19.29,
+            "max_latency_ms": 42.69,
+            "size_bytes": 2608
+        },
+        "/alerts": {
+            "average_latency_ms": 32.05,
+            "min_latency_ms": 17.63,
+            "max_latency_ms": 125.89,
+            "size_bytes": 55
+        }
+    },
+    "notes": [
+        "Measured under host to container network interface",
+        "Initial load time calculated using parallel and sequential request modeling"
+    ]
+}

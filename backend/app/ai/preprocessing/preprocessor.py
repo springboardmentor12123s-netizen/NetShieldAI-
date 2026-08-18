@@ -269,10 +269,13 @@ class NetworkTrafficPreprocessor:
             raise ValueError("Preprocessor has not been fitted yet.")
 
         # Get the feature column names from the fitted scaler
-        # We use the same order as during training
-        feature_names = list(dict.fromkeys(
-            c for c in CICIDS_FEATURE_COLUMNS
-        ))[:self.n_features]
+        # We use the same order as during training. Cache it to avoid overhead.
+        feature_names = getattr(self, "feature_names", None)
+        if feature_names is None:
+            feature_names = list(dict.fromkeys(
+                c for c in CICIDS_FEATURE_COLUMNS
+            ))[:self.n_features]
+            self.feature_names = feature_names
 
         rows = []
         for log in logs:

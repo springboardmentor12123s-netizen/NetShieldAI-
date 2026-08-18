@@ -1,0 +1,26 @@
+{
+    "baseline": {
+        "ml_inference_single_ms": 66.84,
+        "traffic_ingestion_50_ms": 3634.56,
+        "api_status_ms": 7.59,
+        "api_evaluation_ms": 10.75,
+        "api_confusion_matrix_ms": 10.80,
+        "api_predict_ms": 137.98
+    },
+    "optimized": {
+        "ml_inference_single_ms": 82.33,
+        "traffic_ingestion_50_ms": 87.67,
+        "api_status_ms": 6.69,
+        "api_evaluation_ms": 8.40,
+        "api_confusion_matrix_ms": 10.83,
+        "api_predict_ms": 78.93
+    },
+    "improvement_percent": {
+        "ml_inference_single": -23.17,
+        "traffic_ingestion_50": 97.59,
+        "api_status": 11.86,
+        "api_evaluation": 21.86,
+        "api_confusion_matrix": -0.28,
+        "api_predict": 42.79
+    }
+}

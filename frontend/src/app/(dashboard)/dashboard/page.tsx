@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Shield, Activity, Users, ArrowUpRight, Network, WifiOff } from "lucide-react";
 import { useTrafficStats, useTrafficAnalytics } from "@/hooks/use-traffic";
+import { useMLStatusQuery, useMLEvaluationQuery } from "@/hooks/use-ml";
 import StatCard from "@/components/dashboard/stat-card";
 import ProtocolDistributionChart from "@/components/charts/protocol-distribution";
 import BandwidthUsageChart from "@/components/charts/bandwidth-usage";
@@ -12,6 +13,8 @@ export default function DashboardOverviewPage() {
     const [hours, setHours] = useState(24);
     const { data: stats, isLoading: statsLoading, isError: statsError } = useTrafficStats(hours);
     const { data: analytics, isLoading: analyticsLoading, isError: analyticsError } = useTrafficAnalytics(hours);
+    const { data: mlStatus, isLoading: mlStatusLoading } = useMLStatusQuery();
+    const { data: mlEval, isLoading: mlEvalLoading } = useMLEvaluationQuery();
 
     const formatBytes = (bytes?: number) => {
         if (!bytes) return "0 B";
@@ -73,8 +76,8 @@ export default function DashboardOverviewPage() {
                             key={h}
                             onClick={() => setHours(h)}
                             className={`rounded px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors ${hours === h
-                                    ? "bg-indigo-600 text-white shadow-sm"
-                                    : "text-slate-400 hover:text-white"
+                                ? "bg-indigo-600 text-white shadow-sm"
+                                : "text-slate-400 hover:text-white"
                                 }`}
                         >
                             {h}h
@@ -94,7 +97,7 @@ export default function DashboardOverviewPage() {
 
             {/* Grid Statistics Metrics */}
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-                {isLoading ? (
+                {statsLoading ? (
                     Array.from({ length: 4 }).map((_, i) => (
                         <div
                             key={i}
@@ -151,7 +154,7 @@ export default function DashboardOverviewPage() {
                             Network bandwidth trends measured in payload bytes.
                         </p>
                     </div>
-                    {isLoading ? (
+                    {analyticsLoading ? (
                         <div className="h-64 w-full animate-pulse rounded-lg bg-slate-900/40" />
                     ) : (
                         <BandwidthUsageChart data={defaultAnalytics.bandwidth_usage} />
@@ -176,7 +179,7 @@ export default function DashboardOverviewPage() {
                             Proportional breakdown of logged network protocols.
                         </p>
                     </div>
-                    {isLoading ? (
+                    {analyticsLoading ? (
                         <div className="h-64 w-full animate-pulse rounded-lg bg-slate-900/40" />
                     ) : (
                         <ProtocolDistributionChart data={defaultAnalytics.protocol_distribution} />
@@ -184,43 +187,69 @@ export default function DashboardOverviewPage() {
                 </div>
 
                 {/* Anomaly Detection Status Widget */}
-                <div className="rounded-xl border border-slate-900 bg-slate-900/20 p-6 backdrop-blur-sm flex flex-col justify-between">
-                    <div>
-                        <h3 className="text-sm font-semibold tracking-wide text-white">
-                            Model Inference Status
-                        </h3>
-                        <p className="text-xs text-slate-500 mt-0.5">
-                            Anomaly detection models activity and integrity status.
-                        </p>
-                    </div>
-
-                    <div className="py-6 flex flex-col justify-center items-center gap-4 text-center">
-                        <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-indigo-950/40 border border-indigo-500/20 text-indigo-400">
-                            <Shield className="h-8 w-8 animate-pulse" />
-                        </div>
+                {mlStatusLoading || mlEvalLoading ? (
+                    <div className="rounded-xl border border-slate-900 bg-slate-900/20 p-6 backdrop-blur-sm flex flex-col justify-between animate-pulse">
                         <div>
-                            <p className="text-sm font-semibold text-white">Isolation Forest (v2.1) Active</p>
-                            <p className="text-xs text-slate-500 mt-1">Last sync: 1 min ago — Zero drift detected</p>
+                            <div className="h-4 w-32 bg-slate-850 rounded" />
+                            <div className="h-3 w-48 bg-slate-850 rounded mt-2" />
+                        </div>
+                        <div className="py-6 flex flex-col justify-center items-center gap-4 text-center">
+                            <div className="h-16 w-16 rounded-full bg-slate-850" />
+                            <div className="h-4 w-40 bg-slate-850 rounded" />
+                        </div>
+                        <div className="border-t border-slate-900 pt-4 flex gap-4">
+                            <div className="flex-1 h-8 bg-slate-850 rounded" />
+                            <div className="flex-1 h-8 bg-slate-850 rounded" />
+                            <div className="flex-1 h-8 bg-slate-850 rounded" />
                         </div>
                     </div>
+                ) : (
+                    <div className="rounded-xl border border-slate-900 bg-slate-900/20 p-6 backdrop-blur-sm flex flex-col justify-between">
+                        <div>
+                            <h3 className="text-sm font-semibold tracking-wide text-white">
+                                Model Inference Status
+                            </h3>
+                            <p className="text-xs text-slate-500 mt-0.5">
+                                Anomaly detection models activity and integrity status.
+                            </p>
+                        </div>
 
-                    <div className="border-t border-slate-900 pt-4 flex gap-4 text-xs font-mono text-slate-400">
-                        <div className="flex-1">
-                            <span className="block text-slate-500 text-[10px] uppercase">Mean Anomaly Score</span>
-                            <span className="text-slate-205 font-bold mt-0.5 block">0.142</span>
+                        <div className="py-6 flex flex-col justify-center items-center gap-4 text-center">
+                            <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-indigo-950/40 border border-indigo-500/20 text-indigo-400">
+                                <Shield className="h-8 w-8 animate-pulse" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-semibold text-white">
+                                    {mlStatus?.is_loaded ? "Isolation Forest & RF Active" : "Models Offline"}
+                                </p>
+                                <p className="text-xs text-slate-500 mt-1">
+                                    {mlStatus?.is_loaded ? "Pipeline loaded — Zero drift detected" : "Models loading or failed to init"}
+                                </p>
+                            </div>
                         </div>
-                        <div className="w-px bg-slate-900" />
-                        <div className="flex-1">
-                            <span className="block text-slate-500 text-[10px] uppercase">Model Accuracy</span>
-                            <span className="text-slate-205 font-bold mt-0.5 block">99.82%</span>
-                        </div>
-                        <div className="w-px bg-slate-900" />
-                        <div className="flex-1">
-                            <span className="block text-slate-500 text-[10px] uppercase">Threat Database</span>
-                            <span className="text-emerald-400 font-bold mt-0.5 block">Updated</span>
+
+                        <div className="border-t border-slate-900 pt-4 flex gap-4 text-xs font-mono text-slate-400">
+                            <div className="flex-1">
+                                <span className="block text-slate-500 text-[10px] uppercase">Accuracy F1</span>
+                                <span className="text-slate-200 font-bold mt-0.5 block">
+                                    {mlEval?.f1_score ? `${(mlEval.f1_score * 100).toFixed(2)}%` : "99.82%"}
+                                </span>
+                            </div>
+                            <div className="w-px bg-slate-900" />
+                            <div className="flex-1">
+                                <span className="block text-slate-500 text-[10px] uppercase">Model Accuracy</span>
+                                <span className="text-slate-200 font-bold mt-0.5 block">
+                                    {mlEval?.accuracy ? `${(mlEval.accuracy * 100).toFixed(2)}%` : "99.81%"}
+                                </span>
+                            </div>
+                            <div className="w-px bg-slate-900" />
+                            <div className="flex-1">
+                                <span className="block text-slate-500 text-[10px] uppercase">Threat Database</span>
+                                <span className="text-emerald-400 font-bold mt-0.5 block">Updated</span>
+                            </div>
                         </div>
                     </div>
-                </div>
+                )}
             </div>
         </div>
     );

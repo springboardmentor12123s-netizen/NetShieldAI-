@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { AlertTriangle, ShieldAlert, Clock, Terminal, CheckCircle2, MessageSquare, Play, HelpCircle, Activity, Heart, RefreshCw } from "lucide-react";
 import { useWebSocket } from "@/hooks/use-websocket";
-import apiClient from "@/services/api-client";
+import { useAlertsQuery } from "@/hooks/use-alerts";
 
 interface AlertItem {
     id: string;
@@ -15,74 +15,23 @@ interface AlertItem {
 }
 
 export default function AlertManagementPage() {
+    const { data: queryAlerts, isLoading, refetch } = useAlertsQuery();
     const [alerts, setAlerts] = useState<AlertItem[]>([]);
-    const [loading, setLoading] = useState(true);
     const [severityFilter, setSeverityFilter] = useState<string>("all");
     const [diagnostics, setDiagnostics] = useState({ receivedCount: 0, status: "Connected" });
 
     const fetchAlerts = async () => {
-        setLoading(true);
-        try {
-            const response = await apiClient.get<any>("/alerts");
-            const data = response.data.items || response.data || [];
-            const rawAlerts = Array.isArray(data) ? data : [];
-            const alertsList = rawAlerts.map((item: any) => ({
-                id: item.id || item._id,
-                timestamp: item.timestamp,
-                message: item.message || item.description || "",
-                severity: item.severity,
-                src_ip: item.src_ip || item.source_ip || "",
-                type: item.type || item.alert_type || "Unknown Threat"
-            }));
-            setAlerts(alertsList);
-            setDiagnostics(prev => ({ ...prev, receivedCount: alertsList.length }));
-        } catch (error) {
-            console.error("Failed to load DB alerts feed:", error);
-            // Fallback mock alerts for visual clarity
-            const mocks: AlertItem[] = [
-                {
-                    id: "al-901",
-                    timestamp: new Date().toISOString(),
-                    message: "DDoS high volume packet influx on staging server gateway",
-                    severity: "critical",
-                    src_ip: "185.120.45.62",
-                    type: "Traffic Outflow"
-                },
-                {
-                    id: "al-902",
-                    timestamp: new Date(Date.now() - 60000).toISOString(),
-                    message: "SSH brute-force login failure on main database client",
-                    severity: "high",
-                    src_ip: "91.240.118.5",
-                    type: "Authentication"
-                },
-                {
-                    id: "al-903",
-                    timestamp: new Date(Date.now() - 300000).toISOString(),
-                    message: "Subnet address sweeps scan from unsanctioned external host",
-                    severity: "medium",
-                    src_ip: "10.0.0.142",
-                    type: "Port Scanning"
-                },
-                {
-                    id: "al-904",
-                    timestamp: new Date(Date.now() - 1200000).toISOString(),
-                    message: "Server load warning - CPU temperature exceeds 74 degrees",
-                    severity: "low",
-                    src_ip: "127.0.0.1",
-                    type: "Hardware Alert"
-                }
-            ];
-            setAlerts(mocks);
-            setDiagnostics(prev => ({ ...prev, receivedCount: mocks.length }));
-        } finally {
-            setLoading(false);
-        }
+        refetch();
     };
 
     useEffect(() => {
-        fetchAlerts();
-    }, []);
+        if (queryAlerts) {
+            setAlerts(queryAlerts);
+            setDiagnostics(prev => ({ ...prev, receivedCount: queryAlerts.length }));
+        }
+    }, [queryAlerts]);
+
+    const loading = isLoading;
 
     // Subscribe to live backend security alert socket stream
     useWebSocket("security_alerts", (newAlert: any) => {

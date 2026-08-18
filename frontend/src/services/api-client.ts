@@ -14,9 +14,12 @@ export const apiClient = axios.create({
 apiClient.interceptors.request.use(
     (config) => {
         if (typeof window !== "undefined") {
-            const token = localStorage.getItem("netshield_access_token");
-            if (token) {
-                config.headers.Authorization = `Bearer ${token}`;
+            const isAuthRoute = config.url?.includes("/auth/login") || config.url?.includes("/auth/refresh");
+            if (!isAuthRoute) {
+                const token = localStorage.getItem("netshield_access_token");
+                if (token) {
+                    config.headers.Authorization = `Bearer ${token}`;
+                }
             }
         }
         return config;

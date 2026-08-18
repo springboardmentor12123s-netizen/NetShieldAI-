@@ -48,6 +48,17 @@ async def lifespan(app: FastAPI):
     await init_db()
     logger.info("Database tables initialized")
 
+    # Pre-load ML models
+    try:
+        from app.ai.prediction.predictor import ThreatPredictor
+        predictor = ThreatPredictor()
+        if predictor.is_loaded:
+            logger.info("ML models loaded during startup")
+        else:
+            logger.warning("ML models could not be loaded during startup")
+    except Exception as e:
+        logger.warning(f"Failed to pre-load ML models: {e}")
+
     logger.info(f"{settings.APP_NAME} is ready")
 
     yield

@@ -58,5 +58,6 @@ backend/app/ai/datasets/Network Intrusion dataset(CIC-IDS- 2017)/
 # Milestones
 MILESTONE_*.txt
 docs/MILESTONE_*.txt
-
-
+# Runtime/logs
+backend/celerybeat-schedule
+logging/

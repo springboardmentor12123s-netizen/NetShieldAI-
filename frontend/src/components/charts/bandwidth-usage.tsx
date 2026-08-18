@@ -30,7 +30,7 @@ interface BandwidthPoint {
     bytes: number;
 }
 
-export function BandwidthUsageChart({ data }: { data: BandwidthPoint[] }) {
+export const BandwidthUsageChart = React.memo(function BandwidthUsageChart({ data }: { data: BandwidthPoint[] }) {
     const formatBytes = (bytes: number) => {
         if (bytes === 0) return "0 B";
         const k = 1024;
@@ -39,7 +39,7 @@ export function BandwidthUsageChart({ data }: { data: BandwidthPoint[] }) {
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
     };
 
-    const chartData = {
+    const chartData = React.useMemo(() => ({
         labels: data.map((d) => {
             const date = new Date(d.time);
             return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -57,9 +57,9 @@ export function BandwidthUsageChart({ data }: { data: BandwidthPoint[] }) {
                 pointHoverRadius: 6,
             },
         ],
-    };
+    }), [data]);
 
-    const options = {
+    const options = React.useMemo(() => ({
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
@@ -103,7 +103,7 @@ export function BandwidthUsageChart({ data }: { data: BandwidthPoint[] }) {
                 },
             },
         },
-    };
+    }), []);
 
     return (
         <div className="relative h-64 w-full">
@@ -116,5 +116,5 @@ export function BandwidthUsageChart({ data }: { data: BandwidthPoint[] }) {
             )}
         </div>
     );
-}
+});
 export default BandwidthUsageChart;

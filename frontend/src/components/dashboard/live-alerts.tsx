@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { AlertCircle, ShieldAlert, ShieldAlert as WarningIcon, Terminal, Clock } from "lucide-react";
 import { useWebSocket } from "@/hooks/use-websocket";
+import { useAlertsQuery } from "@/hooks/use-alerts";
 
 interface AlertItem {
     id: string;
@@ -41,7 +42,16 @@ const MOCK_INITIAL_ALERTS: AlertItem[] = [
 ];
 
 export function LiveAlerts() {
-    const [alerts, setAlerts] = useState<AlertItem[]>(MOCK_INITIAL_ALERTS);
+    const { data: initialAlerts, isLoading } = useAlertsQuery();
+    const [alerts, setAlerts] = useState<AlertItem[]>([]);
+
+    useEffect(() => {
+        if (initialAlerts) {
+            setAlerts(initialAlerts.slice(0, 10));
+        } else {
+            setAlerts(MOCK_INITIAL_ALERTS);
+        }
+    }, [initialAlerts]);
 
     // Subscribe to live backend security alert socket stream
     useWebSocket("security_alerts", (newAlert: any) => {
@@ -65,6 +75,27 @@ export function LiveAlerts() {
         medium: "bg-yellow-500/10 border-yellow-500/30 text-yellow-400",
         low: "bg-blue-500/10 border-blue-500/30 text-blue-400",
     };
+
+    if (isLoading) {
+        return (
+            <div className="rounded-xl border border-slate-900 bg-slate-900/20 p-6 backdrop-blur-sm">
+                <div className="flex items-center justify-between border-b border-slate-900 pb-4 mb-4">
+                    <h3 className="text-sm font-semibold tracking-wide text-white flex items-center gap-2">
+                        <ShieldAlert className="h-5 w-5 text-indigo-400 animate-pulse" />
+                        Interactive Threat Feed
+                    </h3>
+                    <span className="rounded bg-indigo-950/40 border border-indigo-900/30 px-2 py-0.5 text-[10px] font-medium text-indigo-400 uppercase tracking-wider font-mono">
+                        Connecting...
+                    </span>
+                </div>
+                <div className="space-y-4">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                        <div key={i} className="h-20 w-fit w-full animate-pulse rounded-lg bg-slate-900/40 border border-slate-900/10" />
+                    ))}
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="rounded-xl border border-slate-900 bg-slate-900/20 p-6 backdrop-blur-sm">

@@ -26,9 +26,24 @@ services:
       - "8000:8000"
     env_file:
       - .env
+    command: >
+      sh -c "python -m scripts.create_admin &&
+             alembic stamp head &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    environment:
+      - PYTHONPATH=/app
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-netshield}:${POSTGRES_PASSWORD:-netshield_secret}@db:5432/${POSTGRES_DB:-netshield_db}
+      - MONGO_URL=mongodb://${MONGO_USER:-netshield}:${MONGO_PASSWORD:-netshield_mongo}@mongodb:27017/${MONGO_DB:-netshield_traffic}?authSource=admin
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/5
+      - CELERY_RESULT_BACKEND=redis://redis:6379/5
+      - ADMIN_EMAIL=admin@netshield.io
+      - ADMIN_PASSWORD=Admin@123
     volumes:
       - ./backend:/app
       - ./logging:/app/logging
+      - ./scripts:/app/scripts
+      - ./reports:/reports
     depends_on:
       db:
         condition: service_healthy
@@ -37,7 +52,7 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/system/health"]
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/api/v1/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -54,12 +69,21 @@ services:
     command: celery -A app.tasks.celery_app worker --loglevel=info --concurrency=4
     env_file:
       - .env
+    environment:
+      - PYTHONPATH=/app
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-netshield}:${POSTGRES_PASSWORD:-netshield_secret}@db:5432/${POSTGRES_DB:-netshield_db}
+      - MONGO_URL=mongodb://${MONGO_USER:-netshield}:${MONGO_PASSWORD:-netshield_mongo}@mongodb:27017/${MONGO_DB:-netshield_traffic}?authSource=admin
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/5
+      - CELERY_RESULT_BACKEND=redis://redis:6379/5
     volumes:
       - ./backend:/app
       - ./logging:/app/logging
     depends_on:
-      - backend
-      - redis
+      backend:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - netshield-network
@@ -72,10 +96,20 @@ services:
     command: celery -A app.tasks.celery_app beat --loglevel=info
     env_file:
       - .env
+    environment:
+      - PYTHONPATH=/app
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-netshield}:${POSTGRES_PASSWORD:-netshield_secret}@db:5432/${POSTGRES_DB:-netshield_db}
+      - MONGO_URL=mongodb://${MONGO_USER:-netshield}:${MONGO_PASSWORD:-netshield_mongo}@mongodb:27017/${MONGO_DB:-netshield_traffic}?authSource=admin
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/5
+      - CELERY_RESULT_BACKEND=redis://redis:6379/5
     volumes:
       - ./backend:/app
     depends_on:
-      - redis
+      backend:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - netshield-network
@@ -84,11 +118,17 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=http://localhost/api/v1
+        - NEXT_PUBLIC_WS_URL=ws://localhost/ws/alerts
     container_name: netshield-frontend
     ports:
       - "3000:3000"
     env_file:
       - .env
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost/api/v1
+      - NEXT_PUBLIC_WS_URL=ws://localhost/ws/alerts
     volumes:
       - ./frontend/src:/app/src
     depends_on:
@@ -110,7 +150,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-netshield}"]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-netshield}" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -143,7 +183,7 @@ services:
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
       timeout: 5s
       retries: 5

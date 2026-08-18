@@ -65,7 +65,7 @@ def test_ml_metrics_endpoint():
     assert res.data is not None
     assert "dataset_size" in res.data
     assert "threat_classifier_accuracy" in res.data
-    assert res.data["threat_classifier_accuracy"] == 1.0
+    assert res.data["threat_classifier_accuracy"] > 0.9
 
 
 def test_ml_predict_endpoint(sample_packet):

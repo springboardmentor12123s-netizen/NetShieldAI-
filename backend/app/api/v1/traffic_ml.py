@@ -3,7 +3,7 @@
 import os
 import json
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, FileResponse
 from typing import Dict, Any
 
 from app.core.dependencies import require_roles
@@ -81,3 +81,42 @@ def predict_custom_log(
             
     prediction = predictor.predict_log(packet)
     return APIResponse(data=prediction)
+
+
+@router.get("/evaluation")
+def get_ml_evaluation(
+    current_user: dict = Depends(require_roles(["admin", "security_analyst"])),
+):
+    """Returns the custom model validation and accuracy reports from Milestone 4."""
+    root_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))), ".."))
+    eval_path = os.path.join(root_dir, "reports", "ai_model_evaluation.json")
+    
+    if not os.path.exists(eval_path):
+        raise HTTPException(
+            status_code=404, 
+            detail="Evaluation reports not available. Please run evaluation script first using CLI."
+        )
+        
+    try:
+        with open(eval_path, mode="r", encoding="utf-8") as f:
+            data = json.load(f)
+        return APIResponse(data=data)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to load evaluation results: {e}")
+
+
+@router.get("/confusion-matrix")
+def get_confusion_matrix_image(
+    current_user: dict = Depends(require_roles(["admin", "security_analyst"])),
+):
+    """Returns the confusion matrix visualization as a PNG image."""
+    root_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))), ".."))
+    img_path = os.path.join(root_dir, "reports", "confusion_matrix.png")
+    
+    if not os.path.exists(img_path):
+        raise HTTPException(
+            status_code=404, 
+            detail="Confusion matrix image not found. Perform evaluation first."
+        )
+        
+    return FileResponse(img_path, media_type="image/png")

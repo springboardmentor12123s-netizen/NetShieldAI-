@@ -6,7 +6,7 @@ import random
 import sys
 import time
 from datetime import datetime, timezone
-import requests
+import httpx
 
 # Append backend to py path
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "backend"))
@@ -70,9 +70,11 @@ def generate_packet() -> dict:
 def get_auth_token(api_url: str) -> str:
     """Login to obtain a JWT token for ingestion auth."""
     login_url = f"{api_url}/auth/login"
-    payload = {"email": "admin@netshield.io", "password": "AdminPassword123!"}
+    admin_email = os.getenv("ADMIN_EMAIL", "admin@netshield.io")
+    admin_password = os.getenv("ADMIN_PASSWORD", "Admin@123")
+    payload = {"email": admin_email, "password": admin_password}
     try:
-        r = requests.post(login_url, json=payload, timeout=30)
+        r = httpx.post(login_url, json=payload, timeout=30)
         r.raise_for_status()
         token = r.json()["data"]["access_token"]
         print("OK: Logged in successfully to API server.")
@@ -135,7 +137,7 @@ def main():
             while True:
                 batch = [generate_packet() for _ in range(args.batch_size)]
                 payload = {"packets": batch}
-                r = requests.post(ingest_url, json=payload, headers=headers, timeout=30)
+                r = httpx.post(ingest_url, json=payload, headers=headers, timeout=30)
                 r.raise_for_status()
                 print(f"Ingested {len(batch)} packets via API gateway. Response code: {r.status_code}")
                 time.sleep(args.interval)

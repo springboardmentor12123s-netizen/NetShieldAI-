@@ -16,6 +16,7 @@ from app.core.database import async_session_factory
 from app.models.role import Role
 from app.models.user import User
 from app.models.team import Team, TeamMember
+from app.models.incident import Incident
 from app.core.security import hash_password
 from app.repositories.traffic_repository import TrafficRepository
 
@@ -247,6 +248,73 @@ async def seed_alerts_feed(count: int = 25):
         await MongoDBManager.disconnect()
 
 
+async def seed_incidents():
+    """Seed sample security incidents in PostgreSQL."""
+    async with async_session_factory() as session:
+        # Check if incidents already exist to prevent duplicate seeding
+        res = await session.execute(select(Incident))
+        existing_incidents = res.scalars().all()
+        if existing_incidents:
+            print("OK: Incidents already seeded.")
+            return
+
+        # Fetch an analyst to assign to some incidents
+        res_user = await session.execute(select(User).where(User.email == "analyst1@netshield.io"))
+        analyst = res_user.scalar_one_or_none()
+        analyst_id = analyst.id if analyst else None
+
+        incidents_data = [
+            {
+                "title": "SQL Injection Vector Detected",
+                "description": "AI engine detected structured query injections on staging database router client.",
+                "severity": "critical",
+                "status": "investigating",
+                "assigned_to_id": analyst_id
+            },
+            {
+                "title": "Ingress SSH Brute-Force",
+                "description": "Failed authorization requests exceeding 40 times in a minute from blacklisted IP.",
+                "severity": "high",
+                "status": "open",
+                "assigned_to_id": None
+            },
+            {
+                "title": "Subnet ICMP Sweep",
+                "description": "Mass internal host ping sweeping identified matching Port Sweep signature.",
+                "severity": "medium",
+                "status": "resolved",
+                "assigned_to_id": analyst_id
+            },
+            {
+                "title": "DDoS Activity Flagged",
+                "description": "Threat detection engine flagged high packet volume anomalies matching Syn Flood pattern.",
+                "severity": "critical",
+                "status": "open",
+                "assigned_to_id": None
+            },
+            {
+                "title": "System CPU Temperature Spike",
+                "description": "Processor core temperature exceeds safe threshold limit consistently.",
+                "severity": "low",
+                "status": "closed",
+                "assigned_to_id": None
+            }
+        ]
+
+        for inc_data in incidents_data:
+            incident = Incident(
+                title=inc_data["title"],
+                description=inc_data["description"],
+                severity=inc_data["severity"],
+                status=inc_data["status"],
+                assigned_to_id=inc_data["assigned_to_id"]
+            )
+            session.add(incident)
+
+        await session.commit()
+        print("OK: Sample incidents seeded successfully in PostgreSQL.")
+
+
 async def main():
     print("Starting NetShield AI Database Seeder...")
     # 1. Base RBAC
@@ -257,6 +325,8 @@ async def main():
     await seed_traffic_logs(200)
     # 4. MongoDB Alerts Logs
     await seed_alerts_feed(25)
+    # 5. PostgreSQL Incidents
+    await seed_incidents()
     print("Database seeding finished successfully.")
 
 
