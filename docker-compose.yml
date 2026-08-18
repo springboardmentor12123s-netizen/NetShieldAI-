@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: netshield_ai
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "8765:8765"
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/netshield_ai
+      - CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,http://localhost:80
+    depends_on:
+      - db
+    # Note: For Scapy live capture to work in Docker, it requires host network privileges.
+    # network_mode: "host"
+    # cap_add:
+    #   - NET_ADMIN
+    #   - NET_RAW
+    # However, since Npcap is used locally on Windows, live capture in a Linux container
+    # is generally not supported for the same Windows interfaces without major configuration.
+    # Therefore, live capture inside this container will likely be non-functional unless specifically configured on a Linux host.
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:

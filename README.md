@@ -126,7 +126,7 @@ The backend exposes several REST endpoints:
 - **Advanced Reporting**: Scheduled email reports for analysts.
 
 ## 📄 License
-This project is for educational and portfolio purposes.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 👨‍💻 Author
 Developed by the NetShield AI Team.
