@@ -8,7 +8,7 @@ import random
 
 print("🚀 Initializing NetShield Omni-Replayer...")
 
-API_URL = "http://127.0.0.1:8000/api/live-traffic"
+API_URL = "https://netshieldai.onrender.com/api/live-traffic"
 BATCH_SIZE = 50
 
 # 1. Load the Omni-Model
