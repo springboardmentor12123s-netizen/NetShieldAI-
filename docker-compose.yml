@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: netshield_backend
+    ports:
+      - "8000:8000"
+    # cap_add allows raw packet sniffing using Scapy inside the container
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    network_mode: "host" # Use host networking so Scapy can monitor host Wi-Fi interface directly
+    restart: always
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: netshield_frontend
+    ports:
+      - "5173:80"
+    restart: always
