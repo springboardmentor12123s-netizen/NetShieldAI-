@@ -43,11 +43,12 @@ class LoginRequest(BaseModel):
 
 
 class SignupRequest(BaseModel):
-    """Public self-service signup. Always creates an ANALYST account —
-    role upgrades (admin/soc_lead) go through the admin-only /register route."""
+    """Public self-service signup. Lets the user select their role
+    (analyst, SOC team lead, enterprise viewer, or admin) at signup time."""
     full_name: str
     email: EmailStr
     password: str
+    role: UserRole = UserRole.ANALYST
 
 
 class TokenResponse(BaseModel):

@@ -1,7 +1,7 @@
 from collections import Counter
 from datetime import datetime, timedelta
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
@@ -12,7 +12,7 @@ from app.schemas.traffic import TrafficRecordOut, TrafficStats, GenerateTrafficR
 from app.auth.dependencies import get_current_user
 from app.ml.synthetic_traffic import generate_flows
 from app.utils.audit import log_action
-from app.services.live_capture import start_capture, stop_capture, is_running
+from app.services.live_capture import start_capture, stop_capture, is_running, get_status
 
 router = APIRouter(prefix="/api/traffic", tags=["Network Monitoring"])
 
@@ -84,7 +84,6 @@ def traffic_stats(db: Session = Depends(get_db), current_user: User = Depends(ge
         talker_bytes[r.src_ip] += r.byte_count
     top_talkers = [{"ip": ip, "bytes": b} for ip, b in talker_bytes.most_common(5)]
 
-    
     buckets: dict[str, int] = {}
     now = datetime.utcnow()
     for i in range(30, -1, -1):
@@ -114,10 +113,17 @@ def start_live_capture(
     current_user: User = Depends(get_current_user),
 ):
     """
-    Starts real packet capture on the configured Wi-Fi interface using Scapy/Npcap.
-    Requires the backend process to be run with Administrator privileges.
+    Starts real packet capture on the configured network interface using
+    Scapy/Npcap. This only works when the backend runs natively on the host
+    with administrator privileges — it cannot see real network traffic when
+    running inside a Docker container (see error detail if it fails).
     """
     result = start_capture(interface="Wi-Fi", local_ips=["10.227.189.210"])
+
+    if result["status"] == "error":
+        log_action(db, current_user.id, "LIVE_CAPTURE_FAILED", result["message"])
+        raise HTTPException(status_code=409, detail=result["message"])
+
     log_action(db, current_user.id, "LIVE_CAPTURE_STARTED", "Started live packet capture")
     return result
 
@@ -136,4 +142,4 @@ def stop_live_capture(
 def live_capture_status(
     current_user: User = Depends(get_current_user),
 ):
-    return {"running": is_running()}
+    return get_status()

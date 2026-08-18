@@ -1,22 +1,14 @@
-
-"""
-Dataset loading for benchmark intrusion-detection datasets.
-
-Milestone 1 requirement: "Load CICIDS2017 and UNSW-NB15 datasets."
-
-Real CICIDS2017 / UNSW-NB15 CSVs are large (multi-GB) and not shipped with
-this repo. Drop the official CSV files into backend/data/raw/ (see the
-README there for expected filenames + download links) and this loader will
-read + normalize them into the same feature schema used everywhere else in
-the pipeline. If no file is found, it transparently falls back to the
-synthetic generator so the rest of the platform keeps working out of the box.
-"""
+import random
 from pathlib import Path
 import pandas as pd
 
 from app.ml.synthetic_traffic import generate_flows
 
 RAW_DIR = Path(__file__).resolve().parents[2] / "data" / "raw"
+
+# How many rows to read per chunk while scanning large CSVs for sampling.
+# Keeps memory bounded regardless of how big the underlying file is.
+_CHUNK_SIZE = 50_000
 
 # Common CICIDS2017 column names -> our canonical schema
 CICIDS_COLUMN_MAP = {
@@ -79,6 +71,51 @@ def _find_dataset_file(dataset: str) -> Path | None:
     return None
 
 
+def _sample_large_csv(path: Path, sample_size: int) -> pd.DataFrame:
+    """
+    Reads a (possibly multi-GB) CSV in fixed-size chunks and returns a
+    genuinely random, representative sample of `sample_size` rows using
+    reservoir sampling — WITHOUT ever loading the full file into memory.
+
+    This replaces the old approach of `pd.read_csv(path)` (loads every row
+    of e.g. a 1.2GB / ~3M-row file) followed by `.sample(n=sample_size)`.
+    That full read was the actual bottleneck behind slow "Train models"
+    clicks — the classifier itself trains on only sample_size rows either
+    way, so there's no need to ever materialize the whole file.
+
+    Reservoir sampling still guarantees every row in the file has an equal
+    probability of being selected, so it preserves the original intent
+    (avoid grabbing just the first N rows and missing whole attack
+    categories) while keeping memory bounded to ~sample_size rows + one
+    chunk at a time.
+    """
+    rng = random.Random(42)
+    reservoir: list[dict] = []
+    seen = 0
+    columns = None
+
+    for chunk in pd.read_csv(path, low_memory=False, chunksize=_CHUNK_SIZE):
+        chunk.columns = chunk.columns.str.strip()
+        if columns is None:
+            columns = list(chunk.columns)
+
+        for row in chunk.to_dict("records"):
+            seen += 1
+            if len(reservoir) < sample_size:
+                reservoir.append(row)
+            else:
+                # Classic reservoir sampling: replace a random existing
+                # element with decreasing probability as more rows are seen.
+                j = rng.randint(0, seen - 1)
+                if j < sample_size:
+                    reservoir[j] = row
+
+    if not reservoir:
+        return pd.DataFrame(columns=columns or [])
+
+    return pd.DataFrame(reservoir)
+
+
 def load_dataset(dataset: str = "synthetic", sample_size: int = 4000) -> pd.DataFrame:
     """
     Returns a normalized DataFrame with at least:
@@ -119,16 +156,12 @@ def load_dataset(dataset: str = "synthetic", sample_size: int = 4000) -> pd.Data
         df["_dataset_source"] = f"{dataset}_fallback_synthetic"
         return df
 
-    df = pd.read_csv(path, low_memory=False)
-    df.columns = df.columns.str.strip()  # CICIDS2017 CSVs are notorious for " Label", " Flow Duration", etc.
-
-    # IMPORTANT: take a genuine random sample rather than just the first N
-    # rows. These CSVs are often ordered/grouped by attack category or by
-    # capture day, so nrows=sample_size at read time would silently hand the
-    # model an unrepresentative, imbalanced slice (missing whole attack
-    # categories, wildly over/under-representing others).
-    if len(df) > sample_size:
-        df = df.sample(n=sample_size, random_state=42).reset_index(drop=True)
+    # IMPORTANT: read in chunks + reservoir-sample instead of loading the
+    # entire (often multi-GB) CSV into memory just to immediately discard
+    # all but sample_size rows. Still a genuine random sample across the
+    # whole file — see _sample_large_csv docstring — so the class-balance
+    # guarantee from before is unchanged, just without the full-file read.
+    df = _sample_large_csv(path, sample_size)
 
     # UNSW-NB15's raw CSVs carry both a binary "label" column (0/1) and an
     # "attack_cat" text column. Our column map renames attack_cat -> label
@@ -144,21 +177,16 @@ def load_dataset(dataset: str = "synthetic", sample_size: int = 4000) -> pd.Data
     # Safety net: if any other duplicate column names slipped through
     # (different dataset variants, unexpected schemas), keep only the first.
     df = df.loc[:, ~df.columns.duplicated(keep="first")]
-
     required = ["duration", "packet_count", "byte_count", "packets_per_second", "bytes_per_second"]
     for col in required:
         if col not in df.columns:
             df[col] = 0.0
-
     if "avg_packet_size" not in df.columns:
         df["avg_packet_size"] = df["byte_count"] / df["packet_count"].replace(0, 1)
-
     if "label" not in df.columns:
         df["label"] = "benign"
-
     df["label"] = df["label"].astype(str).str.strip().str.lower()
     df.loc[df["label"].isin(["benign", "normal", "0"]), "label"] = "benign"
-
     df = df.replace([float("inf"), float("-inf")], 0)
     df = df.fillna(0)
     df["_dataset_source"] = str(path)

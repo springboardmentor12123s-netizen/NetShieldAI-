@@ -1,14 +1,10 @@
-"""
-Anomaly Detection Module + Intrusion Prediction Module (Milestone 2).
+from dotenv import load_dotenv
+load_dotenv()
 
-- POST /train   -> trains the unsupervised ensemble + supervised classifier
-                    on a chosen dataset, persists metrics as a DetectionModelRun
-- POST /score    -> scores all not-yet-processed TrafficRecords, writes
-                    AnomalyResult rows, and auto-creates Alerts for high/critical risk
-- GET  /results  -> lists scored results
-- GET  /report   -> aggregate summary (used by "Generate anomaly detection reports")
-- GET  /model-runs -> training history / evaluation metrics
-"""
+import os
+import requests as slack_requests
+from datetime import datetime
+
 import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -24,9 +20,82 @@ from app.schemas.anomaly import (
 from app.auth.dependencies import get_current_user
 from app.ml.pipeline import pipeline_singleton
 from app.utils.audit import log_action
+from app.services.scoring import score_records
 
 router = APIRouter(prefix="/api/anomaly", tags=["Anomaly Detection & Intrusion Prediction"])
 
+
+# ── Slack Notification Helper ──────────────────────────────────────────────────
+
+def send_slack_alert(attack_type: str, src_ip: str, risk_score: float, severity: str):
+    """Send a real-time threat alert to Slack when HIGH or CRITICAL risk detected."""
+    webhook_url = os.getenv("SLACK_WEBHOOK_URL", "")
+    if not webhook_url:
+        return  # Skip silently if webhook not configured
+
+    # Choose emoji based on severity
+    emoji_map = {
+        "critical": "🚨",
+        "high": "⚠️",
+        "medium": "🔔",
+        "low": "ℹ️",
+    }
+    emoji = emoji_map.get(severity.lower(), "⚠️")
+
+    # Color for Slack attachment
+    color_map = {
+        "critical": "#FF4D5E",
+        "high": "#F5892F",
+        "medium": "#F5C242",
+        "low": "#33E6C8",
+    }
+    color = color_map.get(severity.lower(), "#F5892F")
+
+    # Build Slack message
+    message = {
+        "text": f"{emoji} *NetShield AI — {severity.upper()} Alert Detected*",
+        "attachments": [
+            {
+                "color": color,
+                "fields": [
+                    {
+                        "title": "Attack Type",
+                        "value": attack_type.replace("_", " ").title(),
+                        "short": True,
+                    },
+                    {
+                        "title": "Source IP",
+                        "value": src_ip,
+                        "short": True,
+                    },
+                    {
+                        "title": "Risk Score",
+                        "value": f"{risk_score:.2f} / 100",
+                        "short": True,
+                    },
+                    {
+                        "title": "Severity",
+                        "value": severity.upper(),
+                        "short": True,
+                    },
+                    {
+                        "title": "Time",
+                        "value": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC"),
+                        "short": False,
+                    },
+                ],
+                "footer": "NetShield AI Threat Monitoring",
+            }
+        ],
+    }
+
+    try:
+        slack_requests.post(webhook_url, json=message, timeout=5)
+    except Exception as e:
+        print(f"[Slack] Failed to send alert: {e}")
+
+
+# ── Routes ─────────────────────────────────────────────────────────────────────
 
 @router.post("/train")
 def train_models(
@@ -62,6 +131,23 @@ def train_models(
         db.add(clf_run)
 
     db.commit()
+
+    # Notify Slack that a new model was trained
+    webhook_url = os.getenv("SLACK_WEBHOOK_URL", "")
+    if webhook_url:
+        try:
+            slack_requests.post(webhook_url, json={
+                "text": (
+                    f"✅ *NetShield AI — Model Training Complete*\n"
+                    f"• Dataset: `{payload.dataset}`\n"
+                    f"• Sample size: `{result['sample_size']}`\n"
+                    f"• Accuracy: `{ensemble_metrics['accuracy']}`\n"
+                    f"• F1-score: `{ensemble_metrics['f1_score']}`"
+                )
+            }, timeout=5)
+        except Exception:
+            pass
+
     log_action(db, current_user.id, "MODEL_TRAINED", f"Trained on dataset={payload.dataset}, n={result['sample_size']}")
     return result
 
@@ -81,48 +167,26 @@ def score_traffic(
     if not unprocessed:
         return []
 
-    df = pd.DataFrame([{
-        "duration": r.duration,
-        "packet_count": r.packet_count,
-        "byte_count": r.byte_count,
-        "packets_per_second": r.packets_per_second,
-        "bytes_per_second": r.bytes_per_second,
-        "avg_packet_size": r.avg_packet_size,
-    } for r in unprocessed])
+    saved_results = score_records(db, unprocessed)
+    if saved_results is None:
+        raise HTTPException(status_code=409, detail="No trained model available. Train a model first.")
 
-    try:
-        scored = pipeline_singleton.score_flows(df)
-    except RuntimeError as e:
-        raise HTTPException(status_code=409, detail=str(e))
+    # ── Send Slack alerts for HIGH and CRITICAL results ──────────────────────
+    # Build a lookup of traffic records by ID for IP address
+    record_map = {str(r.id): r for r in unprocessed}
 
-    saved_results = []
-    for record, score in zip(unprocessed, scored):
-        anomaly_result = AnomalyResult(
-            traffic_record_id=record.id,
-            **score,
-        )
-        db.add(anomaly_result)
-        record.is_processed = True
+    for result in saved_results:
+        if result.risk_level in ("high", "critical"):
+            # Get source IP from the corresponding traffic record
+            traffic = record_map.get(str(result.traffic_record_id))
+            src_ip = traffic.src_ip if traffic else "Unknown"
 
-        if score["risk_level"] in ("high", "critical"):
-            db.flush()  # ensure anomaly_result.id is available
-            alert = Alert(
-                anomaly_result_id=anomaly_result.id,
-                title=f"{score['predicted_attack_type'].replace('_', ' ').title()} detected from {record.src_ip}",
-                description=(
-                    f"Flow {record.src_ip}:{record.src_port} -> {record.dst_ip}:{record.dst_port} "
-                    f"flagged with risk score {score['risk_score']}."
-                ),
-                severity=score["risk_level"],
-                risk_score=score["risk_score"],
+            send_slack_alert(
+                attack_type=result.predicted_attack_type or "Unknown",
+                src_ip=str(src_ip),
+                risk_score=float(result.risk_score),
+                severity=result.risk_level,
             )
-            db.add(alert)
-
-        saved_results.append(anomaly_result)
-
-    db.commit()
-    for r in saved_results:
-        db.refresh(r)
 
     log_action(db, current_user.id, "TRAFFIC_SCORED", f"Scored {len(saved_results)} flows")
     return saved_results
@@ -144,7 +208,6 @@ def list_results(
 @router.get("/report", response_model=AnomalyReportSummary)
 def anomaly_report(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     from collections import Counter
-    from datetime import datetime
 
     results = db.query(AnomalyResult).all()
     if not results:

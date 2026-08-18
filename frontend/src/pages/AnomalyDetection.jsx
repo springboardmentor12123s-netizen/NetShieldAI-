@@ -79,7 +79,9 @@ export default function AnomalyDetection() {
     }
   }
 
-  const latest = runs[0];
+  const latestClassifier = runs.find((r) => r.model_name === "random_forest_classifier");
+const latestEnsemble = runs.find((r) => r.model_name === "isolation_forest_ocsvm_ensemble");
+const latest = latestClassifier; 
   const riskMax = report ? Math.max(...RISK_LEVELS.map((l) => report.risk_level_breakdown?.[l] || 0), 1) : 1;
   const attackEntries = report ? Object.entries(report.attack_type_breakdown || {}) : [];
   const attackMax = attackEntries.length ? Math.max(...attackEntries.map(([, v]) => v), 1) : 1;

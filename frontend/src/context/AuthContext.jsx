@@ -13,8 +13,8 @@ export function AuthProvider({ children }) {
     return data.user;
   }, []);
 
-  const signup = useCallback(async (full_name, email, password) => {
-    const data = await Api.post("/auth/signup", { full_name, email, password }, { auth: false });
+  const signup = useCallback(async (full_name, email, password, role = "analyst") => {
+    const data = await Api.post("/auth/signup", { full_name, email, password, role }, { auth: false });
     Api.setSession(data.access_token, data.user);
     setUser(data.user);
     return data.user;

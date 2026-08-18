@@ -1,6 +1,4 @@
-"""
-User Management Module: authentication endpoints.
-"""
+
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status, Request
@@ -18,12 +16,7 @@ router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
 @router.post("/signup", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
 def signup(payload: SignupRequest, request: Request, db: Session = Depends(get_db)):
-    """
-    Public self-service account creation. New accounts always land in the
-    ANALYST role — an admin can promote them later via /api/auth/register
-    or a future team-management UI. Returns a token immediately so the
-    person is signed in right after creating their account.
-    """
+   
     if db.query(User).filter(User.email == payload.email).first():
         raise HTTPException(status_code=400, detail="A user with this email already exists")
 
@@ -31,7 +24,7 @@ def signup(payload: SignupRequest, request: Request, db: Session = Depends(get_d
         full_name=payload.full_name,
         email=payload.email,
         hashed_password=hash_password(payload.password),
-        role=UserRole.ANALYST,
+        role=payload.role,
     )
     db.add(new_user)
     db.commit()
@@ -74,7 +67,7 @@ def register(
     db: Session = Depends(get_db),
     admin: User = Depends(require_roles(UserRole.ADMIN)),
 ):
-    """Only admins can create new analyst/SOC accounts (RBAC enforced)."""
+ 
     if db.query(User).filter(User.email == payload.email).first():
         raise HTTPException(status_code=400, detail="A user with this email already exists")
 

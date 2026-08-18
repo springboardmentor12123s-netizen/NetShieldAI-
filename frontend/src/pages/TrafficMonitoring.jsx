@@ -16,6 +16,7 @@ export default function TrafficMonitoring() {
   const [capturing, setCapturing] = useState(false);
   const [liveActive, setLiveActive] = useState(false);
   const [liveToggling, setLiveToggling] = useState(false);
+  const [liveStatus, setLiveStatus] = useState(null); // { running, last_error, available_interfaces }
   const pollRef = useRef(null);
 
   const loadStats = useCallback(async () => {
@@ -37,12 +38,19 @@ export default function TrafficMonitoring() {
     loadTable(protocol).catch((err) => showToast(err.message, "error"));
   }, [protocol, loadTable, showToast]);
 
-  // Check live capture status on mount
-  useEffect(() => {
+  const refreshLiveStatus = useCallback(() => {
     Api.get("/traffic/live/status")
-      .then((res) => setLiveActive(res.running))
+      .then((res) => {
+        setLiveActive(res.running);
+        setLiveStatus(res);
+      })
       .catch(() => {});
   }, []);
+
+  // Check live capture status on mount
+  useEffect(() => {
+    refreshLiveStatus();
+  }, [refreshLiveStatus]);
 
   // Poll for fresh data every 4s while live capture is active
   useEffect(() => {
@@ -86,13 +94,17 @@ export default function TrafficMonitoring() {
         setLiveActive(true);
       }
     } catch (err) {
+      // Surfaces the backend's explicit reason (e.g. "requires running
+      // outside Docker") instead of failing silently.
       showToast(err.message, "error");
     } finally {
       setLiveToggling(false);
+      refreshLiveStatus();
     }
   }
 
   const protoMax = stats ? Math.max(...Object.values(stats.protocol_breakdown), 1) : 1;
+  const dockerLimited = liveStatus?.last_error?.toLowerCase().includes("docker");
 
   return (
     <>
@@ -111,6 +123,7 @@ export default function TrafficMonitoring() {
             className={liveActive ? "btn btn-secondary" : "btn btn-primary"}
             onClick={handleToggleLive}
             disabled={liveToggling}
+            title={dockerLimited ? "Requires running the backend outside Docker" : undefined}
           >
             {liveToggling ? "Working…" : liveActive ? "Stop Live Capture" : "Start Live Capture"}
           </button>
@@ -119,6 +132,8 @@ export default function TrafficMonitoring() {
           </button>
         </div>
       </div>
+
+      
 
       {stats && (
         <div className="grid grid-4" style={{ marginBottom: 18 }}>

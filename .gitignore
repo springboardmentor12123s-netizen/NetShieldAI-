@@ -18,3 +18,4 @@ frontend/.env
 # OS/editor
 .DS_Store
 .vscode/
+DockerDesktopWSL/

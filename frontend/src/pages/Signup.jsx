@@ -3,6 +3,13 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import RadarCanvas from "../components/RadarCanvas";
 
+const ROLE_OPTIONS = [
+  { value: "analyst", label: "Security Analyst" },
+  { value: "soc_lead", label: "SOC Team" },
+  { value: "viewer", label: "Enterprise" },
+  { value: "admin", label: "Admin" },
+];
+
 export default function Signup() {
   const { signup } = useAuth();
   const navigate = useNavigate();
@@ -10,6 +17,7 @@ export default function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [role, setRole] = useState("analyst");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -28,7 +36,7 @@ export default function Signup() {
 
     setLoading(true);
     try {
-      await signup(fullName, email, password);
+      await signup(fullName, email, password, role);
       navigate("/dashboard");
     } catch (err) {
       setError(err.message || "Could not create account");
@@ -44,8 +52,8 @@ export default function Signup() {
         <div className="login-visual-content">
           <h2>Stand up your SOC console in under a minute.</h2>
           <p>
-            New accounts start as analysts with full dashboard, traffic, and detection access.
-            An admin can promote your role later from Team Management.
+            Choose the role that fits how you'll use NetShield AI.
+            An admin can update your role later from Team Management.
           </p>
         </div>
       </div>
@@ -87,6 +95,19 @@ export default function Signup() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
+            </div>
+            <div className="field">
+              <label htmlFor="role">I am signing up as a</label>
+              <select
+                id="role"
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                required
+              >
+                {ROLE_OPTIONS.map((r) => (
+                  <option key={r.value} value={r.value}>{r.label}</option>
+                ))}
+              </select>
             </div>
             <div className="field">
               <label htmlFor="password">Password</label>

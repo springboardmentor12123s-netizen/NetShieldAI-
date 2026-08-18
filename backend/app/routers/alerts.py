@@ -1,13 +1,15 @@
 
 from datetime import datetime, timedelta
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import func
 
 from app.database import get_db
 from app.models.user import User
 from app.models.alert import Alert, AlertStatus
+from app.models.anomaly import AnomalyResult
 from app.auth.dependencies import get_current_user
 
 router = APIRouter(prefix="/api/alerts", tags=["Alert Management"])
@@ -19,6 +21,10 @@ class StatusUpdateRequest(BaseModel):
 
 
 def _serialize(a: Alert):
+    source = None
+    if a.anomaly_result and a.anomaly_result.traffic_record:
+        source = a.anomaly_result.traffic_record.source
+
     return {
         "id": a.id,
         "title": a.title,
@@ -28,6 +34,7 @@ def _serialize(a: Alert):
         "status": a.status.value,
         "notes": a.notes,
         "assigned_to": a.assigned_to,
+        "source": source,
         "created_at": a.created_at,
         "updated_at": a.updated_at,
         "resolved_at": a.resolved_at,
@@ -37,43 +44,71 @@ def _serialize(a: Alert):
 @router.get("")
 def list_alerts(
     status_filter: str | None = None,
+    source_filter: str | None = Query(None, description="synthetic or live_capture"),
     limit: int = 100,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    query = db.query(Alert).order_by(Alert.created_at.desc())
+    query = (
+        db.query(Alert)
+        .options(joinedload(Alert.anomaly_result).joinedload(AnomalyResult.traffic_record))
+        .order_by(Alert.created_at.desc())
+    )
     if status_filter:
         query = query.filter(Alert.status == status_filter)
-    alerts = query.limit(limit).all()
-    return [_serialize(a) for a in alerts]
+
+    alerts = query.limit(limit * 3 if source_filter else limit).all()
+
+    results = [_serialize(a) for a in alerts]
+    if source_filter:
+        results = [r for r in results if r["source"] == source_filter][:limit]
+
+    return results
 
 
 @router.get("/stats")
 def alert_stats(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    all_alerts = db.query(Alert).all()
+    # --- Status counts: single SQL GROUP BY instead of loading all rows ---
+    status_counts = dict(
+        db.query(Alert.status, func.count(Alert.id))
+        .group_by(Alert.status)
+        .all()
+    )
+    total_open = status_counts.get(AlertStatus.OPEN, 0)
+    total_ack = status_counts.get(AlertStatus.ACKNOWLEDGED, 0)
+    total_resolved = status_counts.get(AlertStatus.RESOLVED, 0)
+    total_false_positive = status_counts.get(AlertStatus.FALSE_POSITIVE, 0)
 
-    total_open = sum(1 for a in all_alerts if a.status == AlertStatus.OPEN)
-    total_ack = sum(1 for a in all_alerts if a.status == AlertStatus.ACKNOWLEDGED)
-    total_resolved = sum(1 for a in all_alerts if a.status == AlertStatus.RESOLVED)
-    total_false_positive = sum(1 for a in all_alerts if a.status == AlertStatus.FALSE_POSITIVE)
-    total_critical = sum(1 for a in all_alerts if a.severity == "critical")
-
-    today = datetime.utcnow().date()
-    resolved_today = sum(
-        1 for a in all_alerts
-        if a.resolved_at and a.resolved_at.date() == today
+    # --- Critical count: SQL COUNT with filter ---
+    total_critical = (
+        db.query(func.count(Alert.id))
+        .filter(Alert.severity == "critical")
+        .scalar()
     )
 
-    # Alerts created per day, last 7 days
+    # --- Resolved today: SQL COUNT with date filter ---
+    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    resolved_today = (
+        db.query(func.count(Alert.id))
+        .filter(Alert.resolved_at >= today_start)
+        .scalar()
+    )
+
+    # --- 7-day trend: SQL GROUP BY on date, only pulling last 7 days ---
+    since = datetime.utcnow() - timedelta(days=7)
+    daily_counts = dict(
+        db.query(func.date(Alert.created_at), func.count(Alert.id))
+        .filter(Alert.created_at >= since)
+        .group_by(func.date(Alert.created_at))
+        .all()
+    )
+
     buckets = {}
     now = datetime.utcnow()
     for i in range(6, -1, -1):
-        day = (now - timedelta(days=i)).strftime("%b %d")
-        buckets[day] = 0
-    for a in all_alerts:
-        key = a.created_at.strftime("%b %d")
-        if key in buckets:
-            buckets[key] += 1
+        day_date = (now - timedelta(days=i)).date()
+        day_label = day_date.strftime("%b %d")
+        buckets[day_label] = daily_counts.get(day_date, 0)
     trend = [{"day": k, "count": v} for k, v in buckets.items()]
 
     return {

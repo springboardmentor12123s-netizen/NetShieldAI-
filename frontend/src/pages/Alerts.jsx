@@ -17,11 +17,17 @@ export default function Alerts() {
   const [alerts, setAlerts] = useState([]);
   const [stats, setStats] = useState(null);
   const [statusFilter, setStatusFilter] = useState("");
+  const [sourceFilter, setSourceFilter] = useState("");
   const [updatingId, setUpdatingId] = useState(null);
+  const [expandedId, setExpandedId] = useState(null);
+  const [pendingStatus, setPendingStatus] = useState({});
+  const [noteDraft, setNoteDraft] = useState({});
 
-  const loadAlerts = useCallback(async (filter) => {
-    const path = filter ? `/alerts?limit=100&status_filter=${filter}` : "/alerts?limit=100";
-    setAlerts(await Api.get(path));
+  const loadAlerts = useCallback(async (filter, source) => {
+    const params = new URLSearchParams({ limit: "100" });
+    if (filter) params.set("status_filter", filter);
+    if (source) params.set("source_filter", source);
+    setAlerts(await Api.get(`/alerts?${params.toString()}`));
   }, []);
 
   const loadStats = useCallback(async () => {
@@ -33,15 +39,24 @@ export default function Alerts() {
   }, [loadStats, showToast]);
 
   useEffect(() => {
-    loadAlerts(statusFilter).catch((err) => showToast(err.message, "error"));
-  }, [statusFilter, loadAlerts, showToast]);
+    loadAlerts(statusFilter, sourceFilter).catch((err) => showToast(err.message, "error"));
+  }, [statusFilter, sourceFilter, loadAlerts, showToast]);
 
-  async function handleStatusChange(id, newStatus) {
+  function handleSelectStatus(id, newStatus) {
+    setPendingStatus((prev) => ({ ...prev, [id]: newStatus }));
+    setExpandedId(id);
+  }
+
+  async function handleConfirmStatus(id) {
+    const newStatus = pendingStatus[id];
+    const notes = noteDraft[id]?.trim() || null;
     setUpdatingId(id);
     try {
-      await Api.post(`/alerts/${id}/status`, { status: newStatus });
+      await Api.post(`/alerts/${id}/status`, { status: newStatus, notes });
       showToast(`Alert marked as ${newStatus.replace("_", " ")}`);
-      await Promise.all([loadAlerts(statusFilter), loadStats()]);
+      setExpandedId(null);
+      setNoteDraft((prev) => ({ ...prev, [id]: "" }));
+      await Promise.all([loadAlerts(statusFilter, sourceFilter), loadStats()]);
     } catch (err) {
       showToast(err.message, "error");
     } finally {
@@ -49,7 +64,10 @@ export default function Alerts() {
     }
   }
 
-  const trendMax = stats?.trend?.length ? Math.max(...stats.trend.map((t) => t.count), 1) : 1;
+  function handleCancelStatus(id, originalStatus) {
+    setPendingStatus((prev) => ({ ...prev, [id]: originalStatus }));
+    setExpandedId(null);
+  }
 
   return (
     <>
@@ -57,6 +75,26 @@ export default function Alerts() {
         <div>
           <h1>Alerts</h1>
           <div className="topbar-sub">Auto-generated from high and critical risk detections</div>
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <span
+            className={`chip ${sourceFilter === "" ? "active" : ""}`}
+            onClick={() => setSourceFilter("")}
+          >
+            All sources
+          </span>
+          <span
+            className={`chip ${sourceFilter === "live_capture" ? "active" : ""}`}
+            onClick={() => setSourceFilter("live_capture")}
+          >
+            🔴 Live capture only
+          </span>
+          <span
+            className={`chip ${sourceFilter === "synthetic" ? "active" : ""}`}
+            onClick={() => setSourceFilter("synthetic")}
+          >
+            Synthetic only
+          </span>
         </div>
       </div>
 
@@ -76,14 +114,6 @@ export default function Alerts() {
         </div>
         <div className="panel">
           <div className="panel-header"><div className="panel-title">Status breakdown</div></div>
-          {stats ? (
-            <>
-              <div className="bar-row">
-                <div className="bar-label">Open</div>
-                <div className="bar-track"><div className="bar-fill" style={{ width: `${(stats.total_open / trendMax) * 0 + (stats.total_open ? 100 : 0)}%` }} /></div>
-              </div>
-            </>
-          ) : null}
           <div style={{ fontSize: 12.5, color: "var(--text-secondary)", marginTop: 8 }}>
             {stats?.resolved_today ?? 0} alert(s) resolved today · {stats?.total_false_positive ?? 0} marked false positive
           </div>
@@ -108,38 +138,97 @@ export default function Alerts() {
         <div className="table-wrap">
           <table>
             <thead>
-              <tr><th>Time</th><th>Alert</th><th>Severity</th><th>Risk score</th><th>Status</th><th>Action</th></tr>
+              <tr><th>Time</th><th>Alert</th><th>Source</th><th>Severity</th><th>Risk score</th><th>Status</th><th>Action</th></tr>
             </thead>
             <tbody>
               {alerts.length ? alerts.map((a) => (
-                <tr key={a.id}>
-                  <td>{formatDateTime(a.created_at)}</td>
-                  <td className="primary">{a.title}</td>
-                  <td><Badge level={a.severity} /></td>
-                  <td>{a.risk_score}</td>
-                  <td style={{ textTransform: "capitalize" }}>{a.status.replace("_", " ")}</td>
-                  <td>
-                    <select
-                      value={a.status}
-                      disabled={updatingId === a.id}
-                      onChange={(e) => handleStatusChange(a.id, e.target.value)}
-                      style={{
-                        background: "var(--bg-base)",
-                        border: "1px solid var(--border-hair)",
-                        borderRadius: "var(--radius-sm)",
-                        color: "var(--text-primary)",
-                        fontSize: 12.5,
-                        padding: "5px 8px",
-                      }}
-                    >
-                      {STATUS_OPTIONS.map((o) => (
-                        <option key={o.value} value={o.value}>{o.label}</option>
-                      ))}
-                    </select>
-                  </td>
-                </tr>
+                <>
+                  <tr key={a.id}>
+                    <td>{formatDateTime(a.created_at)}</td>
+                    <td className="primary">{a.title}</td>
+                    <td>
+                      {a.source === "live_capture" ? (
+                        <span style={{ color: "var(--signal-cyan)", fontSize: 11.5, fontWeight: 600 }}>● LIVE</span>
+                      ) : (
+                        <span style={{ color: "var(--text-tertiary)", fontSize: 11.5 }}>synthetic</span>
+                      )}
+                    </td>
+                    <td><Badge level={a.severity} /></td>
+                    <td>{a.risk_score}</td>
+                    <td style={{ textTransform: "capitalize" }}>{a.status.replace("_", " ")}</td>
+                    <td>
+                      <select
+                        value={pendingStatus[a.id] ?? a.status}
+                        disabled={updatingId === a.id}
+                        onChange={(e) => handleSelectStatus(a.id, e.target.value)}
+                        style={{
+                          background: "var(--bg-base)",
+                          border: "1px solid var(--border-hair)",
+                          borderRadius: "var(--radius-sm)",
+                          color: "var(--text-primary)",
+                          fontSize: 12.5,
+                          padding: "5px 8px",
+                        }}
+                      >
+                        {STATUS_OPTIONS.map((o) => (
+                          <option key={o.value} value={o.value}>{o.label}</option>
+                        ))}
+                      </select>
+                    </td>
+                  </tr>
+                  {expandedId === a.id && (
+                    <tr>
+                      <td colSpan={7} style={{ background: "var(--bg-panel-raised)", padding: "14px 16px" }}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                          <label style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+                            Add a note (optional) — marking as{" "}
+                            <strong style={{ color: "var(--text-primary)" }}>
+                              {STATUS_OPTIONS.find((o) => o.value === pendingStatus[a.id])?.label}
+                            </strong>
+                          </label>
+                          <textarea
+                            value={noteDraft[a.id] || ""}
+                            onChange={(e) => setNoteDraft((prev) => ({ ...prev, [a.id]: e.target.value }))}
+                            placeholder="e.g. Confirmed with team — internal vulnerability scan"
+                            rows={2}
+                            style={{
+                              background: "var(--bg-base)",
+                              border: "1px solid var(--border-hair)",
+                              borderRadius: "var(--radius-sm)",
+                              color: "var(--text-primary)",
+                              fontSize: 13,
+                              padding: "8px 10px",
+                              resize: "vertical",
+                              fontFamily: "var(--font-body)",
+                            }}
+                          />
+                          {a.notes && (
+                            <div style={{ fontSize: 11.5, color: "var(--text-tertiary)" }}>
+                              Previous note: {a.notes}
+                            </div>
+                          )}
+                          <div style={{ display: "flex", gap: 8 }}>
+                            <button
+                              className="btn btn-primary"
+                              onClick={() => handleConfirmStatus(a.id)}
+                              disabled={updatingId === a.id}
+                            >
+                              {updatingId === a.id ? "Saving…" : "Confirm"}
+                            </button>
+                            <button
+                              className="btn btn-ghost"
+                              onClick={() => handleCancelStatus(a.id, a.status)}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </>
               )) : (
-                <tr><td colSpan={6}><EmptyState>No alerts yet. Score traffic on the Anomaly Detection page to generate some.</EmptyState></td></tr>
+                <tr><td colSpan={7}><EmptyState>No alerts yet. Score traffic on the Anomaly Detection page to generate some.</EmptyState></td></tr>
               )}
             </tbody>
           </table>

@@ -4,13 +4,14 @@ import uuid
 from datetime import datetime
 from collections import defaultdict
 
-from scapy.all import sniff, IP, TCP, UDP, ICMP
+from scapy.all import sniff, IP, TCP, UDP, ICMP, get_if_list
+from scapy.arch.windows import get_windows_if_list
 from sqlalchemy.orm import Session
 
 from app.database import SessionLocal
 from app.models.traffic import TrafficRecord
+from app.services.scoring import score_records
 
-# Flow key: (src_ip, dst_ip, src_port, dst_port, protocol)
 _flows = defaultdict(lambda: {
     "packet_count": 0,
     "byte_count": 0,
@@ -25,7 +26,8 @@ _lock = threading.Lock()
 _capture_thread = None
 _flush_thread = None
 _stop_event = threading.Event()
-_local_ips = set()  # populated on start, so we know capture direction
+_local_ips = set()
+_last_error = None  # surfaced via /live/status so the UI can explain *why* it isn't running
 
 
 def _get_protocol(pkt):
@@ -53,12 +55,10 @@ def _process_packet(pkt):
     elif UDP in pkt:
         src_port, dst_port = pkt[UDP].sport, pkt[UDP].dport
 
-    # Normalize direction: treat local-machine-originated traffic as "forward"
     is_outbound = src_ip in _local_ips
     if is_outbound:
         key = (src_ip, dst_ip, src_port, dst_port, proto)
     else:
-        # reverse so the flow groups both directions of the same conversation
         key = (dst_ip, src_ip, dst_port, src_port, proto)
 
     size = len(pkt)
@@ -82,7 +82,6 @@ def _process_packet(pkt):
 
 
 def _flush_loop(interval_seconds=10, idle_timeout=5):
-    """Every `interval_seconds`, write flows idle for `idle_timeout`+ seconds to the DB."""
     while not _stop_event.is_set():
         time.sleep(interval_seconds)
         now = time.time()
@@ -99,6 +98,7 @@ def _flush_loop(interval_seconds=10, idle_timeout=5):
 
         db: Session = SessionLocal()
         try:
+            new_records = []
             for (src_ip, dst_ip, src_port, dst_port, proto), flow in to_write:
                 duration = max(flow["last"] - flow["start"], 0.001)
                 total_packets = flow["packet_count"] + flow["dst_packet_count"]
@@ -125,25 +125,70 @@ def _flush_loop(interval_seconds=10, idle_timeout=5):
                     source="live_capture",
                 )
                 db.add(record)
+                new_records.append(record)
+
             db.commit()
+            for r in new_records:
+                db.refresh(r)
+
+            # Auto-score live-captured flows immediately, so alerts (and
+            # critical emails) appear in real time without manual scoring.
+            try:
+                result = score_records(db, new_records)
+                if result is None:
+                    print("[live_capture] No trained model yet — flows saved but not scored.")
+            except Exception as e:
+                print(f"[live_capture] Auto-scoring failed: {e}")
         finally:
             db.close()
 
 
 def _sniff_loop(interface):
-    sniff(
-        iface=interface,
-        prn=_process_packet,
-        stop_filter=lambda pkt: _stop_event.is_set(),
-        store=False,
-    )
+    global _last_error
+    try:
+        sniff(
+            iface=interface,
+            prn=_process_packet,
+            stop_filter=lambda pkt: _stop_event.is_set(),
+            store=False,
+        )
+    except Exception as e:
+        # Most commonly hit when running inside a Docker container: the
+        # container's network namespace has no interface with this name
+        # (containers only see virtual interfaces like eth0), and even if
+        # it did, raw-socket capture requires host-level privileges Docker
+        # doesn't grant by default. Recorded here so /live/status can
+        # explain *why* capture isn't running instead of the UI silently
+        # showing "started" forever.
+        _last_error = str(e)
+        print(f"[live_capture] Sniffing failed: {e}")
 
 
 def start_capture(interface="Wi-Fi", local_ips=None):
-    global _capture_thread, _flush_thread
+    global _capture_thread, _flush_thread, _last_error
 
     if _capture_thread and _capture_thread.is_alive():
         return {"status": "already_running"}
+
+    _last_error = None
+
+    # Fail fast and honestly instead of spawning a thread that dies silently.
+    # NOTE: on Windows, scapy's get_if_list() returns raw Npcap device paths
+    # (\Device\NPF_{GUID}...), not friendly names like "Wi-Fi" — comparing
+    # a friendly name against that list always fails even when the adapter
+    # is available. get_windows_if_list() returns friendly names instead,
+    # which is what actually matches what the UI/API passes in as `interface`.
+    available = [i["name"] for i in get_windows_if_list()]
+    if interface not in available:
+        _last_error = (
+            f"Interface '{interface}' not available in this environment "
+            f"(found: {available}). Make sure Npcap is installed and this "
+            f"backend is running natively on the host (outside Docker) with "
+            f"administrator privileges — Docker containers cannot see the "
+            f"host's real network interfaces. Use 'Simulate flows' for a "
+            f"demo-friendly alternative."
+        )
+        return {"status": "error", "message": _last_error}
 
     _stop_event.clear()
     _local_ips.clear()
@@ -165,3 +210,11 @@ def stop_capture():
 
 def is_running():
     return bool(_capture_thread and _capture_thread.is_alive())
+
+
+def get_status():
+    return {
+        "running": is_running(),
+        "last_error": _last_error,
+        "available_interfaces": [i["name"] for i in get_windows_if_list()],
+    }
