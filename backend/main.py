@@ -360,7 +360,15 @@ def update_user(user_id: int, user_update: UserUpdate, db: Session = Depends(get
 def get_audit_logs(db: Session = Depends(get_db)):
     """Fetches the 10 most recent system audit logs."""
     try:
+        # 1. Start the stopwatch
+        start_time = time.time()
+        
         logs = db.execute(text("SELECT id, timestamp, username, event, severity FROM audit_logs ORDER BY timestamp DESC LIMIT 10")).fetchall()
+        
+        # 2. Stop the stopwatch and print the result to your Render server logs!
+        db_time = time.time() - start_time
+        print(f"DATABASE FETCH TOOK: {db_time:.2f} seconds")
+
         log_list = [
             {
                 "id": log[0],
