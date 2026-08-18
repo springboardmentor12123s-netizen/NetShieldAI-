@@ -259,3 +259,12 @@ On first startup, the backend seeds these users:
 - **Scapy not installed / no admin rights?** The sniffer endpoints return a clear error; the rest of the dashboard continues to function using simulated traffic.
 - **Models not trained?** The `/ai/*` endpoints return a `503` with instructions to run `python -m backend.train_model`.
 - **Live sniffer requires admin/root privileges** to capture raw packets on most systems.
+
+
+---
+
+## 🚀 Deployment
+
+The project has been deployed successfully and can be accessed at the following link:
+
+**Deployment Link**: 
