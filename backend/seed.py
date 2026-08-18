@@ -14,8 +14,12 @@ def seed_admin():
         db.close()
         return
 
+    # Truncate password to 72 bytes/chars to prevent bcrypt crash
+    raw_password = "admin123"
+    safe_password = raw_password[:72]
+
     # Create the initial admin user
-    hashed_pwd = pwd_context.hash("admin123")
+    hashed_pwd = pwd_context.hash(safe_password)
     admin_user = User(
         username="admin@netshield.com",
         hashed_password=hashed_pwd,

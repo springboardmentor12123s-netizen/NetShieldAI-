@@ -158,9 +158,12 @@ def signup_user(user: UserCreate, db: Session = Depends(get_db)):
         if existing_user:
             raise HTTPException(status_code=400, detail="Email already registered")
 
+        # Safely truncate password to 72 bytes to prevent hashing errors
+        safe_password = user.password[:72]
+
         db.execute(
             text("INSERT INTO users (email, hashed_password, is_active) VALUES (:e, :p, :a)"),
-            {"e": normalized_email, "p": pwd_context.hash(user.password), "a": True}
+            {"e": normalized_email, "p": pwd_context.hash(safe_password), "a": True}
         )
         db.commit()
         return {"status": "success", "message": f"User {normalized_email} created."}
@@ -177,8 +180,11 @@ def login_user(req: LoginRequest, db: Session = Depends(get_db)):
         {"e": normalized_email}
     ).fetchone()
 
+    # Safely truncate password to 72 bytes before verifying
+    safe_password = req.password[:72]
+
     # Handle Invalid Login
-    if not user or not user[3] or not pwd_context.verify(req.password, user[2]):
+    if not user or not user[3] or not pwd_context.verify(safe_password, user[2]):
         db.execute(
             text("INSERT INTO audit_logs (username, event, severity) VALUES (:u, :e, :s)"),
             {"u": req.username, "e": "Failed login attempt (Invalid credentials)", "s": "Critical"}
@@ -281,7 +287,10 @@ def reset_password(req: ResetPasswordRequest, db: Session = Depends(get_db)):
     if not user:
         return {"status": "success", "message": "Password has been reset if the account exists."}
 
-    new_hashed = pwd_context.hash(req.new_password)
+    # Safely truncate the new password to 72 bytes to prevent hashing errors
+    safe_new_password = req.new_password[:72]
+    new_hashed = pwd_context.hash(safe_new_password)
+    
     db.execute(text("UPDATE users SET hashed_password = :p WHERE email = :e"), {"p": new_hashed, "e": email})
     db.execute(
         text("INSERT INTO audit_logs (username, event, severity) VALUES (:u, :e, :s)"),

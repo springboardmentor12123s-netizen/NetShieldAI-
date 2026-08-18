@@ -8,13 +8,15 @@ from passlib.context import CryptContext
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from database.postgres import get_db
+from database.postgres import get_db, User
 
 # 1. Security Configuration
 SECRET_KEY = "netshield-key"  
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
+# Note: Using pbkdf2_sha256 here which avoids bcrypt's 72-byte strict limit, 
+# but we will still safely truncate to 72 bytes to keep data clean and consistent.
 pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
@@ -35,22 +37,20 @@ class UserCreate(BaseModel):
     role: str
 
 
-# 3. Mock Database
-fake_users_db = {
-    "admin@netshield.com": {
-        "username": "admin@netshield.com",
-        "full_name": "Security Admin",
-        "email": "admin@netshield.com",
-        "hashed_password": pwd_context.hash("admin123"),
-        "role": "Administrator",
-        "disabled": False,
-    }
-}
+class UserLoginSchema(BaseModel):
+    username: str
+    password: str
 
 
-# 4. Helper Functions
-def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
+# 3. Helper Functions
+def verify_password(plain_password: str, hashed_password: str):
+    safe_password = plain_password[:72]  # Safe truncation
+    return pwd_context.verify(safe_password, hashed_password)
+
+
+def get_password_hash(password: str):
+    safe_password = password[:72]  # Safe truncation
+    return pwd_context.hash(safe_password)
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
@@ -60,16 +60,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
-def authenticate_user(username: str, password: str):
-    user_data = fake_users_db.get(username)
-    if not user_data:
-        return None
-    if not verify_password(password, user_data["hashed_password"]):
-        return None
-    return user_data
-
-
-# 5. Routes
+# 4. Routes
 @router.post("/login")
 def login(user_credentials: UserLoginSchema, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.username == user_credentials.username).first()
@@ -97,21 +88,27 @@ def login(user_credentials: UserLoginSchema, db: Session = Depends(get_db)):
 
 
 @router.post("/signup", status_code=status.HTTP_201_CREATED)
-async def create_user(user: UserCreate):
-    if user.email in fake_users_db:
+async def create_user(user: UserCreate, db: Session = Depends(get_db)):
+    existing_user = db.query(User).filter(User.username == user.email).first()
+    if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered",
         )
 
-    hashed_pwd = pwd_context.hash(user.password)
-    fake_users_db[user.email] = {
-        "username": user.email,
-        "full_name": user.full_name,
-        "email": user.email,
-        "hashed_password": hashed_pwd,
-        "role": user.role,
-        "disabled": False,
-    }
+    hashed_pwd = get_password_hash(user.password)
+    
+    new_user = User(
+        username=user.email,
+        email=user.email,
+        full_name=user.full_name,
+        hashed_password=hashed_pwd,
+        role=user.role,
+        disabled=False
+    )
+    
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
 
     return {"message": "User successfully created", "email": user.email, "role": user.role}
