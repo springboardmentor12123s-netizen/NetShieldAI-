@@ -54,12 +54,15 @@ netshield-ai/
 **Backend**
 
  cd C:\Users\HP\Downloads\netshield-ai\backend
+ 
 .\venv\Scripts\Activate.ps1
+
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 
 **Frontend**
 
  cd C:\Users\HP\Downloads\netshield-ai\frontend
+ 
  npm run dev
 
 Open browser at http://localhost:5500
