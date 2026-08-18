@@ -1,0 +1,19 @@
+services:
+
+  backend:
+    image: netshield-backend
+    container_name: netshield-backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  frontend:
+    image: netshield-frontend
+    container_name: netshield-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend

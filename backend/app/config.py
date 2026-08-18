@@ -1,4 +1,6 @@
-SECRET_KEY = "netshield_ai_secret_key"
+import os
+
+SECRET_KEY = os.getenv("SECRET_KEY", "password")
 
 ALGORITHM = "HS256"
 
