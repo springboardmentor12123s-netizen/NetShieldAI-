@@ -1,20 +1,15 @@
-# Use an official Python runtime as a parent image
 FROM python:3.11-slim
 
-# Set the working directory in the container
 WORKDIR /app
 
-# Copy requirements file first (this caches the pip install step)
+# Copy requirements file first to install dependencies
 COPY requirements.txt .
 
-# Install dependencies, including the psycopg2 binary
+# Install dependencies using pip
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of your project code
+# Copy the rest of the application code
 COPY . .
 
-# Expose port Render uses
-EXPOSE 10000
-
-# Command to run your app using Render's dynamic port
+# Run the app
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "10000"]
