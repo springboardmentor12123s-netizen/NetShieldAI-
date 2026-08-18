@@ -22,7 +22,7 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, T
 
 export default function Dashboard() {
   const router = useRouter();
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
   const [role, setRole] = useState<string | null>("Loading...");
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false); 
@@ -71,7 +71,7 @@ const [doughnutData, setDoughnutData] = useState<ChartData<"doughnut">>({
     // 2. Fetch Live Data
     const fetchTrafficData = async () => {
       try {
-        const response = await fetch(`${apiBaseUrl}/api/traffic-stats?t=${Date.now()}`, {
+        const response = await fetch(`${API_URL}/api/traffic-stats?t=${Date.now()}`, {
   cache: 'no-store'});
         if (!response.ok) throw new Error("Failed to fetch");
         

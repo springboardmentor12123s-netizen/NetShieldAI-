@@ -4,7 +4,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { getApiBaseUrl } from "../../lib/api";
 
 export default function SignupPage() {
   const [formData, setFormData] = useState({
@@ -16,7 +15,7 @@ export default function SignupPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const router = useRouter();
-  const apiBaseUrl = getApiBaseUrl();
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -28,7 +27,7 @@ export default function SignupPage() {
     setSuccess(false);
 
     try {
-      const response = await fetch(`${apiBaseUrl}/api/auth/signup`, {
+      const response = await fetch(`${API_URL}/api/auth/signup`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

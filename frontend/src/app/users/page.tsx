@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import AppShell from "../../components/AppShell";
 
 export default function UserManagementDashboard() {
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
   const [teamMembers, setTeamMembers] = useState([]);
   const [auditLogs, setAuditLogs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -23,8 +23,8 @@ export default function UserManagementDashboard() {
   const fetchUserData = useCallback(async () => {
     try {
       const [usersRes, logsRes] = await Promise.all([
-        fetch(`${apiBaseUrl}/api/users`),
-        fetch(`${apiBaseUrl}/api/audit-logs`)
+        fetch(`${API_URL}/api/users`),
+        fetch(`${API_URL}/api/audit-logs`)
       ]);
 
       if (usersRes.ok) {
@@ -51,7 +51,7 @@ export default function UserManagementDashboard() {
   const handleAddUser = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`${apiBaseUrl}/api/auth/signup`, {
+      const res = await fetch(`${API_URL}/api/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData)
@@ -79,7 +79,7 @@ export default function UserManagementDashboard() {
   const handleEditUser = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`${apiBaseUrl}/api/users/${editingUserId}`, {
+      const res = await fetch(`${API_URL}/api/users/${editingUserId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(editFormData)
@@ -103,7 +103,7 @@ export default function UserManagementDashboard() {
     }
 
     try {
-      const res = await fetch(`${apiBaseUrl}/api/users/${id}`, {
+      const res = await fetch(`${API_URL}/api/users/${id}`, {
         method: "DELETE",
       });
 

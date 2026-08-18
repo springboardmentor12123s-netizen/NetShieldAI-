@@ -20,7 +20,7 @@ interface IncidentItem {
 }
 
 export default function AnalyticsPage() {
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
   const [incidents, setIncidents] = useState<IncidentItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -28,7 +28,7 @@ export default function AnalyticsPage() {
     async function loadLiveStats() {
       try {
         // Just fetch the live alerts, we will calculate the stats dynamically!
-        const res = await fetch(`${apiBaseUrl}/api/alerts`);
+        const res = await fetch(`${API_URL}/api/alerts`);
         const incidentsData = await res.json();
         
         setIncidents(incidentsData.data || incidentsData || []);
