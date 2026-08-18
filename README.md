@@ -8,6 +8,7 @@ NetShieldAI is a full-stack **Security Operations Center (SOC)** platform that d
 
 - **Milestone 2** - Core SOC dashboard with real-time monitoring completed.
 - **Milestone 3** - ML model training, real-time Wi-Fi packet sniffer, and enhanced frontend completed.
+- **Milestone 4** - Real-time Gmail alerts, Profile SMTP Tester, and Admin Database Console completed.
 - Trained AI models on a clean, balanced 10,000-record sample (2,500 normal + 2,500 attack per dataset).
 - **Current focus:** Increasing dataset utilization for model training and expanding threat-detection coverage.
 
@@ -41,6 +42,17 @@ NetShieldAI is a full-stack **Security Operations Center (SOC)** platform that d
 ### PCAP Analyzer
 - Upload `.pcap` files for offline analysis.
 - Parses and stores PCAP metadata into MongoDB.
+
+### Real-Time Gmail Notifications & Auditing
+- **Who ➔ Whom Auditing** - Tracks the assigner who delegated each ticket (`assigned_by` column definition).
+- **Asynchronous Mail Queue** - Triggers real-time email notifications (using Google App Passwords via TLS) to alert analysts when a task is assigned.
+- **False Positive Controls** - Analysts/Admins can mark tickets as `False Positive` inside the Incident Center, automatically resolving active threat logs and updating analytics charts dynamically.
+
+### Profile & Admin Database Console
+- **Profile Management** - Edit email credentials and Gmail SMTP App Passwords.
+- **SMTP Connection Tester** - Validate Google App Password handshakes directly from the UI.
+- **Database Statistics Card** - Displays active telemetry metrics (Total users, threat logs, and incidents).
+- **Interactive Table Inspector** - Query and inspect SQL table records (`users`, `alerts`, `incidents`) directly from the browser.
 
 ### Hybrid Data Storage
 - **SQLite** (relational): users, alerts, incidents.
