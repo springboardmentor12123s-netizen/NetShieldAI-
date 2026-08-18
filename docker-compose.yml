@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  # 1. PostgreSQL Database
+  postgres:
+    image: postgres:15
+    container_name: netshield_postgres
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: adminpassword
+      POSTGRES_DB: netshield_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - netshield_network
+
+  # 2. MongoDB Database (NEW!)
+  mongo:
+    image: mongo:6
+    container_name: netshield_mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - netshield_network
+
+  # 3. Backend (FastAPI)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: netshield_backend
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - mongo
+    environment:
+      - DATABASE_URL=postgresql://admin:adminpassword@postgres:5432/netshield_db
+      - MONGO_URL=mongodb://mongo:27017
+    networks:
+      - netshield_network
+
+  # 4. Frontend (Next.js)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: netshield_frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - netshield_network
+
+networks:
+  netshield_network:
+
+volumes:
+  postgres_data:
+  mongo_data: # NEW!

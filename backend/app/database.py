@@ -1,15 +1,16 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
+import os
 
-# Database URL (Matches our docker-compose.yml)
-SQLALCHEMY_DATABASE_URL = "postgresql://admin:adminpassword@localhost:5432/netshield_db"
+# Get the database URL from environment variables (for Docker), 
+# or fallback to local 127.0.0.1 if running natively
+SQLALCHEMY_DATABASE_URL = os.getenv(
+    "DATABASE_URL", 
+    "postgresql://admin:adminpassword@127.0.0.1:5432/netshield_db"
+)
 
-# Create the SQLAlchemy engine
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
-
-# Create a SessionLocal class for database interactions
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Modern SQLAlchemy 2.0 Base class
 class Base(DeclarativeBase):
     pass

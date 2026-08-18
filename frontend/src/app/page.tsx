@@ -27,8 +27,9 @@ export default function Home() {
 
     setErrors(currentErrors);
 
+    // CHANGE: Redirect to dashboard upon successful login
     if (isValid) {
-      alert(`Authenticating Operator: ${username}`);
+      window.location.href = "/dashboard";
     }
   };
 
@@ -43,13 +44,11 @@ export default function Home() {
         playsInline
         className="absolute top-0 left-0 w-full h-full object-cover z-0"
       >
-        {/* MAKE SURE YOUR VIDEO FILE IS IN THE 'public' FOLDER AND THE NAME MATCHES */}
         <source src="/cyber-bg.mp4" type="video/mp4" /> 
       </video>
-      {/* ------------------------ */}
 
       {/* Dark overlay to make text readable over the video */}
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm z-10"></div>   {/*<div className="absolute inset-0 bg-gradient-to-r from-black/30 to-black/80 z-10"></div>/}
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm z-10"></div>
 
       {/* Main Container: Left Graphic + Right Form */}
       <div className="relative z-20 flex items-center gap-24 max-w-5xl w-full">

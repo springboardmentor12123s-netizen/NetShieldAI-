@@ -1,7 +1,9 @@
+import os
 from pymongo import MongoClient
 
-# Connect to the MongoDB Docker container (default local port 27017)
-MONGO_URI = "mongodb://localhost:27017/"
+# Get the Mongo URL from environment variables (for Docker), 
+# or fallback to local 127.0.0.1 if running natively
+MONGO_URI = os.getenv("MONGO_URL", "mongodb://127.0.0.1:27017/")
 
 # Create the client
 mongo_client = MongoClient(MONGO_URI)
