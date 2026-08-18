@@ -43,6 +43,10 @@ app = FastAPI(
     description="Backend API for the NetShield Cybersecurity Dashboard"
 )
 
+@app.on_event("startup")
+def startup_db_client():
+    # This automatically creates tables in your Neon database if they don't exist yet
+    Base.metadata.create_all(bind=engine)
 # Configure CORS for Frontend Access
 app.add_middleware(
     CORSMiddleware,
