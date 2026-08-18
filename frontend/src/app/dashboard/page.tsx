@@ -71,29 +71,37 @@ const [doughnutData, setDoughnutData] = useState<ChartData<"doughnut">>({
     // 2. Fetch Live Data
     const fetchTrafficData = async () => {
       try {
+        // 1. Grab the token that was saved when the user logged in
+        const token = localStorage.getItem("token") || localStorage.getItem("access_token");
+
+        // 2. Attach the token to the fetch request
         const response = await fetch(`${API_URL}/api/traffic-stats?t=${Date.now()}`, {
-  cache: 'no-store'});
-        if (!response.ok) throw new Error("Failed to fetch");
+          cache: 'no-store',
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { "Authorization": `Bearer ${token}` } : {})
+          }
+        });
+
+        if (!response.ok) throw new Error(`Failed to fetch: ${response.status}`);
         
         const result = await response.json();
         const data = result.data; // The 500 rows we ingested
 
         // --- DATA PROCESSING LOGIC ---
-        // (You may need to adjust these field names based on your exact CSV headers)
-        
         // Example: Count total packets (length of array)
         const total = data.length;
         
         // Example: Count anomalies (assuming you have a 'Label' or 'Is_Anomaly' column)
         const anomalousPackets = data.filter((packet: any) => {
-  const threatLabel = packet.Label || packet.label || packet['Attack Type'] || packet.Class;
-  
-  // If we found the label, make sure it is NOT a normal packet
-  return threatLabel && 
-         threatLabel.toString().toUpperCase() !== 'BENIGN' && 
-         threatLabel.toString().toUpperCase() !== 'NORMAL' && 
-         threatLabel !== 0;
-}).length;
+          const threatLabel = packet.Label || packet.label || packet['Attack Type'] || packet.Class;
+          
+          // If we found the label, make sure it is NOT a normal packet
+          return threatLabel && 
+                 threatLabel.toString().toUpperCase() !== 'BENIGN' && 
+                 threatLabel.toString().toUpperCase() !== 'NORMAL' && 
+                 threatLabel !== 0;
+        }).length;
         
         setMetrics({
           totalPackets: total,
