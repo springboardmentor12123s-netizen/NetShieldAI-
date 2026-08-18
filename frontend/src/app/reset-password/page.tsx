@@ -8,7 +8,7 @@ function ResetPasswordPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams?.get("token") ?? "";
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");

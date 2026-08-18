@@ -29,6 +29,7 @@ interface ReportSummary {
 }
 
 export default function ReportsPage() {
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
   const [loading, setLoading] = useState(true);
   const [alerts, setAlerts] = useState<AlertData[]>([]);
   const [summary, setSummary] = useState<ReportSummary | null>(null);
@@ -37,8 +38,8 @@ export default function ReportsPage() {
     const fetchLiveIntelligence = async () => {
       try {
         const [alertsRes, reportsRes] = await Promise.all([
-          fetch("http://127.0.0.1:8000/api/alerts"),
-          fetch("http://127.0.0.1:8000/api/reports"),
+          fetch(`${apiBaseUrl}/api/alerts`),
+          fetch(`${apiBaseUrl}/api/reports`),
         ]);
 
         if (!alertsRes.ok || !reportsRes.ok) {

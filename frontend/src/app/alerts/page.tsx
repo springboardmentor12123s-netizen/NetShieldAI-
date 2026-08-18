@@ -6,6 +6,7 @@ import AppShell from "../../components/AppShell";
 
 export default function AlertsDashboard() {
   const router = useRouter();
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
   const [role, setRole] = useState<string | null>("Loading...");
   const [alerts, setAlerts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -24,7 +25,7 @@ export default function AlertsDashboard() {
     // 2. Fetch incident notifications from the backend
     const fetchAlerts = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:8000/api/alerts');
+        const response = await fetch(`${apiBaseUrl}/api/alerts`);
         if (!response.ok) throw new Error("Failed to fetch");
 
         const result = await response.json();
@@ -96,7 +97,7 @@ export default function AlertsDashboard() {
     }
 
     try {
-      const res = await fetch(`http://127.0.0.1:8000/api/incidents/${incidentId}`, {
+      const res = await fetch(`${apiBaseUrl}/api/incidents/${incidentId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 

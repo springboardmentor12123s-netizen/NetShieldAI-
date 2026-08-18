@@ -8,7 +8,7 @@ export default function ForgotPasswordPage() {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

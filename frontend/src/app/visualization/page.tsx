@@ -5,6 +5,7 @@ import AppShell from "../../components/AppShell";
 import { Activity, BarChart3, Crosshair, Map } from "lucide-react";
 
 export default function VisualizationDashboard() {
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
   const [loading, setLoading] = useState(true);
   const [attackData, setAttackData] = useState<any[]>([]);
   const [topIps, setTopIps] = useState<any[]>([]);
@@ -13,7 +14,7 @@ export default function VisualizationDashboard() {
   useEffect(() => {
     const fetchTelemetry = async () => {
       try {
-        const response = await fetch("http://127.0.0.1:8000/api/alerts");
+        const response = await fetch(`${apiBaseUrl}/api/alerts`);
         const alertsJson = await response.json();
         const liveAlerts = alertsJson.data || alertsJson || [];
 
