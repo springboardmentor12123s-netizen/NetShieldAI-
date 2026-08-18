@@ -106,7 +106,7 @@ export default function Alerts({ userRole }) {
                                 <td>{alert.id}</td>
                                 <td>{alert.severity}</td>
                                 <td>{alert.message}</td>
-                                <td>{alert.source_ip}</td>
+                                <td>{alert.source_ip} {alert.source_ip_geo ? `(${alert.source_ip_geo})` : ''}</td>
                                 <td>{new Date(alert.timestamp).toLocaleString()}</td>
                                 <td>{alert.status}</td>
                             </tr>

@@ -11,6 +11,7 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     password_hash = Column(String, nullable=False)
     role = Column(String, default="Analyst")  # Admin, Analyst, Auditor
+    gmail_app_password = Column(String, nullable=True)
 
 
 class Alert(Base):
@@ -33,6 +34,7 @@ class Incident(Base):
     title = Column(String, nullable=False)
     alert_id = Column(Integer, ForeignKey("alerts.id"))
     assigned_to = Column(String, nullable=True)
+    assigned_by = Column(String, nullable=True)
     status = Column(String, default="Open")  # Open, Closed
 
     alert = relationship("Alert", back_populates="incidents")

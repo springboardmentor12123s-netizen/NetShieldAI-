@@ -5,6 +5,8 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 import bcrypt
+from typing import Optional
+from typing import Optional
 
 from .database import get_db
 from .models import User
@@ -21,6 +23,8 @@ class RegisterSchema(BaseModel):
     email: str
     password: str
     role: str = "Analyst"
+    gmail_app_password: Optional[str] = None
+    gmail_app_password: Optional[str] = None
 
 class LoginSchema(BaseModel):
     username: str
@@ -45,6 +49,11 @@ def register_user(data: RegisterSchema, db: Session = Depends(get_db)):
     if existing:
         raise HTTPException(status_code=400, detail="Username already exists")
     
+    # Check if email address already exists to prevent SQL database IntegrityError
+    existing_email = db.query(User).filter(User.email == data.email).first()
+    if existing_email:
+        raise HTTPException(status_code=400, detail="Email address already registered")
+    
     # Hash password
     salt = bcrypt.gensalt()
     hashed = bcrypt.hashpw(data.password.encode('utf-8'), salt).decode('utf-8')
@@ -53,7 +62,8 @@ def register_user(data: RegisterSchema, db: Session = Depends(get_db)):
         username=data.username,
         email=data.email,
         password_hash=hashed,
-        role=data.role
+        role=data.role,
+        gmail_app_password=data.gmail_app_password
     )
     db.add(new_user)
     db.commit()
@@ -84,3 +94,15 @@ def login_user(data: LoginSchema, db: Session = Depends(get_db)):
     }
     token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
     return {"access_token": token, "token_type": "bearer", "role": user.role, "username": user.username}
+
+class SmtpUpdateSchema(BaseModel):
+    gmail_app_password: str
+
+@router.post("/profile/smtp")
+def update_smtp_password(data: SmtpUpdateSchema, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    user = db.query(User).filter(User.username == current_user["sub"]).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.gmail_app_password = data.gmail_app_password
+    db.commit()
+    return {"message": "Gmail App Password updated successfully!"}

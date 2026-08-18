@@ -1,10 +1,13 @@
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 import time
 import csv
 import os
 import pickle
 import numpy as np
 import random
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from datetime import datetime
 import io
@@ -137,7 +140,16 @@ def get_dashboard_stats(db: Session = Depends(get_db)):
 
 @router.get("/alerts")
 def list_alerts(db: Session = Depends(get_db)):
-    return db.query(Alert).all()
+    alerts = db.query(Alert).all()
+    return [{
+        "id": a.id,
+        "severity": a.severity,
+        "message": a.message,
+        "source_ip": a.source_ip,
+        "source_ip_geo": get_ip_geolocation(a.source_ip),
+        "timestamp": a.timestamp,
+        "status": a.status
+    } for a in alerts]
 
 @router.post("/alerts")
 def create_alert(alert_in: AlertCreate, db: Session = Depends(get_db)):
@@ -391,15 +403,92 @@ def get_incidents(db: Session = Depends(get_db)):
         })
     return res
 
+
+def send_notification_email(sender_email: str, recipient_email: str, incident_id: int, title: str, severity: str, sender_username: str, recipient_username: str, sender_app_password: str = None):
+    try:
+        msg = MIMEMultipart()
+        msg['From'] = sender_email
+        msg['To'] = recipient_email
+        msg['Subject'] = f"🔔 Incident #{incident_id} Assigned: {sender_username} -> {recipient_username}"
+        
+        body = f"""
+        Hello,
+        
+        A security threat investigation task has been assigned to you.
+        
+        --------------------------------------------------
+        Incident ID: #{incident_id}
+        Incident: {title}
+        Severity: {severity}
+        Assigned From: {sender_username} ({sender_email})
+        Assigned To: {recipient_username} ({recipient_email})
+        --------------------------------------------------
+        
+        Best regards,
+        NetShield AI Security Portal
+        """
+        msg.attach(MIMEText(body, 'plain'))
+        
+        with smtplib.SMTP("smtp.gmail.com", 587, timeout=10) as server:
+            server.ehlo()
+            server.starttls()
+            server.login(sender_email, sender_app_password)
+            server.sendmail(sender_email, recipient_email, msg.as_string())
+        print(f"[SMTP SUCCESS] Assignment email sent from {sender_email} to {recipient_email}")
+    except Exception as e:
+        print(f"[SMTP ERROR] Failed to send assignment email: {e}")
+
+
 @router.put("/incidents/{incident_id}")
-def update_incident(incident_id: int, inc_in: IncidentUpdate, db: Session = Depends(get_db)):
+def update_incident(
+    incident_id: int, 
+    inc_in: IncidentUpdate, 
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db), 
+    current_user: dict = Depends(get_current_user)
+):
     inc = db.query(Incident).filter(Incident.id == incident_id).first()
     if not inc:
         raise HTTPException(status_code=404, detail="Incident not found")
+        
+    old_assignee = inc.assigned_to
+    
     if inc_in.assigned_to is not None:
         inc.assigned_to = inc_in.assigned_to
+        inc.assigned_by = current_user["sub"]
+        
+        if inc_in.assigned_to and inc_in.assigned_to != old_assignee:
+            sender = db.query(User).filter(User.username == current_user["sub"]).first()
+            recipient = db.query(User).filter(User.username == inc_in.assigned_to).first()
+            
+            if sender and recipient and sender.gmail_app_password:
+                title = inc.title
+                severity = inc.alert.severity if inc.alert else "Medium"
+                
+                background_tasks.add_task(
+                    send_notification_email,
+                    sender.email,
+                    recipient.email,
+                    inc.id,
+                    title,
+                    severity,
+                    sender.username,
+                    recipient.username,
+                    sender.gmail_app_password
+                )
+            else:
+                print(f"[SMTP WARNING] Skipping email. Sender SMTP set: {sender is not None and sender.gmail_app_password is not None}")
+                
     if inc_in.status is not None:
         inc.status = inc_in.status
+        if inc.alert:
+            if inc_in.status == "Closed":
+                inc.alert.status = "Resolved"
+            elif inc_in.status == "False Positive":
+                inc.alert.status = "False Positive"
+            elif inc_in.status == "Open":
+                inc.alert.status = "Active"
+                
     db.commit()
     db.refresh(inc)
     return inc
@@ -476,3 +565,171 @@ def get_threat_intelligence(db: Session = Depends(get_db)):
         "attack_category_distribution": category_counts,
         "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
+
+
+# =====================================================================
+# Profile & Admin User Management Endpoints
+# =====================================================================
+
+class ProfileUpdate(BaseModel):
+    email: Optional[str] = None
+    gmail_app_password: Optional[str] = None
+
+class UserAdminEdit(BaseModel):
+    email: Optional[str] = None
+    role: Optional[str] = None
+
+@router.get("/users/profile")
+def get_profile(db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    user = db.query(User).filter(User.username == current_user["sub"]).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {
+        "username": user.username,
+        "email": user.email,
+        "role": user.role,
+        "is_smtp_set": user.gmail_app_password is not None
+    }
+
+@router.put("/users/profile")
+def update_profile(profile_in: ProfileUpdate, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    user = db.query(User).filter(User.username == current_user["sub"]).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if profile_in.email is not None:
+        existing = db.query(User).filter(User.email == profile_in.email, User.id != user.id).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Email already registered")
+        user.email = profile_in.email
+    if profile_in.gmail_app_password is not None:
+        user.gmail_app_password = profile_in.gmail_app_password
+    db.commit()
+    db.refresh(user)
+    return {"message": "Profile updated successfully"}
+
+@router.get("/users/admin/list")
+def admin_list_users(db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    if current_user["role"] != "Admin":
+        raise HTTPException(status_code=403, detail="Admin permissions required")
+    users = db.query(User).all()
+    return [{
+        "id": u.id,
+        "username": u.username,
+        "email": u.email,
+        "role": u.role,
+        "is_smtp_set": u.gmail_app_password is not None
+    } for u in users]
+
+@router.put("/users/admin/{user_id}")
+def admin_update_user(user_id: int, data: UserAdminEdit, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    if current_user["role"] != "Admin":
+        raise HTTPException(status_code=403, detail="Admin permissions required")
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if data.email is not None:
+        existing = db.query(User).filter(User.email == data.email, User.id != user.id).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Email already registered")
+        user.email = data.email
+    if data.role is not None:
+        user.role = data.role
+    db.commit()
+    return {"message": "User updated successfully"}
+
+@router.delete("/users/admin/{user_id}")
+def admin_delete_user(user_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    if current_user["role"] != "Admin":
+        raise HTTPException(status_code=403, detail="Admin permissions required")
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if user.username == current_user["sub"]:
+        raise HTTPException(status_code=400, detail="Cannot delete your own admin account")
+    db.delete(user)
+    db.commit()
+    return {"message": f"User {user.username} deleted successfully"}
+
+@router.post("/users/profile/smtp/test")
+def test_smtp_connection(db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    user = db.query(User).filter(User.username == current_user["sub"]).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if not user.gmail_app_password:
+        raise HTTPException(status_code=400, detail="Gmail App Password is not configured. Please save it first.")
+        
+    try:
+        msg = MIMEMultipart()
+        msg['From'] = user.email
+        msg['To'] = user.email
+        msg['Subject'] = "SMTP Test Connection Email"
+        
+        body = f"""
+        Hello {user.username},
+        
+        This is a security test notification email verifying that your NetShield AI SMTP alert configuration is successfully active and connected to smtp.gmail.com!
+        
+        Dispatched At: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+        
+        Regards,
+        NetShield AI Portal Support
+        """
+        msg.attach(MIMEText(body, 'plain'))
+        
+        with smtplib.SMTP("smtp.gmail.com", 587, timeout=8) as server:
+            server.ehlo()
+            server.starttls()
+            server.login(user.email, user.gmail_app_password)
+            server.sendmail(user.email, user.email, msg.as_string())
+        return {"status": "success", "message": f"Test email sent successfully to {user.email}!"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"SMTP Login/Connection Failed: {e}")
+
+@router.get("/users/admin/db/stats")
+def get_db_stats(db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    if current_user["role"] != "Admin":
+        raise HTTPException(status_code=403, detail="Admin permissions required")
+    
+    users_count = db.query(User).count()
+    alerts_count = db.query(Alert).count()
+    incidents_count = db.query(Incident).count()
+    
+    return {
+        "users_count": users_count,
+        "alerts_count": alerts_count,
+        "incidents_count": incidents_count
+    }
+
+@router.get("/users/admin/db/{table_name}")
+def admin_get_db_table(table_name: str, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    if current_user["role"] != "Admin":
+        raise HTTPException(status_code=403, detail="Admin permissions required")
+    
+    if table_name == "users":
+        rows = db.query(User).all()
+        return [{
+            "id": r.id,
+            "username": r.username,
+            "email": r.email,
+            "role": r.role
+        } for r in rows]
+    elif table_name == "alerts":
+        rows = db.query(Alert).order_by(Alert.id.desc()).limit(50).all()
+        return [{
+            "id": r.id,
+            "severity": r.severity,
+            "message": r.message,
+            "source_ip": r.source_ip,
+            "timestamp": r.timestamp.strftime("%Y-%m-%d %H:%M:%S")
+        } for r in rows]
+    elif table_name == "incidents":
+        rows = db.query(Incident).order_by(Incident.id.desc()).limit(50).all()
+        return [{
+            "id": r.id,
+            "title": r.title,
+            "status": r.status,
+            "assigned_to": r.assigned_to,
+            "assigned_by": r.assigned_by
+        } for r in rows]
+    else:
+        raise HTTPException(status_code=400, detail="Invalid table name")

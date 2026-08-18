@@ -8,6 +8,7 @@ import AnomalyDetection from './components/AnomalyDetection';
 import Incidents        from './components/Incidents';
 import ThreatIntel      from './components/ThreatIntel';
 import Tracker          from './components/Tracker';
+import Profile          from './components/Profile';
 
 export default function App() {
     const [token,     setToken]     = useState(localStorage.getItem('token')    || '');
@@ -54,6 +55,7 @@ export default function App() {
         { id: 'incidents',  label: 'Incident Center' },
         { id: 'tracker',    label: 'Task Tracker & Inbox' },
         { id: 'pcap',       label: 'PCAP Analyzer' },
+          { id: 'profile',    label: 'My Profile' }
     ];
 
     return (
@@ -92,6 +94,7 @@ export default function App() {
             {activeTab === 'incidents' && <Incidents />}
             {activeTab === 'tracker'   && <Tracker />}
             {activeTab === 'pcap'      && <Pcap   userRole={role} />}
+            {activeTab === 'profile'   && <Profile />}
         </div>
     );
 }

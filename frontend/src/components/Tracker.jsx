@@ -3,6 +3,32 @@ import React, { useState, useEffect } from 'react';
 const API_URL = "http://127.0.0.1:8000";
 
 export default function Tracker() {
+    const [gmailAppPassword, setGmailAppPassword] = useState('');
+    const [saveMessage, setSaveMessage] = useState('');
+
+    const handleSaveSmtp = async (e) => {
+        e.preventDefault();
+        setSaveMessage('');
+        try {
+            const res = await fetch(`${API_URL}/auth/profile/smtp`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + localStorage.getItem('token')
+                },
+                body: JSON.stringify({ gmail_app_password: gmailAppPassword })
+            });
+            if (res.ok) {
+                setSaveMessage('Gmail App Password saved successfully!');
+                setGmailAppPassword('');
+            } else {
+                const errResult = await res.json();
+                setSaveMessage('Error: ' + (errResult.detail || 'Failed to save settings.'));
+            }
+        } catch (err) {
+            setSaveMessage('Server communication error.');
+        }
+    };
     const [incidents, setIncidents] = useState([]);
     const [users,      setUsers]      = useState([]);
     const [loading,    setLoading]    = useState(true);
@@ -62,6 +88,30 @@ export default function Tracker() {
     return (
         <div className="container">
             <h2 style={{ marginBottom: '24px' }}>🛡️ Task Tracker &amp; Notification History</h2>
+
+            {/* Gmail Notification Settings Panel */}
+            <div style={{ border: '1px solid #ddd', borderRadius: '6px', padding: '16px', background: '#fff', marginBottom: '24px' }}>
+                <h3 style={{ marginTop: 0, borderBottom: '1px solid #eee', paddingBottom: '8px', color: '#2c3e50', fontSize: '15px' }}>
+                    ✉️ Real-Time Gmail Alert Settings
+                </h3>
+                <p style={{ fontSize: '12px', color: '#666', margin: '8px 0' }}>
+                    Configure your Google Account <strong>App Password</strong> to send notifications directly from your registered email account to the assignee's email address in real-time.
+                </p>
+                <form onSubmit={handleSaveSmtp} style={{ display: 'flex', gap: '10px', alignItems: 'center', marginTop: '12px' }}>
+                    <input 
+                        type="password" 
+                        placeholder="Google App Password" 
+                        value={gmailAppPassword} 
+                        onChange={(e) => setGmailAppPassword(e.target.value)}
+                        style={{ padding: '6px 12px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '12px', flex: '1', maxWidth: '300px' }}
+                        required
+                    />
+                    <button type="submit" style={{ padding: '6px 16px', fontSize: '12px', background: '#2c3e50', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+                        Save App Password
+                    </button>
+                </form>
+                {saveMessage && <p style={{ fontSize: '12px', color: saveMessage.startsWith('Error') ? 'red' : 'green', margin: '8px 0 0 0' }}>{saveMessage}</p>}
+            </div>
 
             {/* Notification History panel */}
             <div style={{ border: '1px solid #ddd', borderRadius: '6px', padding: '16px', background: '#fff', marginBottom: '24px' }}>
@@ -169,6 +219,59 @@ export default function Tracker() {
                                 )}
                             </div>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* System-Wide Assigned Tasks Board (Visible to Admins and Analysts) */}
+            {(userRole === 'Admin' || userRole === 'Analyst') && (
+                <div style={{ border: '1px solid #ddd', borderRadius: '6px', padding: '16px', background: '#fff', marginTop: '24px' }}>
+                    <h3 style={{ marginTop: 0, color: '#2c3e50', borderBottom: '1px solid #eee', paddingBottom: '8px', fontSize: '15px' }}>
+                        🌐 Global System-Wide Task Assignments
+                    </h3>
+                    <div style={{ overflowX: 'auto', marginTop: '10px' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
+                            <thead>
+                                <tr style={{ borderBottom: '2px solid #eee', color: '#7f8c8d' }}>
+                                    <th style={{ padding: '8px' }}>Task Ticket</th>
+                                    <th style={{ padding: '8px' }}>Severity</th>
+                                    <th style={{ padding: '8px' }}>Status</th>
+                                    <th style={{ padding: '8px' }}>Who ➔ Whom</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {incidents.filter(i => i.assigned_to).map(i => (
+                                    <tr key={i.id} style={{ borderBottom: '1px solid #eee' }}>
+                                        <td style={{ padding: '8px', fontWeight: 'bold' }}>#{i.id}: {i.title}</td>
+                                        <td style={{ padding: '8px' }}>
+                                            <span style={{ 
+                                                padding: '2px 6px', 
+                                                borderRadius: '10px', 
+                                                fontSize: '10px', 
+                                                color: '#fff',
+                                                fontWeight: 'bold',
+                                                background: i.severity === 'Critical' ? '#c0392b' : i.severity === 'High' ? '#e67e22' : i.severity === 'Medium' ? '#2980b9' : '#95a5a6'
+                                            }}>{i.severity}</span>
+                                        </td>
+                                        <td style={{ padding: '8px', color: i.status === 'Open' ? '#e67e22' : '#27ae60', fontWeight: 'bold' }}>
+                                            {i.status}
+                                        </td>
+                                        <td style={{ padding: '8px' }}>
+                                            <span style={{ color: '#2980b9', fontWeight: 'bold' }}>{i.assigned_by || 'System'}</span>
+                                            {' ➔ '}
+                                            <span style={{ color: '#27ae60', fontWeight: 'bold' }}>{i.assigned_to}</span>
+                                        </td>
+                                    </tr>
+                                ))}
+                                {incidents.filter(i => i.assigned_to).length === 0 && (
+                                    <tr>
+                                        <td colSpan="4" style={{ padding: '12px', textAlign: 'center', color: '#888' }}>
+                                            No tasks currently assigned in the system.
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             )}

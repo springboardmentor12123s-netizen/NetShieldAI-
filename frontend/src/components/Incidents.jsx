@@ -41,7 +41,10 @@ export default function Incidents() {
         try {
             const res = await fetch(`${API_URL}/incidents/${incidentId}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + localStorage.getItem('token')
+                },
                 body: JSON.stringify({ assigned_to: username })
             });
             if (res.ok) {
@@ -54,21 +57,23 @@ export default function Incidents() {
         }
     };
 
-    const handleStatusToggle = async (incidentId, currentStatus) => {
-        const nextStatus = currentStatus === 'Open' ? 'Closed' : 'Open';
+    const handleStatusChange = async (incidentId, nextStatus) => {
         try {
             const res = await fetch(`${API_URL}/incidents/${incidentId}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + localStorage.getItem('token')
+                },
                 body: JSON.stringify({ status: nextStatus })
             });
             if (res.ok) {
-                setNotification(`Incident #${incidentId} marked as ${nextStatus}.`);
+                setNotification(`Incident #${incidentId} status updated to ${nextStatus}.`);
                 fetchIncidents();
                 setTimeout(() => setNotification(''), 4000);
             }
         } catch (err) {
-            console.error("Status toggle error:", err);
+            console.error("Status change error:", err);
         }
     };
 
@@ -143,7 +148,7 @@ export default function Incidents() {
                             <h3 style={{ fontSize: '15px', margin: '4px 0 8px 0', color: '#2c3e50' }}>{inc.title}</h3>
                             
                             <div style={{ fontSize: '12px', color: '#7f8c8d', marginBottom: '12px' }}>
-                                <div><strong>Source Host:</strong> {inc.source_ip}</div>
+                                <div><strong>Source Host:</strong> {inc.source_ip} {inc.source_ip_geo ? `(${inc.source_ip_geo})` : ''}</div>
                                 <div><strong>Triggered:</strong> {new Date(inc.timestamp).toLocaleString()}</div>
                                 <div style={{ marginTop: '6px', fontStyle: 'italic' }}>"{inc.message}"</div>
                             </div>
@@ -172,21 +177,40 @@ export default function Incidents() {
                                 </div>
 
                                 {(localStorage.getItem('role') === 'Admin' || localStorage.getItem('role') === 'Analyst') && (
-                                    <button
-                                        onClick={() => handleStatusToggle(inc.id, inc.status)}
-                                        style={{
-                                            padding: '6px 12px',
-                                            fontSize: '11px',
-                                            background: inc.status === 'Open' ? '#27ae60' : '#2980b9',
-                                            color: '#fff',
-                                            border: 'none',
-                                            borderRadius: '4px',
-                                            cursor: 'pointer',
-                                            fontWeight: 'bold'
-                                        }}
-                                    >
-                                        {inc.status === 'Open' ? 'Mark Resolved' : 'Re-open Ticket'}
-                                    </button>
+                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                        <button
+                                            onClick={() => handleStatusChange(inc.id, inc.status === 'Open' ? 'Closed' : 'Open')}
+                                            style={{
+                                                padding: '6px 12px',
+                                                fontSize: '11px',
+                                                background: inc.status === 'Open' ? '#27ae60' : '#2980b9',
+                                                color: '#fff',
+                                                border: 'none',
+                                                borderRadius: '4px',
+                                                cursor: 'pointer',
+                                                fontWeight: 'bold'
+                                            }}
+                                        >
+                                            {inc.status === 'Open' ? 'Mark Resolved' : 'Re-open Ticket'}
+                                        </button>
+                                        {inc.status === 'Open' && (
+                                            <button
+                                                onClick={() => handleStatusChange(inc.id, 'False Positive')}
+                                                style={{
+                                                    padding: '6px 12px',
+                                                    fontSize: '11px',
+                                                    background: '#e67e22',
+                                                    color: '#fff',
+                                                    border: 'none',
+                                                    borderRadius: '4px',
+                                                    cursor: 'pointer',
+                                                    fontWeight: 'bold'
+                                                }}
+                                            >
+                                                Flag False Positive
+                                            </button>
+                                        )}
+                                    </div>
                                 )}
                             </div>
                         </div>
