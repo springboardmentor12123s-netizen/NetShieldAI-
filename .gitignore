@@ -21,3 +21,8 @@ backend/app/data/model_candidates/
 .DS_Store
 .vscode/
 *.log
+backend/venv/
+backend/app/data/CICIDS2017/
+backend/app/data/UNSW-NB15/
+backend/app/data/processed/
+backend/app/data/model_candidates/

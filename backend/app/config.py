@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     remember_me_expire_minutes: int = 60 * 24 * 14  # 14 days
     reset_token_expire_minutes: int = 30
 
-    dataset_path: str = "app/data/network_traffic.csv"
+    dataset_path: str = "app/data/processed/netshield_combined.csv"
     model_path: str = "app/ml/model.pkl"
     model_metrics_path: str = "app/ml/model_metrics.json"
 

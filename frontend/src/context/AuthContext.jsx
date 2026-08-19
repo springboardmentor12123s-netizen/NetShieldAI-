@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+
 import api from "../api.js";
 
 const AuthContext = createContext(null);
@@ -9,22 +15,33 @@ export function AuthProvider({ children }) {
 
   const loadUser = async () => {
     const token = localStorage.getItem("netshield_token");
+
     if (!token) {
       setUser(null);
       setLoading(false);
-      return;
+      return null;
     }
+
     try {
       const res = await api.get("/users/me");
+
       setUser(res.data);
-    } catch {
+
+      return res.data;
+    } catch (error) {
+      console.error("LOAD USER ERROR:", error);
+
       setUser(null);
+
+      return null;
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { loadUser(); }, []);
+  useEffect(() => {
+    loadUser();
+  }, []);
 
   const logout = () => {
     localStorage.removeItem("netshield_token");
@@ -33,7 +50,15 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, setUser, loading, refreshUser: loadUser, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        setUser,
+        loading,
+        refreshUser: loadUser,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

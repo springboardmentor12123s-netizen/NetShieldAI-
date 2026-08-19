@@ -1,5 +1,5 @@
 {
-  "trained_at": "2026-07-25T01:47:31.472585",
+  "trained_at": "2026-08-16T10:21:56.280482",
   "training_samples": 8000,
   "testing_samples": 2000,
   "classes": [
@@ -149,5 +149,5 @@
       "support": 2000.0
     }
   },
-  "training_time_seconds": 2.5
+  "training_time_seconds": 0.75
 }
