@@ -154,8 +154,8 @@ const [doughnutData, setDoughnutData] = useState<ChartData<"doughnut">>({
     };
 
     fetchTrafficData();
-    // 2. THE HEARTBEAT: Set up a timer to fetch new data every 3 seconds!
-    const intervalId = setInterval(fetchTrafficData, 3000);
+    // 2. THE HEARTBEAT: Set up a timer to fetch new data every 1 seconds!
+    const intervalId = setInterval(fetchTrafficData, 1000);
 
     // 3. Clean up the timer if the user logs out or leaves the page
     return () => clearInterval(intervalId);

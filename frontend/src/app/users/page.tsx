@@ -14,7 +14,8 @@ export default function UserManagementDashboard() {
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({
-    username: '',
+    email: '',
+    full_name: '',
     password: '',
     role: 'Security Analyst'
   });
@@ -59,7 +60,7 @@ export default function UserManagementDashboard() {
 
       if (res.ok) {
         setIsModalOpen(false); // Close Modal
-        setFormData({ username: '', password: '', role: 'Security Analyst' }); // Reset Form
+        setFormData({ email: '', full_name: '', password: '', role: 'Security Analyst' });
         fetchUserData(); // Refresh the table automatically!
       } else {
         const errorData = await res.json();
@@ -254,7 +255,9 @@ export default function UserManagementDashboard() {
                   <div key={log.id} className="border-l-4 pl-3 py-1 border-gray-600 hover:bg-gray-750 transition-colors">
                     <div className="flex justify-between items-start">
                       <span className="text-sm font-medium">{log.user}</span>
-                      <span className="text-xs text-gray-500">{log.time.split(' ')[1]}</span>
+                      <span className="text-xs text-gray-500">
+                        {log.time.includes(' ') ? log.time.split(' ')[1] : log.time}
+                      </span>
                     </div>
                     <p className={`text-xs mt-1 ${
                       log.severity === 'Critical' ? 'text-red-400' : 
@@ -283,14 +286,27 @@ export default function UserManagementDashboard() {
             <form onSubmit={handleAddUser} className="space-y-4">
               
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">Username</label>
+                <label className="block text-sm font-medium text-gray-400 mb-1">Full Name</label>
                 <input 
                   type="text" 
                   required
-                  value={formData.username}
-                  onChange={(e) => setFormData({...formData, username: e.target.value})}
+                  value={formData.full_name}
+                  onChange={(e) => setFormData({...formData, full_name: e.target.value})}
                   className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
                   placeholder="e.g., Alice Vanguard"
+                />
+              </div>
+
+              {/* --- NEW EMAIL INPUT --- */}
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-1">Email Address</label>
+                <input 
+                  type="email" 
+                  required
+                  value={formData.email}
+                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
+                  placeholder="alice@netshield.com"
                 />
               </div>
 

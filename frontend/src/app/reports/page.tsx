@@ -63,7 +63,7 @@ export default function ReportsPage() {
     };
 
     fetchLiveIntelligence();
-    const interval = setInterval(fetchLiveIntelligence, 3000);
+    const interval = setInterval(fetchLiveIntelligence, 1000);
     return () => clearInterval(interval);
   }, []);
 

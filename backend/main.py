@@ -2,8 +2,11 @@ import os
 import sys
 import logging
 import secrets
+import time
 from typing import List
 from datetime import datetime, timedelta
+from notifications import send_critical_alert
+from threat_ops import build_dashboard_snapshot, classify_threat
 
 from fastapi import FastAPI, Request, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,26 +15,22 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 from bson import ObjectId
 from passlib.context import CryptContext
-# from models import Incident, User, AuditLog
 
 import smtplib
 import ssl
 from email.message import EmailMessage
 from jose import jwt, JWTError
 
-# from models import Base  # Import your SQLAlchemy Base from your models file
-from database.postgres import engine 
-
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 # --- Path Fix ---
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # --- Internal Imports ---
-from database import get_mongo_db
+from database.mongo import get_mongo_db # Ensure this points to your new motor setup
 from database.postgres import get_db, engine, Base, User, SessionLocal
-# from auth import router as auth_router
 from threat_ops import build_dashboard_snapshot, classify_threat
+
+# FIX 1: Upgraded to pbkdf2_sha256 to avoid bcrypt limitations
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 # ==========================================
 # 1. APPLICATION & DATABASE SETUP
@@ -43,12 +42,35 @@ app = FastAPI(
     description="Backend API for the NetShield Cybersecurity Dashboard"
 )
 
+# Setup Logging
+logger = logging.getLogger("netshield-threatops")
+
+# FIX 2: Consolidated Startup Event
 @app.on_event("startup")
-def startup_db_client():
-    # This automatically creates tables in your Neon database if they don't exist yet
-    Base.metadata.create_all(bind=engine)
-    with engine.begin() as conn:
-        conn.execute(text("ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS role VARCHAR DEFAULT 'Security Analyst'"))
+def on_startup():
+    try:
+        # Automatically creates tables in your PostgreSQL database if they don't exist
+        Base.metadata.create_all(bind=engine)
+        # Force create the audit_logs table if it doesn't exist
+        with engine.begin() as conn:
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS audit_logs (
+                    id SERIAL PRIMARY KEY,
+                    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    username VARCHAR(255),
+                    event TEXT,
+                    severity VARCHAR(50)
+                )
+            """))
+        
+        # Ensures the role column exists for RBAC
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS role VARCHAR DEFAULT 'Security Analyst'"))
+            
+        logger.info("Database tables verified successfully in PostgreSQL.")
+    except Exception as exc:
+        logger.warning("Database tables could not be created at startup: %s", exc)
+
 # Configure CORS for Frontend Access
 app.add_middleware(
     CORSMiddleware,
@@ -58,20 +80,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include external routers
-# app.include_router(auth_router)
-
-# Setup Logging
-logger = logging.getLogger("netshield-threatops")
-
-# Auto-generate PostgreSQL tables on startup
-try:
-    Base.metadata.create_all(bind=engine)
-    logger.info("Database tables verified successfully on Supabase PostgreSQL.")
-except Exception as exc:
-    logger.warning("Database tables could not be created at startup: %s", exc)
-
-# Initialize MongoDB connection (with in-memory fallback)
+# Initialize Asynchronous MongoDB connection
 mongo_db = get_mongo_db()
 collection = mongo_db["network_traffic_stats"] if mongo_db is not None else None
 
@@ -81,6 +90,7 @@ SAMPLE_PACKETS: List[dict] = [
     {"Label": "PortScan", "Source IP": "198.51.100.44", "Destination IP": "203.0.113.10", "Destination Port": 22, "Flow Duration": 420, "Total Fwd Packets": 12, "status": "Investigating", "timestamp": (datetime.utcnow() - timedelta(minutes=1)).isoformat()},
     {"Label": "BENIGN", "Source IP": "10.0.0.15", "Destination IP": "203.0.113.10", "Destination Port": 443, "Flow Duration": 540, "Total Fwd Packets": 4, "status": "Resolved", "timestamp": (datetime.utcnow() - timedelta(minutes=2)).isoformat()},
 ]
+
 IN_MEMORY_ALERTS = [
     {
         "id": "fallback-1",
@@ -105,7 +115,6 @@ IN_MEMORY_ALERTS = [
         "status": "Investigating",
     },
 ]
-
 # ==========================================
 # 2. PYDANTIC DATA SCHEMAS
 # ==========================================
@@ -389,6 +398,8 @@ def get_audit_logs(db: Session = Depends(get_db)):
 # 4. THREAT INTELLIGENCE & NETWORK ENDPOINTS (MongoDB)
 # ==========================================
 
+from bson import ObjectId
+
 def calculate_risk_metrics(label, dest_port):
     """Calculates a Risk Score (0-100) and Severity Level."""
     label_str = str(label).upper()
@@ -408,9 +419,9 @@ async def get_live_alerts():
     alerts_list = []
     if collection is not None:
         try:
-            raw_threats = list(collection.find(
-                {"Label": {"$nin": ["BENIGN", "0", 0]}}
-            ).sort("_id", -1).limit(50))
+            # ASYNC FIX: Use motor's to_list() instead of Python's built-in list()
+            cursor = collection.find({"Label": {"$nin": ["BENIGN", "0", 0]}}).sort("_id", -1).limit(50)
+            raw_threats = await cursor.to_list(length=50)
 
             for threat in raw_threats:
                 label = threat.get("Label", "Anomalous Traffic")
@@ -435,6 +446,7 @@ async def get_live_alerts():
     if not alerts_list:
         alerts_list = list(IN_MEMORY_ALERTS)
     return {"data": alerts_list, "count": len(alerts_list)}
+
 @app.get("/api/incidents")
 async def get_incidents():
     """Groups current alerts by source IP into incidents."""
@@ -460,15 +472,16 @@ async def get_incidents():
 
     return {"data": list(grouped.values()), "count": len(grouped)}
 
+# ASYNC FIX: Changed from 'def' to 'async def'
 @app.put("/api/incidents/{incident_id}")
-def update_incident_status(incident_id: str, update: IncidentUpdate):
+async def update_incident_status(incident_id: str, update: IncidentUpdate):
     """Updates the packet status directly in MongoDB so the UI instantly syncs."""
     if mongo_db is None:
         raise HTTPException(status_code=500, detail="MongoDB not connected")
         
     try:
-        # Locates the exact packet in MongoDB using its _id and updates the status
-        result = mongo_db.network_traffic_stats.update_one(
+        # ASYNC FIX: Await the update_one operation
+        result = await mongo_db.network_traffic_stats.update_one(
             {"_id": ObjectId(incident_id)},
             {"$set": {
                 "status": update.status,
@@ -484,6 +497,8 @@ def update_incident_status(incident_id: str, update: IncidentUpdate):
     except Exception as e:
         print(f"Error isolating host in MongoDB: {e}")
 
+# NOTE: Left as synchronous 'def' because SQLAlchemy Sessions are inherently synchronous.
+# FastAPI is smart enough to run this in a separate threadpool so it won't block your server!
 @app.post("/api/incidents")
 def create_incident(req: IsolateRequest, db: Session = Depends(get_db)):
     """Creates a new incident ticket when a critical threat is detected."""
@@ -506,9 +521,7 @@ def create_incident(req: IsolateRequest, db: Session = Depends(get_db)):
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
-
-
-    
+# NOTE: Left as synchronous 'def' for the same SQLAlchemy reason.
 @app.delete("/api/users/{user_id}")
 def delete_user(user_id: int, db: Session = Depends(get_db)):
     """Deletes a user from the PostgreSQL database."""
@@ -536,7 +549,10 @@ async def isolate_host(req: IsolateRequest):
 async def get_traffic_stats() -> dict:
     """Retrieves recent network packets and generates dashboard statistics."""
     if collection is not None:
-        docs = list(collection.find().sort([("_id", -1)]).limit(200))
+        # ASYNC FIX: Use motor's to_list()
+        cursor = collection.find().sort("_id", -1).limit(200)
+        docs = await cursor.to_list(length=200)
+        
         packets = []
         for d in docs:
             d2 = {k: v for k, v in d.items() if k != "_id"}
@@ -552,13 +568,32 @@ async def get_traffic_stats() -> dict:
 
 @app.post("/api/live-traffic")
 async def receive_live_traffic(request: Request) -> dict:
-    """Ingests live packets from the network sniffer."""
+    """Ingests live packets from the network sniffer and triggers alerts."""
     packet_batch = await request.json()
     inserted = 0
+    
     if packet_batch:
+        # --- NEW SLACK TRIGGER LOGIC ---
+        for packet in packet_batch:
+            label = str(packet.get("Label", "BENIGN")).upper()
+            
+            # If the packet is NOT benign, evaluate it
+            if label not in ["BENIGN", "0"]:
+                dest_port = packet.get("Destination Port", 0)
+                risk_score, severity = calculate_risk_metrics(label, dest_port)
+                
+                # Only spam Slack for HIGH or CRITICAL threats
+                if severity in ["CRITICAL"]:
+                    source_ip = packet.get("Source IP", "Unknown IP")
+                    details = f"Targeting port {dest_port}. Risk Score: {risk_score}/100"
+                    
+                    # Fire the webhook!
+                    send_critical_alert(source_ip, label, severity, details)
+        # -------------------------------
+
         if collection is not None:
             try:
-                collection.insert_many(packet_batch)
+                await collection.insert_many(packet_batch)
                 inserted = len(packet_batch)
             except Exception:
                 SAMPLE_PACKETS.extend(packet_batch)
@@ -579,8 +614,9 @@ async def get_reports():
 
     if collection is not None:
         try:
-            total_packets = collection.count_documents({"Label": {"$nin": ["BENIGN", "0", 0]}})
-            isolated_count = collection.count_documents({"status": "Isolated"})
+            # ASYNC FIX: Await the count_documents operations
+            total_packets = await collection.count_documents({"Label": {"$nin": ["BENIGN", "0", 0]}})
+            isolated_count = await collection.count_documents({"status": "Isolated"})
         except Exception as e:
             logger.warning(f"Error counting MongoDB stats: {e}")
 

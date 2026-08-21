@@ -42,8 +42,8 @@ export default function AnalyticsPage() {
     // 1. Initial Load
     loadLiveStats();
 
-    // 2. Set up Auto-Refresh (Polling every 3 seconds)
-    const intervalId = setInterval(loadLiveStats, 3000);
+    // 2. Set up Auto-Refresh (Polling every 1 seconds)
+    const intervalId = setInterval(loadLiveStats, 1000);
 
     // 3. Clean up interval if user leaves the page
     return () => clearInterval(intervalId);

@@ -96,8 +96,8 @@ export default function VisualizationDashboard() {
     };
 
     fetchTelemetry();
-    // Poll every 3 seconds so the minute-window slides naturally
-    const interval = setInterval(fetchTelemetry, 3000);
+    // Poll every 1 seconds so the minute-window slides naturally
+    const interval = setInterval(fetchTelemetry, 1000);
     return () => clearInterval(interval);
   }, []);
 

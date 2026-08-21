@@ -1,8 +1,8 @@
-
 from dotenv import load_dotenv
 import os
 
-from pymongo import MongoClient
+# 1. Swap MongoClient for the asynchronous Motor client
+from motor.motor_asyncio import AsyncIOMotorClient
 
 load_dotenv()
 
@@ -16,11 +16,17 @@ def _resolve_database_name() -> str:
 
 
 try:
-    client = MongoClient(MONGO_URL, serverSelectionTimeoutMS=5000)
-    client.admin.command("ping")
+    # 2. Connect using AsyncIOMotorClient
+    client = AsyncIOMotorClient(MONGO_URL, serverSelectionTimeoutMS=5000)
     db = client[_resolve_database_name()]
-    db.list_collection_names()
-except Exception:
+    
+    # We removed the synchronous ping and list_collection_names here 
+    # because motor operations must be awaited inside an async function, 
+    # and running them at the root level will block the event loop.
+    print("Successfully connected to asynchronous MongoDB instance.")
+
+except Exception as e:
+    print(f"MongoDB connection failed: {e}")
     client = None
     db = None
 

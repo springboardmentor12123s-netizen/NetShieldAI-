@@ -43,8 +43,8 @@ export default function AlertsDashboard() {
     // Initial fetch
     fetchAlerts();
     
-    // 3. Live Polling: Refresh data every 3 seconds to match sniffer pace
-    const interval = setInterval(fetchAlerts, 3000);
+    // 3. Live Polling: Refresh data every 1 seconds to match sniffer pace
+    const interval = setInterval(fetchAlerts, 1000);
     return () => clearInterval(interval);
   }, [router]);
 
