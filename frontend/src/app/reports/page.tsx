@@ -101,7 +101,7 @@ export default function ReportsPage() {
   const aiAnalysis = useMemo(() => {
     const isElevated = metrics.isolatedCount > 0 || alerts.length > 5;
     return (
-      `NetShield AI has captured and analyzed ${metrics.totalPackets} network packets in the active operational window. ` +
+      `NetShield AI has captured and analyzed ${metrics.totalPackets} network threat packets in the active operational window lifetime. ` +
       `The network threat level is currently ${isElevated ? "ELEVATED" : "STABLE"}. ` +
       (alerts.length > 0
         ? `There are currently ${alerts.length} active incidents logged, with '${metrics.topVector}' identified as the primary threat vector signature. `
@@ -153,7 +153,7 @@ export default function ReportsPage() {
               <div class="metric-value">${metrics.topVector}</div>
             </div>
             <div class="metric-card">
-              <div class="metric-label">Isolated Hosts</div>
+              <div class="metric-label">Isolated Hosts Lifetime</div>
               <div class="metric-value">${metrics.isolatedCount}</div>
             </div>
           </div>
@@ -230,7 +230,7 @@ export default function ReportsPage() {
               <Activity size={24} />
             </div>
             <div>
-              <p className="text-xs uppercase tracking-wider text-slate-400 font-semibold">Total Packets</p>
+              <p className="text-xs uppercase tracking-wider text-slate-400 font-semibold">Total Threat Packets</p>
               <p className="text-2xl font-bold text-slate-100">{metrics.totalPackets}</p>
             </div>
           </div>

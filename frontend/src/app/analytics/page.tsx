@@ -107,7 +107,7 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Metrics Grid - NOW FULLY DYNAMIC */}
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-3">
           <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4">
             <div className="flex items-center gap-3 text-blue-400"><Activity size={18} /> Total packets tracked</div>
             <p className="mt-3 text-3xl font-semibold">{incidents.length}</p>
@@ -120,10 +120,10 @@ export default function AnalyticsPage() {
             <div className="flex items-center gap-3 text-amber-400"><TrendingUp size={18} /> Average risk</div>
             <p className="mt-3 text-3xl font-semibold">{averageRisk}</p>
           </div>
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4">
+          {/* <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4">
             <div className="flex items-center gap-3 text-emerald-400"><ShieldCheck size={18} /> Incident count</div>
             <p className="mt-3 text-3xl font-semibold">{incidents.length}</p>
-          </div>
+          </div> */}
         </div>
 
         {/* Main Content Grid */}
